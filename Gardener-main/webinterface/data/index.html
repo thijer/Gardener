@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Gardener</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <script src="script.js"></script>
+</head>
+
+<body>
+  <!-- <h1>Watering interface</h1>
+  <form action="/start_feed" method="post">
+    <div>
+      <label for="position">Position:</label>
+      <input type="number" id="position" name="position"><br>
+    </div>
+    <div>
+      <label for="duration">Duration:</label>
+      <input type="number" id="duration" name="duration"><br>
+    </div>
+    <input type="submit" value="Start">
+  </form> -->
+  <div class="chat-container">
+    <h1>Gardener terminal</h1>
+    <div class="websocket">
+      <button class="connect-button" id="bt_connect" onclick="connect_onclick()">Connect</button>
+      <span class="label">WebSocket: <span class="ws_state" id="ws_state">CLOSED</span></span>
+    </div>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="user-input">
+      <input type="text" id="message" placeholder="Type your message..." onkeypress="send_onenter(event)">
+      <button onclick="send_onclick()">Send</button>
+    </div>
+  </div>
+  <h1>Gardener Firmware Update</h1>
+    <form method='POST' enctype='multipart/form-data' id='upload-form'>
+      <input type='file' id='file' name='update'>
+      <input type='text' id='md5' placeholder="md5" name='MD5-hash'>
+      <input class="button" type='submit' value='Update' onclick="submit_firmware_meta(event)">
+    </form>
+    <br>
+    <div id='prg' style='width:0;color:rgb(0, 0, 0);text-align:center'>0%</div>
+</body>
+</html>
