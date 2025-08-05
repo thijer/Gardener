@@ -8,42 +8,67 @@
 class TempHumSensor
 {
     public:
-        TempHumSensor(uint pin, FloatProperty* temp, FloatProperty* hum);
+        TempHumSensor(uint8_t pin, FloatProperty* temp = nullptr, FloatProperty* hum = nullptr);
         void property_reading_interval(IntProperty* p) { reading_interval = p; }
         void loop();
+        void begin();
+        bool get_error() { return error; }
         // void apply_setting(settings* config);
         // double temp;
         // double hum;
         
     private:
+        bool read();
         FloatProperty* temp;
         FloatProperty* hum;
         IntProperty* reading_interval;
         
         bool desired_state = false;
 
-        uint last_update = 0;
+        uint32_t last_update = 0;
+        bool error = false;
 
         DHT sensor;
 };
 
-TempHumSensor::TempHumSensor(uint pin, FloatProperty* temp, FloatProperty* hum):
+TempHumSensor::TempHumSensor(uint8_t pin, FloatProperty* temp, FloatProperty* hum):
     sensor(pin, DHT22),
     temp(temp),
     hum(hum)
+{}
+
+bool TempHumSensor::read()
+{
+    if(temp != nullptr)
+    {
+        float t = sensor.readTemperature();
+        if(isnan(t)) return false;
+        temp->set(double(t));
+    }
+    if(hum  != nullptr)
+    {
+        float h = sensor.readHumidity();
+        if(isnan(h)) return false;
+        hum->set(double(h));
+    }
+    return true;
+}
+
+void TempHumSensor::begin()
 {
     sensor.begin();
+    error = !read();
+    last_update = millis();
 }
 
 void TempHumSensor::loop()
 {
     if(reading_interval != nullptr)
     {
-        if(millis() - last_update >= reading_interval->get())
+        if(millis() - last_update >= uint32_t(reading_interval->get()))
         {
             last_update = millis();
-            temp->set(double(sensor.readTemperature()));
-            hum->set(double(sensor.readHumidity()));
+            error = !read();
         }
     }
 }

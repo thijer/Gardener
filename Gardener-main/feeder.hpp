@@ -72,7 +72,7 @@ class Feeder
 
         uint32_t feed_position = 0;
         uint32_t feed_duration = 0;
-        bool feed_active = false;
+        bool active = false;
         bool command_set = false;
 
         ulong last_state_change = 0;
@@ -116,7 +116,7 @@ void Feeder::loop()
 
 bool Feeder::start_feed(uint32_t position, uint32_t duration)
 {
-    if(feed_active) return false;
+    if(active) return false;
     feed_position = position;
     feed_duration = duration;
     command_set = true;
@@ -190,7 +190,7 @@ void Feeder::set_state(STATE newstate)
     {
         feed_position = 0;
         feed_duration = 0;
-        feed_active = false;
+        active = false;
         command_set = false;
         digitalWrite(pin_act_pump, 1);
         digitalWrite(pin_act_valve, 1);
@@ -204,7 +204,7 @@ void Feeder::set_state(STATE newstate)
     {
         feed_position = 0;
         feed_duration = 0;
-        feed_active = false;
+        active = false;
         command_set = false;
         digitalWrite(pin_act_pump, 1);
         digitalWrite(pin_act_valve, 1);
@@ -214,7 +214,7 @@ void Feeder::set_state(STATE newstate)
         newstate == STATE::RETURNING_TO_ZERO_1 || 
         newstate == STATE::RETURNING_TO_ZERO_2
     ){
-        // feed_active = false;
+        // active = false;
         digitalWrite(pin_act_pump, 1);
         digitalWrite(pin_act_valve, 1);
     }
@@ -228,11 +228,11 @@ void Feeder::state_transitions()
 {
     if(state == STATE::IDLE)
     {
-        if(!feed_active && command_set)
+        if(!active && command_set)
         {
             debug.print("[Feeder] command sent.");
             print_to_feeder("[Feeder] feed: ", feed_position, ",", feed_duration);
-            feed_active = true;
+            active = true;
         }
     }
     else if(state == STATE::MOVE_RIGHT)
@@ -245,14 +245,15 @@ void Feeder::state_transitions()
     }
     else if(state == STATE::WAITING)
     {
-        if(!feed_active && command_set)
+        if(!active && command_set)
         {
             print_to_feeder("[Feeder] feed: ", feed_position, ",", feed_duration);
-            feed_active = true;
+            active = true;
         }
-        else if((millis() - last_state_change) >= (1000 * 60))
+        else if(((millis() - last_state_change) >= (1000 * 60)) && !active)
         {
             // Timeout, return to base
+            active = true;
             print_to_feeder("[Feeder] abort");
         }
     }

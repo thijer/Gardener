@@ -158,7 +158,7 @@ void PRINT(T t, Args... args)
 
 template<> void PRINT()
 {
-    Serial.println();
+    Serial.print('\n');
 }
 
 void move_to_pos(int32_t pos, uint32_t duration = 0)

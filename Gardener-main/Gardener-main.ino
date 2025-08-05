@@ -158,6 +158,8 @@ void setup()
     #ifdef ENABLE_TEMP
     th_interior.property_reading_interval(&temp_measurement_interval);
     th_exterior.property_reading_interval(&temp_measurement_interval);
+    th_interior.begin();
+    th_exterior.begin();
     #endif
 
     #ifdef ENABLE_FEEDER
@@ -377,7 +379,7 @@ void decision_window()
     static ulong last_check = 0;
     
     // Manually control window, using the 'window_manual_pos' property.
-    if(window_manual)
+    if(window_manual || th_interior.get_error() || th_exterior.get_error())
     {
         if(window_manual_pos != act_window.get_position())
         {
