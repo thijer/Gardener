@@ -113,7 +113,11 @@ bool WebInterface::begin(Debug* debugger)
     // Webserver is already running.
     if(is_running) return true;
     
-    if(ledpin) pinMode(ledpin, OUTPUT);
+    if(ledpin)
+    {
+        pinMode(ledpin, OUTPUT);
+        digitalWrite(ledpin, 0);
+    }
     
     if(!SPIFFS.begin(true))
     {

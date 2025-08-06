@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 6-8-2025
+### Fixed
+- WebGUI enable switch now behaves correctly after startup/reset.
+
 ## [1.0.1] - 5-8-2025
 ### Fixed
 - "[Feeder] abort" message spamming by `Feeder`.

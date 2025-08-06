@@ -19,7 +19,7 @@
 #include "webinterface/webinterface.hpp"
 WebInterface        webgui(WEBGUI_PORT, PIN_ACT_WEBGUI_ACTIVE);
 String              webgui_buffer;
-volatile bool       webgui_btn_state = 0;
+volatile bool       webgui_btn_state = 1;           // Set to 1 to let webgui_management update the current state of the switch.
 volatile uint32_t   webgui_btn_ts = 0;
 bool                webgui_des_state = false;
 Debug               debug({&webgui, &Serial});
@@ -128,7 +128,6 @@ void setup()
     #ifdef ENABLE_WEBGUI
     pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
     attachInterrupt(PIN_SENS_WEBGUI_ENABLE, webgui_button_isr, CHANGE);
-    webgui_des_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
 
     webgui_buffer.reserve(51);
     bool success = webgui.begin(&debug);
