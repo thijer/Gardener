@@ -8,7 +8,7 @@
 #define ENABLE_WINDOW
 #define ENABLE_FEEDER
 #define ENABLE_TEMP
-// #define ENABLE_MOISTURE_SENSORS
+#define ENABLE_MOISTURE_SENSORS
 
 #include "config.h"
 #include "property.hpp"
@@ -60,9 +60,25 @@ TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, &temp_ext, &hum_ext);
 // MOISTURE SENSOR CONFIG
 #ifdef ENABLE_MOISTURE_SENSORS
 #include "moisture_sensor.hpp"
-IntProperty   moisture_response_timeout("moisture_response_timeout", SENSORS_RESPONSE_TIMEOUT);
-IntProperty   moisture_measurement_duration("moisture_measurement_duration", SENSORS_MEASUREMENT_DURATION);
-IntProperty   moisture_measurement_interval("moisture_measurement_interval", LOOP_INTERVAL);
+IntProperty   moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
+
+IntProperty moisture_sensor_0("ms_0");
+IntProperty moisture_sensor_1("ms_1");
+
+MoistureSensorArray moisture_sensors(
+    PIN_SENS_MOISTURE_ENABLE,
+    PIN_SENS_MOISTURE_ADDR_0,
+    PIN_SENS_MOISTURE_ADDR_1,
+    PIN_SENS_MOISTURE_ADDR_2,
+    PIN_SENS_MOISTURE_ADDR_3,
+    PIN_SENS_MOISTURE_P0,
+    PIN_SENS_MOISTURE_P1,
+    {
+        {&moisture_sensor_0, 0},
+        {&moisture_sensor_1, 1}
+    },
+    &moisture_measurement_interval
+);
 #endif
 
 // FEEDER CONFIG
@@ -96,6 +112,9 @@ PropertyStore properties = {
 #endif
 #ifdef ENABLE_WEBGUI
 #endif
+#ifdef ENABLE_MOISTURE_SENSORS
+    &moisture_measurement_interval,
+#endif
 };
 
 TelemetryStore variables = {
@@ -108,6 +127,10 @@ TelemetryStore variables = {
 #ifdef WINDOW
     // &window_switch
 #endif
+#ifdef ENABLE_MOISTURE_SENSORS
+    &moisture_sensor_0,
+    &moisture_sensor_1,
+#endif
 };
 
 // DEVICES
@@ -118,8 +141,6 @@ String serial_buffer;
 
 void setup()
 {
-    // analogReadResolution(ADC_RESOLUTION);
-    
     Serial.begin(115200);
     delay(5000);
     debug.print("[Gardener] Starting.");
@@ -138,11 +159,8 @@ void setup()
     properties.begin();
     
     #ifdef ENABLE_MOISTURE_SENSORS
-    pinMode(PIN_SENS_MOISTURE_ADDR_0, OUTPUT); digitalWrite(PIN_SENS_MOISTURE_ADDR_0, 0);
-    pinMode(PIN_SENS_MOISTURE_ADDR_1, OUTPUT); digitalWrite(PIN_SENS_MOISTURE_ADDR_1, 0);
-    pinMode(PIN_SENS_MOISTURE_ADDR_2, OUTPUT); digitalWrite(PIN_SENS_MOISTURE_ADDR_2, 0);
-    pinMode(PIN_SENS_MOISTURE_ADDR_3, OUTPUT); digitalWrite(PIN_SENS_MOISTURE_ADDR_3, 0);
-    pinMode(PIN_SENS_MOISTURE_ENABLE, OUTPUT); digitalWrite(PIN_SENS_MOISTURE_ENABLE, 0);
+    analogReadResolution(MS_ADC_RESOLUTION);
+    moisture_sensors.begin(debug);
     #endif
 
     #ifdef ENABLE_WINDOW
@@ -194,6 +212,10 @@ void loop()
     decision_window();
     #endif
 
+    #ifdef ENABLE_MOISTURE_SENSORS
+    moisture_sensors.loop();
+    #endif
+
     properties.save();
     // delay(1);
 }
@@ -213,14 +235,14 @@ void parse_command(String& message)
     {
         String key = message.substring(0, j);
         String value = message.substring(j + 1);
-        #ifdef ENABLE_MOISTURE_SENSORS
+        /* #ifdef ENABLE_MOISTURE_SENSORS
         if(key == "read")
         {
             int addr = value.toInt();
             uint val = get_measurement(addr);
             debug.print("[Moisture] sensor resistance:", val);
         }
-        #endif
+        #endif */
 
         #ifdef ENABLE_FEEDER
         if(key == "[Feeder] feed")

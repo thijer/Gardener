@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0] - 10-8-2025
+### Added
+- `MoistureSensorArray`: A class that can measure the resistance of a moisture sensor and store the measurement in the assigned `IntProperty`.
+
+### Changed
+- switched window actuator and moisture analog pins because ESP32 wifi interferes with `analogRead` using ADC2.
+
 ## [1.0.2] - 6-8-2025
 ### Fixed
 - WebGUI enable switch now behaves correctly after startup/reset.
