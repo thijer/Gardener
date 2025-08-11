@@ -103,8 +103,8 @@ Servo nozzle;
 Debounce endstop(ENDSTOP, 30);
 
 const uint32_t steps_per_revolution = 12;
-const uint32_t nozzle_extend_pos = 160;
-const uint32_t nozzle_retract_pos = 60;
+uint32_t nozzle_extend_pos = 160;
+uint32_t nozzle_retract_pos = 60;
 
 unsigned long last_state_transition = 0; // Timestamp of last state transition
 int32_t desired_pos = 0;      // 
@@ -336,6 +336,19 @@ void serial_input()
                         }
                         else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
                     }
+                    else if(key == "[Feeder] nozzle_extrude_pos")
+                    {
+                        uint32_t pos = uint32_t(value.toInt());
+                        nozzle_extend_pos = pos;
+                        PRINT("[Feeder] nozzle_extrude_pos updated.");
+                    }
+                    else if(key == "[Feeder] nozzle_retract_pos")
+                    {
+                        uint32_t pos = uint32_t(value.toInt());
+                        nozzle_retract_pos = pos;
+                        PRINT("[Feeder] nozzle_retract_pos updated.");
+                    }
+                        
                 }
             }
             buffer = "";
