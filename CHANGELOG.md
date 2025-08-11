@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.1] - 11-8-2025
+### Fixed
+- Feeder now moves to correct position before feeding when given a new command when it is in WAITING.
+
 ## [1.1.0] - 10-8-2025
 ### Added
 - `MoistureSensorArray`: A class that can measure the resistance of a moisture sensor and store the measurement in the assigned `IntProperty`.

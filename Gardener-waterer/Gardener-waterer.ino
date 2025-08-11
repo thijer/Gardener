@@ -213,13 +213,13 @@ void state_transitions()
     else if(state == STATE::WAITING)
     {
         if(abort_action)                            set_state_returning_1();
-        else if(feed_duration > 0)                  set_state_extruding();
         else if(desired_pos <= 0)                   set_state_returning_1();
         else if(abs(desired_pos - current_pos)  > POS_ERROR_MARGIN)
         {
             if(desired_pos < current_pos)           set_state_move_left();
             else                                    set_state_move_right();
         }
+        else if(feed_duration > 0)                  set_state_extruding();
     }
     else if(state == STATE::EXTRUDING_NOZZLE)
     {
@@ -330,7 +330,7 @@ void serial_input()
                                 int pos = position.toInt();
                                 int dur = duration.toInt();
                                 if(pos >= 0 && dur >= 0) move_to_pos(pos, dur);
-                                else PRINT("[Feeder] ERROR: position and duration should be larger than zero.");
+                                else PRINT("[Feeder] ERROR: position and duration should be larger or equal than zero.");
                             }
                             else PRINT("[Feeder] ERROR: command format incorrect.");
                         }
