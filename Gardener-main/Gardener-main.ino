@@ -85,6 +85,8 @@ MoistureSensorArray moisture_sensors(
 #ifdef ENABLE_FEEDER
 #include "feeder.hpp"
 
+IntProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
+IntProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
 Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, PIN_ACT_FEEDER_VALVE, PIN_ACT_FEEDER_PUMP, debug);
 
 bool start_feed(uint32_t position, uint32_t duration)
@@ -114,6 +116,10 @@ PropertyStore properties = {
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
     &moisture_measurement_interval,
+#endif
+#ifdef ENABLE_FEEDER
+    &feeder_nozzle_extrude_pos,
+    &feeder_nozzle_retract_pos,
 #endif
 };
 
@@ -180,6 +186,7 @@ void setup()
     #endif
 
     #ifdef ENABLE_FEEDER
+    act_feeder.set_properties(feeder_nozzle_extrude_pos, feeder_nozzle_retract_pos);
     act_feeder.begin();
     #endif
 
@@ -194,14 +201,10 @@ void loop()
     th_exterior.loop();
     #endif
 
-    #ifdef ENABLE_WINDOW
-    act_window.loop();
+    #ifdef ENABLE_MOISTURE_SENSORS
+    moisture_sensors.loop();
     #endif
 
-    #ifdef ENABLE_FEEDER
-    act_feeder.loop();
-    #endif
-    
     serial_input();
     #ifdef ENABLE_WEBGUI
     websocket_input();
@@ -210,12 +213,13 @@ void loop()
 
     #ifdef ENABLE_WINDOW
     decision_window();
+    act_window.loop();
     #endif
 
-    #ifdef ENABLE_MOISTURE_SENSORS
-    moisture_sensors.loop();
+    #ifdef ENABLE_FEEDER
+    act_feeder.loop();
     #endif
-
+    
     properties.save();
     // delay(1);
 }

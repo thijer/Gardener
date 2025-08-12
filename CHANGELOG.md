@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.2.0] - 12-8-2025
+### Added
+- Nozzle retraction and extrusion position properties.
+- `Gardener-waterer` can now be configured with the desired nozzle retraction and extrusion positions.
+
 ## [1.1.1] - 11-8-2025
 ### Fixed
 - Feeder now moves to correct position before feeding when given a new command when it is in WAITING.

@@ -24,6 +24,7 @@ class Feeder
         {}
         void loop();
         void begin();
+        void set_properties(IntProperty& nozzle_extrude_pos, IntProperty& nozzle_retract_pos);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
         template<typename T, typename... Args>
@@ -39,6 +40,9 @@ class Feeder
         HardwareSerial& port;
         Debug& debug;
 
+        IntProperty* nozzle_extrude_pos = nullptr;
+        IntProperty* nozzle_retract_pos = nullptr;
+        
         String buffer;
 
         enum STATE {
@@ -87,6 +91,12 @@ class Feeder
         void state_transitions();
 };
 
+void Feeder::set_properties(IntProperty& extrude_pos, IntProperty& retract_pos)
+{
+    nozzle_extrude_pos = &extrude_pos;
+    nozzle_retract_pos = &retract_pos;
+}
+
 void Feeder::abort()
 {
     digitalWrite(pin_act_pump, 1);
@@ -106,12 +116,28 @@ void Feeder::begin()
     buffer = "";
     port.begin(9600, SERIAL_8N1, pin_port_rx, pin_port_tx);
     debug.print("[Feeder] started.");
+
+    uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+    print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
+
+    pos = uint32_t(nozzle_retract_pos->get());
+    print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
 }
 
 void Feeder::loop()
 {
     serial_input();
     state_transitions();
+    if(nozzle_extrude_pos->is_updated())
+    {
+        uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+        print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
+    }
+    if(nozzle_retract_pos->is_updated())
+    {
+        uint32_t pos = uint32_t(nozzle_retract_pos->get());
+        print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
+    }
 }
 
 bool Feeder::start_feed(uint32_t position, uint32_t duration)
@@ -247,6 +273,7 @@ void Feeder::state_transitions()
     {
         if(!active && command_set)
         {
+            debug.print("[Feeder] command sent.");
             print_to_feeder("[Feeder] feed: ", feed_position, ",", feed_duration);
             active = true;
         }
