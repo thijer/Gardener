@@ -2,6 +2,24 @@
 var ws;
 var wsm_max_len = 4096; /* bigger length causes uart0 buffer overflow with low speed smart device */
 
+function start_feed(el) {
+  console.log("Starting feed request");
+  el.preventDefault();
+  var data = new FormData(document.getElementById('feed-form'));
+  console.log(data);
+
+  let post_feed = new XMLHttpRequest();
+  post_feed.open("POST", "/start_feed");
+  post_feed.send(data);
+}
+
+function abort_feed(el) {
+  console.log("Aborting feed");
+  let abort_feed = new XMLHttpRequest();
+  abort_feed.open("GET", "/abort_feed");
+  abort_feed.send();
+}
+
 function update_text(text) {
   text = text.replace("\n", "<br>");
   var chat_messages = document.getElementById("chat-messages");

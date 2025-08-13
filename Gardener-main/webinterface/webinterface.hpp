@@ -79,6 +79,7 @@ class WebInterface : public Stream
 
         #ifdef ENABLE_FEEDER
         void cb_start_feed(AsyncWebServerRequest* request);
+        void cb_abort_feed(AsyncWebServerRequest* request);
         #endif
         void cb_index(AsyncWebServerRequest* request);
         void cb_css(AsyncWebServerRequest* request);
@@ -162,6 +163,7 @@ bool WebInterface::begin(Debug* debugger)
     #endif
     #ifdef ENABLE_FEEDER
     server.on("/start_feed",    HTTP_POST, std::bind(&WebInterface::cb_start_feed, this, _1));
+    server.on("/abort_feed",    HTTP_GET,  std::bind(&WebInterface::cb_abort_feed, this, _1));
     #endif
     server.on("/",              HTTP_GET,  std::bind(&WebInterface::cb_index, this, _1));
     server.on("/style.css",     HTTP_GET,  std::bind(&WebInterface::cb_css, this, _1));
@@ -322,26 +324,30 @@ void WebInterface::reset_out_buffer()
 void WebInterface::cb_start_feed(AsyncWebServerRequest* request)
 {
     last_activity = millis();
-
+    debug->print("[WebGUI] start_feed");
     int n_params = request->params();
-    int32_t pos, dur = 0;
+    String pos = "", dur = "";
     for(int i = 0; i < n_params; i++)
     {
         const AsyncWebParameter* param = request->getParam(i);
         // PRINT.print("[WebGUI] POST /start_feed: ", param->name(), ", ", param->value());
-        if(param->name() == "position") pos = param->value().toInt();
-        else if(param->name() == "duration") dur = param->value().toInt();
+        if(param->name() == "position") pos = param->value();
+        else if(param->name() == "duration") dur = param->value();
     }
-    if(pos > 0 || dur > 0)
-    {
-        bool res = start_feed(uint32_t(pos), uint32_t(dur));
-        // PRINT.print("[WebGUI] ", res ? "starting feed" : "ERROR: feed already active.");
-        request->send(200, "text/plain", "OK");
-    }
-    else
-    {
-        request->send(400, "text/plain", "Position or duration needs to be higher than zero.");
-    }
+    String command = "[Feeder] feed:" + pos + ',' + dur + '\n';
+    debug->print("[WebGUI] command: ", command);
+    write_buffer((const uint8_t*)command.c_str(), command.length());
+    // PRINT.print("[WebGUI] ", res ? "starting feed" : "ERROR: feed already active.");
+    request->send(200, "text/plain", "OK");
+}
+
+void WebInterface::cb_abort_feed(AsyncWebServerRequest* request)
+{
+    last_activity = millis();
+
+    const char* command = "[Feeder] abort\n";
+    write_buffer((const uint8_t*)command, strlen(command));
+    request->send(200, "text/plain", "OK");
 }
 #endif
 

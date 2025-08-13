@@ -25,6 +25,12 @@ p{
 body {
   font-size: 16px;
 }
+.container {
+  width: 80%;
+  height: 80%;
+  margin: 0 auto;
+  padding: 10px;
+}
 .chat-container {
   width: 80%;
   height: 80%;
@@ -41,13 +47,20 @@ body {
 }
 .user-input {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 10px;
+  margin-top: 10px;
 }
 .user-input input {
   flex: 1;
   border: 1px solid #444;
   padding: 5px;
 }
+.user-input label {
+  width: 20%;
+  padding: 5px;
+  text-align: left;
+}
+
 .user-input button {
   margin-left: 5px;
   background-color: #0F3376;
