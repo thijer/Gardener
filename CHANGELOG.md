@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.3.0] - 13-8-2025
+### Added
+- Feeder can now be given a start and abort command directly from an HTML form in the webgui.
+
 ## [1.2.0] - 12-8-2025
 ### Added
 - Nozzle retraction and extrusion position properties.
