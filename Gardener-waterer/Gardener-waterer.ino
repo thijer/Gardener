@@ -145,6 +145,7 @@ const char* STATE_KEYS[] = {
     "ERROR"
 };
 
+const uint8_t n_keys = sizeof(STATE_KEYS) / sizeof(const char*);
 
 template<typename... Args>
 void PRINT(Args... args);
@@ -326,79 +327,94 @@ void serial_input()
         char c = Serial.read();
         if(c == '\r' || c == '\n') // carriage return
         {
-            // PRINT("[Serial]: processing line.");
-            
-            if(buffer == "[Feeder] abort")
+            int i = buffer.indexOf(':');
+            String key;
+            String value;
+
+            if(i != 0)
+            {
+                key = buffer.substring(0, i);
+                value = buffer.substring(i + 1);
+            }
+            else key = buffer;
+
+            if(key == "[Feeder] abort")
             {
                 // quit doing whatever is being done now.
                 PRINT("[Feeder] aborting.");
                 abort_action = true;
             }
-            else if(buffer == "[Feeder] get_pos")
+            else if(key == "[Feeder] get_pos")
             {
                 PRINT("[Feeder] position: ", get_steps());
             }
-            else if(buffer == "[Feeder] get_state_verbose")
+            else if(key == "[Feeder] get_state_verbose")
             {
                 PRINT("[Feeder] state_verbose: ", STATE_KEYS[state]);
             }
-            else if(buffer == "[Feeder] get_state")
+            else if(key == "[Feeder] get_state")
             {
                 PRINT("[Feeder] state: ", state);
             }
-            else
+            else if(key == "[Feeder] force_state" && i != -1)
             {
-                int i = buffer.indexOf(':');
-                if(i != -1)
+                uint32_t i = 0;
+                while(i < n_keys)
                 {
-                    String key = buffer.substring(0, i);
-                    String value = buffer.substring(i + 1);
-                    
-                    if(key == "[Feeder] set_pos")
+                    if(value == STATE_KEYS[i])
                     {
-                        if(state == STATE::IDLE || state == STATE::WAITING)
-                        {
-                            // Calibrate specific position by index.
-                            int32_t target = int32_t(value.toInt());
-                            if(target >= 0) move_to_pos(target);
-                            else PRINT("[Feeder] ERROR: target must be larger than zero.");
-                        }
-                        else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
+                        STATE newstate = static_cast<STATE>(i);
+                        set_state(newstate);
+                        break;
                     }
-                    else if(key == "[Feeder] feed")
-                    {
-                        if(state == STATE::IDLE || state == STATE::WAITING)
-                        {
-                            int k = value.indexOf(',');
-                            if(k != -1)
-                            {
-                                String position = value.substring(0, k);
-                                String duration = value.substring(k + 1);
-                                
-                                int pos = position.toInt();
-                                int dur = duration.toInt();
-                                if(pos >= 0 && dur >= 0) move_to_pos(pos, dur);
-                                else PRINT("[Feeder] ERROR: position and duration should be larger or equal than zero.");
-                            }
-                            else PRINT("[Feeder] ERROR: command format incorrect.");
-                        }
-                        else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
-                    }
-                    else if(key == "[Feeder] nozzle_extrude_pos")
-                    {
-                        uint32_t pos = uint32_t(value.toInt());
-                        nozzle_extend_pos = pos;
-                        PRINT("[Feeder] nozzle_extrude_pos updated.");
-                    }
-                    else if(key == "[Feeder] nozzle_retract_pos")
-                    {
-                        uint32_t pos = uint32_t(value.toInt());
-                        nozzle_retract_pos = pos;
-                        PRINT("[Feeder] nozzle_retract_pos updated.");
-                    }
-                        
+                    i++;
                 }
+                if(i == n_keys) PRINT("[Feeder] ERROR: State not found.");
             }
+            else if(key == "[Feeder] set_pos" && i != -1)
+            {
+                if(state == STATE::IDLE || state == STATE::WAITING)
+                {
+                    // Calibrate specific position by index.
+                    int32_t target = int32_t(value.toInt());
+                    if(target >= 0) move_to_pos(target);
+                    else PRINT("[Feeder] ERROR: target must be larger than zero.");
+                }
+                else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
+            }
+            else if(key == "[Feeder] feed" && i != -1)
+            {
+                if(state == STATE::IDLE || state == STATE::WAITING)
+                {
+                    int k = value.indexOf(',');
+                    if(k != -1)
+                    {
+                        String position = value.substring(0, k);
+                        String duration = value.substring(k + 1);
+                        
+                        int pos = position.toInt();
+                        int dur = duration.toInt();
+                        if(pos >= 0 && dur >= 0) move_to_pos(pos, dur);
+                        else PRINT("[Feeder] ERROR: position and duration should be larger or equal than zero.");
+                    }
+                    else PRINT("[Feeder] ERROR: command format incorrect.");
+                }
+                else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
+            }
+            else if(key == "[Feeder] nozzle_extrude_pos" && i != -1)
+            {
+                uint32_t pos = uint32_t(value.toInt());
+                nozzle_extend_pos = pos;
+                PRINT("[Feeder] nozzle_extrude_pos updated.");
+            }
+            else if(key == "[Feeder] nozzle_retract_pos" && i != -1)
+            {
+                uint32_t pos = uint32_t(value.toInt());
+                nozzle_retract_pos = pos;
+                PRINT("[Feeder] nozzle_retract_pos updated.");
+            }
+            else PRINT("[Feeder] ERROR: command not recognized.");
+
             buffer = "";
         }
         else

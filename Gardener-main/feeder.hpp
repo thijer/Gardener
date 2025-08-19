@@ -311,7 +311,7 @@ void Feeder::print_to_feeder(T t, Args... args)
 
 void Feeder::print_to_feeder()
 {
-    port.println();
+    port.print('\n');
 }
 
 #endif
