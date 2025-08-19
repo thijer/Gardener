@@ -181,89 +181,137 @@ void state_transitions()
         if(desired_pos > 0)
         {
             nozzle.attach(SERVO);
-            set_state_move_right();
+            set_state(STATE::MOVE_RIGHT);
         }
         else if(desired_pos == 0 && feed_duration > 0)
         {
             nozzle.attach(SERVO);
-            set_state_extruding();
+            set_state(STATE::EXTRUDING_NOZZLE);
         }
     }
 
     else if(state == STATE::MOVE_RIGHT)
     {
-        if(abort_action)                            set_state_returning_1();
+        if(abort_action)                            set_state(STATE::RETURNING_TO_ZERO_1);
         else if((desired_pos - current_pos) < POS_ERROR_MARGIN)
         {
             // Reached desired position.
-            if(feed_duration > 0)                   set_state_extruding();
-            else                                    set_state_waiting();
+            if(feed_duration > 0)                   set_state(STATE::EXTRUDING_NOZZLE);
+            else                                    set_state(STATE::WAITING);
         }
     }
     else if(state == STATE::MOVE_LEFT)
     {
-        if(endstop)                                 set_state_returning_2();
-        else if(abort_action)                       set_state_returning_1();
+        if(endstop)                                 set_state(STATE::RETURNING_TO_ZERO_2);
+        else if(abort_action)                       set_state(STATE::RETURNING_TO_ZERO_1);
         else if((current_pos - desired_pos) < POS_ERROR_MARGIN)
         {
-            if(feed_duration > 0)                   set_state_extruding();
-            else                                    set_state_waiting();
+            if(feed_duration > 0)                   set_state(STATE::EXTRUDING_NOZZLE);
+            else                                    set_state(STATE::WAITING);
         }
     }
     else if(state == STATE::WAITING)
     {
-        if(abort_action)                            set_state_returning_1();
-        else if(desired_pos <= 0)                   set_state_returning_1();
+        if(abort_action)                            set_state(STATE::RETURNING_TO_ZERO_1);
+        else if(desired_pos <= 0)                   set_state(STATE::RETURNING_TO_ZERO_1);
         else if(abs(desired_pos - current_pos)  > POS_ERROR_MARGIN)
         {
-            if(desired_pos < current_pos)           set_state_move_left();
-            else                                    set_state_move_right();
+            if(desired_pos < current_pos)           set_state(STATE::MOVE_LEFT);
+            else                                    set_state(STATE::MOVE_RIGHT);
         }
-        else if(feed_duration > 0)                  set_state_extruding();
+        else if(feed_duration > 0)                  set_state(STATE::EXTRUDING_NOZZLE);
     }
     else if(state == STATE::EXTRUDING_NOZZLE)
     {
         // Stay in this state until extend nozzle command is lifted.
-        if(((millis() - last_state_transition) >= feed_duration) || abort_action) set_state_prep_retract();
+        if(((millis() - last_state_transition) >= feed_duration) || abort_action) set_state(STATE::PREPARE_RETRACTION);
     }
     else if(state == STATE::PREPARE_RETRACTION)
     {
         // Indicate to main control that the valve and/or pump need to be shut off before retracting the nozzle.
-        if(((millis() - last_state_transition) >= 1000)) set_state_retracting();
+        if(((millis() - last_state_transition) >= 1000)) set_state(STATE::RETRACTING_NOZZLE);
     }
     else if(state == STATE::RETRACTING_NOZZLE)
     {
         // Wait 1s to give servo time to retract the nozzle.
-        if(millis() - last_state_transition >= RETRACTION_DURATION) set_state_waiting();
+        if(millis() - last_state_transition >= RETRACTION_DURATION) set_state(STATE::WAITING);
     }
     else if(state == STATE::RETURNING_TO_ZERO_1)
     {
         // Move to base until endstop is pressed.
-        if(endstop)                                 set_state_returning_2();
+        if(endstop)                                 set_state(STATE::RETURNING_TO_ZERO_2);
     }
     else if(state == STATE::RETURNING_TO_ZERO_2)
     {
         // Move from base until endstop is released.
-        if(!endstop)                                set_state_idle();
+        if(!endstop)                                set_state(STATE::IDLE);
     }
 }
 
 void set_state(STATE newstate)
 {
+    if(newstate == STATE::IDLE)                     
+    {
+        digitalWrite(MOTOR_1, 0);       
+        digitalWrite(MOTOR_2, 0);       
+        current_pos = 0; 
+        desired_pos = 0; 
+        feed_duration = 0; 
+        abort_action = false; 
+        nozzle.detach();
+    }
+    else if(newstate == STATE::MOVE_RIGHT)         
+    {
+        digitalWrite(MOTOR_1, RIGHT_1); 
+        digitalWrite(MOTOR_2, RIGHT_2); 
+        direction = RIGHT;
+    }
+    else if(newstate == STATE::MOVE_LEFT)          
+    {
+        digitalWrite(MOTOR_1, LEFT_1);  
+        digitalWrite(MOTOR_2, LEFT_2);  
+        direction = LEFT;
+    }
+    else if(newstate == STATE::WAITING)            
+    {
+        digitalWrite(MOTOR_1, 0);       
+        digitalWrite(MOTOR_2, 0);       
+        feed_duration = 0;
+    }
+    else if(newstate == STATE::EXTRUDING_NOZZLE)   
+    {
+        digitalWrite(MOTOR_1, 0);       
+        digitalWrite(MOTOR_2, 0);       
+        nozzle.write(nozzle_extend_pos);
+    }
+    else if(newstate == STATE::PREPARE_RETRACTION) 
+    {
+        digitalWrite(MOTOR_1, 0);       
+        digitalWrite(MOTOR_2, 0);       
+    }
+    else if(newstate == STATE::RETRACTING_NOZZLE)  
+    {
+        digitalWrite(MOTOR_1, 0);       
+        digitalWrite(MOTOR_2, 0);       
+        nozzle.write(nozzle_retract_pos);
+    }
+    else if(newstate == STATE::RETURNING_TO_ZERO_1)
+    {
+        digitalWrite(MOTOR_1, LEFT_1);  
+        digitalWrite(MOTOR_2, LEFT_2);  
+        direction = LEFT;
+    }
+    else if(newstate == STATE::RETURNING_TO_ZERO_2)
+    {
+        digitalWrite(MOTOR_1, RIGHT_1); 
+        digitalWrite(MOTOR_2, RIGHT_2); 
+        direction = RIGHT;
+    }
+    
     last_state_transition = millis();
     state = newstate;
     PRINT("[Feeder] state_verbose: ", STATE_KEYS[state]);
 }
-
-void set_state_idle()        { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::IDLE); current_pos = 0; desired_pos = 0; feed_duration = 0; abort_action = false; nozzle.detach(); }
-void set_state_move_right()  { digitalWrite(MOTOR_1, RIGHT_1); digitalWrite(MOTOR_2, RIGHT_2); set_state(STATE::MOVE_RIGHT); direction = RIGHT; }
-void set_state_move_left()   { digitalWrite(MOTOR_1, LEFT_1);  digitalWrite(MOTOR_2, LEFT_2);  set_state(STATE::MOVE_LEFT); direction = LEFT; }
-void set_state_waiting()     { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::WAITING); feed_duration = 0; }
-void set_state_extruding()   { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::EXTRUDING_NOZZLE);  nozzle.write(nozzle_extend_pos); }
-void set_state_prep_retract(){ digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::PREPARE_RETRACTION); }
-void set_state_retracting()  { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::RETRACTING_NOZZLE); nozzle.write(nozzle_retract_pos); }
-void set_state_returning_1() { digitalWrite(MOTOR_1, LEFT_1);  digitalWrite(MOTOR_2, LEFT_2);  set_state(STATE::RETURNING_TO_ZERO_1); direction = LEFT; }
-void set_state_returning_2() { digitalWrite(MOTOR_1, RIGHT_1); digitalWrite(MOTOR_2, RIGHT_2); set_state(STATE::RETURNING_TO_ZERO_2); direction = RIGHT; }
 
 void stepcounter()
 {
@@ -379,8 +427,8 @@ void setup()
     nozzle.write(nozzle_retract_pos);
     endstop.init();
 
-    if(!endstop) set_state_returning_1();
-    else set_state_idle();
+    if(!endstop) set_state(STATE::RETURNING_TO_ZERO_1);
+    else set_state(STATE::IDLE);
 
     // PRINT("[Feeder] ready");
 }
