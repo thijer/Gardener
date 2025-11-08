@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "ServoValve.hpp"
 
 #define RIGHT 0
 #define LEFT !RIGHT
@@ -99,6 +100,7 @@ class Debounce
         } state;
 };
 
+ServoValve valve(8);
 Servo nozzle;
 Debounce endstop(ENDSTOP, 30);
 
@@ -220,6 +222,8 @@ void state_transitions()
             else                                    set_state_move_right();
         }
         else if(feed_duration > 0)                  set_state_extruding();
+        else if(millis() - last_state_transition > 60 * 1000)
+                                                    set_state_returning_1();
     }
     else if(state == STATE::EXTRUDING_NOZZLE)
     {
@@ -228,7 +232,7 @@ void state_transitions()
     }
     else if(state == STATE::PREPARE_RETRACTION)
     {
-        // Indicate to main control that the valve and/or pump need to be shut off before retracting the nozzle.
+        // Closing the valve
         if(((millis() - last_state_transition) >= 1000)) set_state_retracting();
     }
     else if(state == STATE::RETRACTING_NOZZLE)
@@ -259,9 +263,9 @@ void set_state_idle()        { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTO
 void set_state_move_right()  { digitalWrite(MOTOR_1, RIGHT_1); digitalWrite(MOTOR_2, RIGHT_2); set_state(STATE::MOVE_RIGHT); direction = RIGHT; }
 void set_state_move_left()   { digitalWrite(MOTOR_1, LEFT_1);  digitalWrite(MOTOR_2, LEFT_2);  set_state(STATE::MOVE_LEFT); direction = LEFT; }
 void set_state_waiting()     { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::WAITING); feed_duration = 0; }
-void set_state_extruding()   { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::EXTRUDING_NOZZLE);  nozzle.write(nozzle_extend_pos); }
-void set_state_prep_retract(){ digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::PREPARE_RETRACTION); }
-void set_state_retracting()  { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::RETRACTING_NOZZLE); nozzle.write(nozzle_retract_pos); }
+void set_state_extruding()   { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::EXTRUDING_NOZZLE);    nozzle.write(nozzle_extend_pos); valve.open(); }
+void set_state_prep_retract(){ digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::PREPARE_RETRACTION);  valve.close(); }
+void set_state_retracting()  { digitalWrite(MOTOR_1, 0);       digitalWrite(MOTOR_2, 0);       set_state(STATE::RETRACTING_NOZZLE);   nozzle.write(nozzle_retract_pos); }
 void set_state_returning_1() { digitalWrite(MOTOR_1, LEFT_1);  digitalWrite(MOTOR_2, LEFT_2);  set_state(STATE::RETURNING_TO_ZERO_1); direction = LEFT; }
 void set_state_returning_2() { digitalWrite(MOTOR_1, RIGHT_1); digitalWrite(MOTOR_2, RIGHT_2); set_state(STATE::RETURNING_TO_ZERO_2); direction = RIGHT; }
 
@@ -375,6 +379,8 @@ void setup()
     Serial.begin(9600);
     delay(1000);
 
+    valve.begin();
+
     nozzle.attach(SERVO);
     nozzle.write(nozzle_retract_pos);
     endstop.init();
@@ -388,6 +394,7 @@ void setup()
 void loop()
 {
 	endstop.loop();
+    valve.loop();
     serial_input();
     state_transitions();
 }
