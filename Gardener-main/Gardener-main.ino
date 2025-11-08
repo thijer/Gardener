@@ -87,7 +87,7 @@ MoistureSensorArray moisture_sensors(
 
 IntProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
 IntProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
-Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, PIN_ACT_FEEDER_VALVE, PIN_ACT_FEEDER_PUMP, debug);
+Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, debug);
 
 bool start_feed(uint32_t position, uint32_t duration)
 {
