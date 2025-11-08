@@ -88,7 +88,7 @@ void ServoValve::loop()
             last_state = millis();
             state = STATE::CLOSING;
             Servo::attach(pin);
-            Servo::write(pos_open + pos_overshoot);        
+            Servo::write(pos_closed - pos_overshoot);        
         }
     }
     
