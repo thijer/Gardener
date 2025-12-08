@@ -3,6 +3,19 @@
 #include "Arduino.h"
 // #include "helpers.hpp"
 #include "debug.hpp"
+#include <deque>
+
+// Simple structure that merges the two feeding parameters in a single variable.
+class FeedCommand
+{
+    public:
+    FeedCommand(uint32_t position, uint32_t duration):
+        position(position),
+        duration (duration)
+        {}
+    uint32_t position = 0;
+    uint32_t duration = 0;
+};
 
 class Feeder
 {
@@ -74,7 +87,8 @@ class Feeder
         bool command_set = false;
 
         ulong last_state_change = 0;
-        
+
+        std::deque<FeedCommand> command_queue;
         // template<typename... Args>
         // void print_to_feeder(Args... args);
 
@@ -115,6 +129,16 @@ void Feeder::begin()
 void Feeder::loop()
 {
     serial_input();
+
+    // Check if there is a command in the queue and the waterer is not doing anything.
+    if(command_queue.size() > 0 && (state == STATE::IDLE || state == STATE::WAITING))
+    {
+        FeedCommand cmd = command_queue.front();
+        print_to_feeder("[Feeder] feed:", cmd.position, ",", cmd.duration);
+        // No command reception verification taking place for now.
+        command_queue.pop_front();
+    }
+    
     if(nozzle_extrude_pos->is_updated())
     {
         uint32_t pos = uint32_t(nozzle_extrude_pos->get());
@@ -129,7 +153,8 @@ void Feeder::loop()
 
 bool Feeder::start_feed(uint32_t position, uint32_t duration)
 {
-    print_to_feeder("[Feeder] feed:", position, ",", duration);
+    FeedCommand cmd(position, duration);
+    command_queue.push_back(cmd);
     return true;
 }
 
