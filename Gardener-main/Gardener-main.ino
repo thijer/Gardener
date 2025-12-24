@@ -32,38 +32,54 @@ Debug debug({&Serial});
 // WINDOW CONFIG
 #ifdef ENABLE_WINDOW
 #include "window.hpp"
-BoolProperty  window_manual("wd_manual", false);
-BoolProperty  window_manual_pos("wd_manual_pos", false);
-FloatProperty window_open_temp("wd_open_temp", TEMP_MAX);
-FloatProperty window_close_temp("wd_close_temp", TEMP_MIN);
-IntProperty   window_open_duration("wd_open_dur", WINDOW_DURATION);
-IntProperty   window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN);
-IntProperty   window_update_interval("wd_update_int", WINDOW_UPDATE_INTERVAL);
-
-// BoolProperty  window_switch("window_switch");
+BooleanProperty  window_manual("wd_manual", false);
+BooleanProperty  window_manual_pos("wd_manual_pos", false);
+IntegerProperty  window_open_duration("wd_open_dur", WINDOW_DURATION);
+IntegerProperty  window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN);
+const size_t N_PROP_WINDOW = 4;
+// BooleanProperty  window_switch("window_switch");
+const size_t N_VARS_WINDOW = 0;
 Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, debug);
+#else
+const size_t N_PROP_WINDOW = 0;
+const size_t N_VARS_WINDOW = 0;
 #endif
 
 // TEMPHUM SENSOR CONFIG
 #ifdef ENABLE_TEMP
 #include "temphum_sensor.hpp"
-IntProperty   temp_measurement_interval("t_measure_int", TEMP_MEASUREMENT_INTERVAL);
-FloatProperty temp_int("temp_internal");
-FloatProperty hum_int("hum_internal");
-FloatProperty temp_ext("temp_external");
-FloatProperty hum_ext("hum_external");
+IntegerProperty   temp_measurement_interval("t_measure_int", TEMP_MEASUREMENT_INTERVAL);
+RealProperty temp_int("temp_internal");
+RealProperty hum_int("hum_internal");
+RealProperty temp_ext("temp_external");
+RealProperty hum_ext("hum_external");
+
+#ifdef ENABLE_WINDOW
+RealProperty     window_open_temp("wd_open_temp", TEMP_MAX);
+RealProperty     window_close_temp("wd_close_temp", TEMP_MIN);
+IntegerProperty  window_update_interval("wd_update_int", WINDOW_UPDATE_INTERVAL);
+const size_t N_PROP_TEMP = 4;
+#else
+const size_t N_PROP_TEMP = 1;
+#endif
+
+const size_t N_VARS_TEMP = 4;
 
 TempHumSensor th_interior(PIN_SENS_TEMP_HUM_INTERIOR, &temp_int, &hum_int);
 TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, &temp_ext, &hum_ext);
+#else
+const size_t N_PROP_TEMP = 0;
+const size_t N_VARS_TEMP = 0;
 #endif
 
 // MOISTURE SENSOR CONFIG
 #ifdef ENABLE_MOISTURE_SENSORS
 #include "moisture_sensor.hpp"
-IntProperty   moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
-
-IntProperty moisture_sensor_0("ms_0");
-IntProperty moisture_sensor_1("ms_1");
+IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
+IntegerProperty moisture_sensor_0("ms_0");
+IntegerProperty moisture_sensor_1("ms_1");
+const size_t N_PROP_MOISTURE = 1;
+const size_t N_VARS_MOISTURE = 2;
 
 MoistureSensorArray moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
@@ -79,25 +95,34 @@ MoistureSensorArray moisture_sensors(
     },
     &moisture_measurement_interval
 );
+#else
+const size_t N_PROP_MOISTURE = 0;
+const size_t N_VARS_MOISTURE = 0;
 #endif
 
 // FEEDER CONFIG
 #ifdef ENABLE_FEEDER
 #include "feeder.hpp"
 
-IntProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
-IntProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
+IntegerProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
+IntegerProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
+const size_t N_PROP_FEEDER = 2;
+const size_t N_VARS_FEEDER = 0;
+
 Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, debug);
 
 bool start_feed(uint32_t position, uint32_t duration)
 {
     return act_feeder.start_feed(position, duration);
 }
+#else
+const size_t N_PROP_FEEDER = 0;
+const size_t N_VARS_FEEDER = 0;
 #endif
 
 // MEASURED VARIABLES
-
-PropertyStore properties = {
+const size_t N_PROP = N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER;
+PropertyStore<N_PROP> properties({
 #ifdef ENABLE_WINDOW
     &window_manual, 
     &window_manual_pos,
@@ -121,9 +146,10 @@ PropertyStore properties = {
     &feeder_nozzle_extrude_pos,
     &feeder_nozzle_retract_pos,
 #endif
-};
+});
 
-TelemetryStore variables = {
+const size_t N_VARS = N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER;
+TelemetryStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
     &hum_int,
@@ -137,7 +163,7 @@ TelemetryStore variables = {
     &moisture_sensor_0,
     &moisture_sensor_1,
 #endif
-};
+});
 
 // DEVICES
 

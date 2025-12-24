@@ -40,10 +40,10 @@ class Window
 
 
         // Register properties.
-        void property_window_opening_duration(IntProperty* p)   { window_open_duration = p; }
-        void property_window_duration_margin(IntProperty* p)    { window_duration_margin = p; }
-        // void telemetry_window_endstop(BoolProperty* p)          { window_endstop = p; }
-        // IntProperty window_open_duration;
+        void property_window_opening_duration(IntegerProperty* p)   { window_open_duration = p; }
+        void property_window_duration_margin(IntegerProperty* p)    { window_duration_margin = p; }
+        // void telemetry_window_endstop(BooleanProperty* p)          { window_endstop = p; }
+        // IntegerProperty window_open_duration;
     
     private:
         bool open_window = false;       // Desired state of the window, open = true, closed = false.
@@ -55,9 +55,9 @@ class Window
         ulong last_state_change;
         ulong open_duration = 0;
         bool direction = true;
-        IntProperty* window_open_duration;
-        IntProperty* window_duration_margin;
-        // BoolProperty* window_endstop;
+        IntegerProperty* window_open_duration;
+        IntegerProperty* window_duration_margin;
+        // BooleanProperty* window_endstop;
         Debug& PRINT;
 
         void set_state(STATE new_state);
