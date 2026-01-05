@@ -1,4 +1,5 @@
 #include <Servo.h>
+#include "ServoValve.hpp"
 
 #define RIGHT 0
 #define LEFT !RIGHT
@@ -99,6 +100,7 @@ class Debounce
         } state;
 };
 
+ServoValve valve(8);
 Servo nozzle;
 Debounce endstop(ENDSTOP, 30);
 
@@ -221,6 +223,8 @@ void state_transitions()
             else                                    set_state(STATE::MOVE_RIGHT);
         }
         else if(feed_duration > 0)                  set_state(STATE::EXTRUDING_NOZZLE);
+        else if(millis() - last_state_transition > 60 * 1000)
+                                                    set_state(STATE::RETURNING_TO_ZERO_1);
     }
     else if(state == STATE::EXTRUDING_NOZZLE)
     {
@@ -284,11 +288,13 @@ void set_state(STATE newstate)
         digitalWrite(MOTOR_1, 0);       
         digitalWrite(MOTOR_2, 0);       
         nozzle.write(nozzle_extend_pos);
+        valve.open();
     }
     else if(newstate == STATE::PREPARE_RETRACTION) 
     {
         digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);       
+        digitalWrite(MOTOR_2, 0);
+        valve.close();      
     }
     else if(newstate == STATE::RETRACTING_NOZZLE)  
     {
@@ -439,6 +445,8 @@ void setup()
     Serial.begin(9600);
     delay(1000);
 
+    valve.begin();
+
     nozzle.attach(SERVO);
     nozzle.write(nozzle_retract_pos);
     endstop.init();
@@ -452,6 +460,7 @@ void setup()
 void loop()
 {
 	endstop.loop();
+    valve.loop();
     serial_input();
     state_transitions();
 }

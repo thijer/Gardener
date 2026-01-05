@@ -37,7 +37,7 @@ class WebInterface : public Stream
         bool running();
         // bool no_reason_to_live();
 
-        // void property_ap_timeout(IntProperty* p);
+        // void property_ap_timeout(IntegerProperty* p);
 
         // Stream interfaces
         int read();
@@ -60,7 +60,7 @@ class WebInterface : public Stream
         #endif
         String md5_str;
 
-        // IntProperty* ap_timeout;
+        // IntegerProperty* ap_timeout;
         bool is_running = false;
         uint32_t last_activity = 0;
         
@@ -236,7 +236,7 @@ bool WebInterface::running()
 } */
 
 // PROPERTY SETTERS
-/* void WebInterface::property_ap_timeout(IntProperty* p)
+/* void WebInterface::property_ap_timeout(IntegerProperty* p)
 {
     ap_timeout = p;
 } */

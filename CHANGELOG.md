@@ -1,4 +1,17 @@
 # Changelog
+## [2.0.1] - 5-1-2026
+### Fixed
+- Support for Properties v2.2
+
+## [2.0.0] - 8-11-2025
+### Added
+- `ServoValve`, a class that uses Arduino's `Servo` implementation to control a servo attached to a ball valve.
+
+### Changed
+- `Gardener-waterer` now used a `ServoValve` to control water supply.
+
+### Removed
+- All pump functionality used by `Feeder`.
 
 ## [1.3.0] - 13-8-2025
 ### Added

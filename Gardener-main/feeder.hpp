@@ -11,20 +11,16 @@ class Feeder
             HardwareSerial& port,
             uint8_t pin_port_tx,
             uint8_t pin_port_rx,
-            uint8_t pin_act_valve, 
-            uint8_t pin_act_pump, 
             Debug& output
         ):
             port(port),
             pin_port_tx(pin_port_tx),
             pin_port_rx(pin_port_rx),
-            pin_act_valve(pin_act_valve),
-            pin_act_pump(pin_act_pump),
             debug(output)
         {}
         void loop();
         void begin();
-        void set_properties(IntProperty& nozzle_extrude_pos, IntProperty& nozzle_retract_pos);
+        void set_properties(IntegerProperty& nozzle_extrude_pos, IntegerProperty& nozzle_retract_pos);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
         template<typename T, typename... Args>
@@ -33,15 +29,13 @@ class Feeder
         void print_to_feeder();
 
     private:
-        const uint8_t pin_act_valve;
-        const uint8_t pin_act_pump;
         const uint8_t pin_port_rx;
         const uint8_t pin_port_tx;
         HardwareSerial& port;
         Debug& debug;
 
-        IntProperty* nozzle_extrude_pos = nullptr;
-        IntProperty* nozzle_retract_pos = nullptr;
+        IntegerProperty* nozzle_extrude_pos = nullptr;
+        IntegerProperty* nozzle_retract_pos = nullptr;
         
         String buffer;
 
@@ -88,10 +82,9 @@ class Feeder
         void serial_input();
         void parse_state(String& val);
         void set_state(STATE newstate);
-        void state_transitions();
 };
 
-void Feeder::set_properties(IntProperty& extrude_pos, IntProperty& retract_pos)
+void Feeder::set_properties(IntegerProperty& extrude_pos, IntegerProperty& retract_pos)
 {
     nozzle_extrude_pos = &extrude_pos;
     nozzle_retract_pos = &retract_pos;
@@ -99,22 +92,17 @@ void Feeder::set_properties(IntProperty& extrude_pos, IntProperty& retract_pos)
 
 void Feeder::abort()
 {
-    digitalWrite(pin_act_pump, 1);
-    digitalWrite(pin_act_valve, 1);
     print_to_feeder("[Feeder] abort");
 }
 
 void Feeder::begin()
 {
     // pinMode(pin_port_en, OUTPUT);
-    pinMode(pin_act_valve, OUTPUT);
-    pinMode(pin_act_pump, OUTPUT);
-    digitalWrite(pin_act_pump, 1);
-    digitalWrite(pin_act_valve, 1);
     
     buffer.reserve(51);
     buffer = "";
     port.begin(9600, SERIAL_8N1, pin_port_rx, pin_port_tx);
+    delay(10);
     debug.print("[Feeder] started.");
 
     uint32_t pos = uint32_t(nozzle_extrude_pos->get());
@@ -127,7 +115,6 @@ void Feeder::begin()
 void Feeder::loop()
 {
     serial_input();
-    state_transitions();
     if(nozzle_extrude_pos->is_updated())
     {
         uint32_t pos = uint32_t(nozzle_extrude_pos->get());
@@ -142,10 +129,7 @@ void Feeder::loop()
 
 bool Feeder::start_feed(uint32_t position, uint32_t duration)
 {
-    if(active) return false;
-    feed_position = position;
-    feed_duration = duration;
-    command_set = true;
+    print_to_feeder("[Feeder] feed:", position, ",", duration);
     return true;
 }
 
@@ -207,99 +191,10 @@ void Feeder::parse_state(String& val)
 
 void Feeder::set_state(STATE newstate)
 {
-    if(newstate == STATE::EXTRUDING_NOZZLE)
-    {
-        digitalWrite(pin_act_valve, 0);
-        digitalWrite(pin_act_pump, 0);    
-    }
-    else if(newstate == STATE::WAITING)
-    {
-        feed_position = 0;
-        feed_duration = 0;
-        active = false;
-        command_set = false;
-        digitalWrite(pin_act_pump, 1);
-        digitalWrite(pin_act_valve, 1);
-    }
-    else if(newstate == STATE::PREPARE_RETRACTION)
-    {
-        digitalWrite(pin_act_pump, 1);
-        digitalWrite(pin_act_valve, 1);
-    }
-    else if(newstate == STATE::IDLE)
-    {
-        feed_position = 0;
-        feed_duration = 0;
-        active = false;
-        command_set = false;
-        digitalWrite(pin_act_pump, 1);
-        digitalWrite(pin_act_valve, 1);
-    }
-    else if(
-        newstate == STATE::RETRACTING_NOZZLE || 
-        newstate == STATE::RETURNING_TO_ZERO_1 || 
-        newstate == STATE::RETURNING_TO_ZERO_2
-    ){
-        // active = false;
-        digitalWrite(pin_act_pump, 1);
-        digitalWrite(pin_act_valve, 1);
-    }
     last_state_change = millis();
     state = newstate;
     // debug.print("[Feeder] newstate is ", state);
-            
-}
-
-void Feeder::state_transitions()
-{
-    if(state == STATE::IDLE)
-    {
-        if(!active && command_set)
-        {
-            debug.print("[Feeder] command sent.");
-            print_to_feeder("[Feeder] feed: ", feed_position, ",", feed_duration);
-            active = true;
-        }
-    }
-    else if(state == STATE::MOVE_RIGHT)
-    {
-        
-    }
-    else if(state == STATE::MOVE_LEFT)
-    {
-        
-    }
-    else if(state == STATE::WAITING)
-    {
-        if(!active && command_set)
-        {
-            debug.print("[Feeder] command sent.");
-            print_to_feeder("[Feeder] feed: ", feed_position, ",", feed_duration);
-            active = true;
-        }
-        else if(((millis() - last_state_change) >= (1000 * 60)) && !active)
-        {
-            // Timeout, return to base
-            active = true;
-            print_to_feeder("[Feeder] abort");
-        }
-    }
-    else if(state == STATE::EXTRUDING_NOZZLE)
-    {
-       
-    }
-    else if(state == STATE::RETRACTING_NOZZLE)
-    {
-
-    }
-    else if(state == STATE::RETURNING_TO_ZERO_1)
-    {
-        
-    }
-    else if(state == STATE::RETURNING_TO_ZERO_2)
-    {
-        
-    }
+    
 }
 
 template<typename T, typename... Args>
