@@ -8,8 +8,8 @@
 class TempHumSensor
 {
     public:
-        TempHumSensor(uint8_t pin, FloatProperty* temp = nullptr, FloatProperty* hum = nullptr);
-        void property_reading_interval(IntProperty* p) { reading_interval = p; }
+        TempHumSensor(uint8_t pin, RealProperty* temp = nullptr, RealProperty* hum = nullptr);
+        void property_reading_interval(IntegerProperty* p) { reading_interval = p; }
         void loop();
         void begin();
         bool get_error() { return error; }
@@ -19,9 +19,9 @@ class TempHumSensor
         
     private:
         bool read();
-        FloatProperty* temp;
-        FloatProperty* hum;
-        IntProperty* reading_interval;
+        RealProperty* temp;
+        RealProperty* hum;
+        IntegerProperty* reading_interval;
         
         bool desired_state = false;
 
@@ -31,7 +31,7 @@ class TempHumSensor
         DHT sensor;
 };
 
-TempHumSensor::TempHumSensor(uint8_t pin, FloatProperty* temp, FloatProperty* hum):
+TempHumSensor::TempHumSensor(uint8_t pin, RealProperty* temp, RealProperty* hum):
     sensor(pin, DHT22),
     temp(temp),
     hum(hum)
