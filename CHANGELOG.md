@@ -1,4 +1,19 @@
 # Changelog
+## [2.0.2] - 9-1-2026
+### Added
+- Option to manually set the tracked position variable.
+
+### Changed
+- Moved all state change code to the `set_state` function.
+- Restructured the command parsing code.
+
+### Fixed
+- Feeder does not remain in `WAITING` state indefinitely.
+
+## [2.0.1] - 5-1-2026
+### Fixed
+- Support for Properties v2.2
+
 ## [2.0.0] - 8-11-2025
 ### Added
 - `ServoValve`, a class that uses Arduino's `Servo` implementation to control a servo attached to a ball valve.

@@ -33,7 +33,7 @@ class Feeder
         {}
         void loop();
         void begin();
-        void set_properties(IntProperty& nozzle_extrude_pos, IntProperty& nozzle_retract_pos);
+        void set_properties(IntegerProperty& nozzle_extrude_pos, IntegerProperty& nozzle_retract_pos);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
         template<typename T, typename... Args>
@@ -47,8 +47,8 @@ class Feeder
         HardwareSerial& port;
         Debug& debug;
 
-        IntProperty* nozzle_extrude_pos = nullptr;
-        IntProperty* nozzle_retract_pos = nullptr;
+        IntegerProperty* nozzle_extrude_pos = nullptr;
+        IntegerProperty* nozzle_retract_pos = nullptr;
         
         String buffer;
 
@@ -98,7 +98,7 @@ class Feeder
         void set_state(STATE newstate);
 };
 
-void Feeder::set_properties(IntProperty& extrude_pos, IntProperty& retract_pos)
+void Feeder::set_properties(IntegerProperty& extrude_pos, IntegerProperty& retract_pos)
 {
     nozzle_extrude_pos = &extrude_pos;
     nozzle_retract_pos = &retract_pos;
