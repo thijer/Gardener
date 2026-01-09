@@ -223,7 +223,7 @@ void state_transitions()
             else                                    set_state(STATE::MOVE_RIGHT);
         }
         else if(feed_duration > 0)                  set_state(STATE::EXTRUDING_NOZZLE);
-        else if(millis() - last_state_transition > 60 * 1000)
+        else if(millis() - last_state_transition > 60ul * 1000ul)
                                                     set_state(STATE::RETURNING_TO_ZERO_1);
     }
     else if(state == STATE::EXTRUDING_NOZZLE)
