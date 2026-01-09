@@ -164,11 +164,16 @@ template<> void PRINT()
     Serial.print('\n');
 }
 
-void move_to_pos(int32_t pos, uint32_t duration = 0)
+int32_t pos_to_steps(int32_t pos)
 {
     // Each revolution moves the nozzle by 1.25mm
     double steps = double(pos) / 1.25 * double(steps_per_revolution);
-    desired_pos = int32_t(round(steps));
+    return int32_t(round(steps));
+}
+
+void move_to_pos(int32_t pos, uint32_t duration = 0)
+{
+    desired_pos = pos_to_steps(pos);
     feed_duration = duration * 1000U;
     // direction = desired_pos > current_pos ? RIGHT : LEFT;
     PRINT("[Feeder] moving to: ", desired_pos);
@@ -379,14 +384,10 @@ void serial_input()
             }
             else if(key == "[Feeder] set_pos" && i != -1)
             {
-                if(state == STATE::IDLE || state == STATE::WAITING)
-                {
-                    // Calibrate specific position by index.
-                    int32_t target = int32_t(value.toInt());
-                    if(target >= 0) move_to_pos(target);
-                    else PRINT("[Feeder] ERROR: target must be larger than zero.");
-                }
-                else PRINT("[Feeder] ERROR: not currently in IDLE or WAITING state.");
+                // Manually set tracked position variable.
+                int32_t target = int32_t(value.toInt());
+                if(target >= 0) current_pos = pos_to_steps(target);
+                else PRINT("[Feeder] ERROR: target must be larger than or equal to zero.");
             }
             else if(key == "[Feeder] feed" && i != -1)
             {
