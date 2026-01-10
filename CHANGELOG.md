@@ -1,4 +1,8 @@
 # Changelog
+## [2.1.0] - 10-1-2026
+### Added
+- A queue to store multiple feed commands, so that multiple commands can be given at once without having to wait for the feeder to finish.
+- 
 ## [2.0.2] - 9-1-2026
 ### Added
 - Option to manually set the tracked position variable.
