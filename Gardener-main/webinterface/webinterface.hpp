@@ -130,6 +130,7 @@ bool WebInterface::begin(Debug* debugger)
     WiFi.mode(WIFI_AP);
     WiFi.setHostname("gardener");
     WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+    WiFi.softAPdisconnect(true);
     // WiFi.softAPConfig(INADDR_NONE, INADDR_NONE, INADDR_NONE);
     // if(!WiFi.softAP(SSID, WPA2PSK))
     // {
