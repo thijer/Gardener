@@ -9,6 +9,12 @@
 #define ENABLE_FEEDER
 #define ENABLE_TEMP
 #define ENABLE_MOISTURE_SENSORS
+#define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
+
+// Disable watering logic if the Feeder is unavailable.
+#if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
+#undef ENABLE_WATERING_FIXED
+#endif
 
 #include "config.h"
 #include "property.hpp"
@@ -120,8 +126,21 @@ bool start_feed(uint32_t position, uint32_t duration)
 #define N_VARS_FEEDER 0
 #endif
 
+#ifdef ENABLE_WATERING_FIXED
+#include "wateringlogic/fixedquantities.hpp"
+IntegerProperty gr0_feed_quantity("gr0_fd_quantity", 360);      // 6 min
+IntegerProperty gr0_timeout("gr0_timeout", 24*60*60);           // daily
+#define N_PROP_WATERING_FIXED 2
+#define N_VARS_WATERING_FIXED 0
+FixedQuantity group0("group0", 25, gr0_feed_quantity, gr0_timeout, act_feeder, debug);
+#else
+#define N_PROP_WATERING_FIXED 0
+#define N_VARS_WATERING_FIXED 0
+#endif
+
+
 // MEASURED VARIABLES
-#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER)
+#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER + N_PROP_WATERING_FIXED)
 PropertyStore<N_PROP> properties({
 #ifdef ENABLE_WINDOW
     &window_manual, 
@@ -146,9 +165,13 @@ PropertyStore<N_PROP> properties({
     &feeder_nozzle_extrude_pos,
     &feeder_nozzle_retract_pos,
 #endif
+#ifdef ENABLE_WATERING_FIXED
+    &gr0_feed_quantity,
+    &gr0_timeout,
+#endif
 });
 
-#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER)
+#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED)
 TelemetryStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
@@ -216,6 +239,10 @@ void setup()
     act_feeder.begin();
     #endif
 
+    #ifdef ENABLE_WATERING_FIXED
+    group0.begin();
+    #endif
+
     debug.print("[Gardener] Ready.");
 
 }
@@ -245,7 +272,11 @@ void loop()
     #ifdef ENABLE_FEEDER
     act_feeder.loop();
     #endif
-    
+
+    #ifdef ENABLE_WATERING_FIXED
+    group0.loop();
+    #endif
+
     properties.save();
     // delay(1);
 }
