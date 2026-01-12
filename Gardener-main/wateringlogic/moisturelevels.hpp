@@ -102,7 +102,7 @@ void MoistureLevels::begin()
 void MoistureLevels::loop()
 {
     // Check soil moisture and water if necessary once per `timeout` seconds.
-    if(ready && ((millis() - last_state_change) >= timeout->get()))
+    if(ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
     {
         last_state_change = millis();
         uint32_t weighted_sum = 0;
