@@ -1,5 +1,5 @@
-#ifndef MOISTURE_LEVELS_HPP
-#define MOISTURE_LEVELS_HPP
+#ifndef FIXED_QUANTITIES_HPP
+#define FIXED_QUANTITIES_HPP
 #include "wateringlogic.hpp"
 
 class FixedQuantity: public WateringLogic
