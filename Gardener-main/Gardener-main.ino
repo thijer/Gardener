@@ -9,6 +9,19 @@
 #define ENABLE_FEEDER
 #define ENABLE_TEMP
 #define ENABLE_MOISTURE_SENSORS
+#define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
+#define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
+
+// Disable watering logic if the Feeder is unavailable.
+#if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
+#undef ENABLE_WATERING_FIXED
+#endif
+
+// Disable moisture-based watering logic if the Feeder and moisture sensors are notavailable.
+#if defined(ENABLE_WATERING_MOISTURE) && !(defined(ENABLE_FEEDER) && defined(ENABLE_MOISTURE_SENSORS))
+#undef ENABLE_WATERING_MOISTURE
+#endif
+
 
 #include "config.h"
 #include "property.hpp"
@@ -120,8 +133,34 @@ bool start_feed(uint32_t position, uint32_t duration)
 #define N_VARS_FEEDER 0
 #endif
 
+#ifdef ENABLE_WATERING_FIXED
+#include "wateringlogic/fixedquantities.hpp"
+IntegerProperty gr0_feed_quantity("gr0_fd_quantity", 360);      // 6 min
+IntegerProperty gr0_timeout("gr0_timeout", 24*60*60);           // daily
+#define N_PROP_WATERING_FIXED 2
+#define N_VARS_WATERING_FIXED 0
+FixedQuantity group0("group0", 25, gr0_feed_quantity, gr0_timeout, act_feeder, debug);
+#else
+#define N_PROP_WATERING_FIXED 0
+#define N_VARS_WATERING_FIXED 0
+#endif
+
+#ifdef ENABLE_WATERING_MOISTURE
+#include "wateringlogic/moisturelevels.hpp"
+IntegerProperty gr1_feed_quantity("gr1_fd_quantity", 360);      // 6 min
+IntegerProperty gr1_timeout("gr1_timeout", 24*60*60);           // daily
+IntegerProperty gr1_threshold("gr1_threshold", 10000);          // 10 kOhm
+#define N_PROP_WATERING_MOISTURE 3
+#define N_VARS_WATERING_MOISTURE 0
+MoistureLevels group1("group1", 50, gr1_feed_quantity, gr1_timeout, gr1_threshold, act_feeder, debug);
+#else
+#define N_PROP_WATERING_MOISTURE 0
+#define N_VARS_WATERING_MOISTURE 0
+#endif
+
+
 // MEASURED VARIABLES
-#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER)
+#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER + N_PROP_WATERING_FIXED + N_PROP_WATERING_MOISTURE)
 PropertyStore<N_PROP> properties({
 #ifdef ENABLE_WINDOW
     &window_manual, 
@@ -146,9 +185,18 @@ PropertyStore<N_PROP> properties({
     &feeder_nozzle_extrude_pos,
     &feeder_nozzle_retract_pos,
 #endif
+#ifdef ENABLE_WATERING_FIXED
+    &gr0_feed_quantity,
+    &gr0_timeout,
+#endif
+#ifdef ENABLE_WATERING_MOISTURE
+    &gr1_feed_quantity,
+    &gr1_timeout,
+    &gr1_threshold,
+#endif
 });
 
-#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER)
+#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE)
 TelemetryStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
@@ -216,6 +264,20 @@ void setup()
     act_feeder.begin();
     #endif
 
+    #ifdef ENABLE_WATERING_FIXED
+    group0.begin();
+    #endif
+
+    #ifdef ENABLE_WATERING_MOISTURE
+    group1.add_sensors(
+        {
+            {&moisture_sensor_0, 1.0},
+            {&moisture_sensor_1, 0.5}
+        }
+    );
+    group1.begin();
+    #endif
+
     debug.print("[Gardener] Ready.");
 
 }
@@ -245,7 +307,15 @@ void loop()
     #ifdef ENABLE_FEEDER
     act_feeder.loop();
     #endif
-    
+
+    #ifdef ENABLE_WATERING_FIXED
+    group0.loop();
+    #endif
+
+    #ifdef ENABLE_WATERING_MOISTURE
+    group1.loop();
+    #endif
+
     properties.save();
     // delay(1);
 }

@@ -1,4 +1,10 @@
 # Changelog
+## [2.2.0] - 13-1-2026
+### Added
+- The `WateringLogic` base class, which provides a standard framework from which classes can be derived that each implement custom logic for watering a specific area of the greenhouse connected to the `Feeder`. 
+- The `FixedQuantity` class, that specializes `WateringLogic` to water an area with a fixed quantity at a fixed interval.
+- The `MoistureLevels` class, that specializes `WateringLogic` to water an area based on the soil moisture levels of one or more connected moisture sensors.
+
 ## [2.1.1] - 10-1-2026
 ### Fixed
 - ESP32 starting a generic accesspoint during `WebInterface::begin`.
