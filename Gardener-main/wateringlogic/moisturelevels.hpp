@@ -41,7 +41,7 @@ class MoistureLevels: public WateringLogic
         /// @param sensors An initializer list containing pairs of moisture sensors and their weights.
         void add_sensors(std::initializer_list<std::pair<IntegerProperty*, double>> sensors);
         void begin();
-        void loop();
+        void execute();
     
     private:
         
@@ -99,28 +99,24 @@ void MoistureLevels::begin()
     }
 } 
 
-void MoistureLevels::loop()
+void MoistureLevels::execute()
 {
-    // Check soil moisture and water if necessary once per `timeout` seconds.
-    if(ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
+    // Calculate weighted mean of soil moisture levels.
+    uint32_t weighted_sum = 0;
+    for(std::pair<IntegerProperty*, double>& sens : weighted_sensors)
     {
-        last_state_change = millis();
-        uint32_t weighted_sum = 0;
-        for(std::pair<IntegerProperty*, double>& sens : weighted_sensors)
-        {
-            // Obtain soil moisture
-            uint32_t measurement = sens.first->get();
-            weighted_sum += uint32_t(double(measurement) * sens.second / normalizer);
-            debug.print("[MoistureLevels] ", id, " measurement: ", measurement, ", weight: ", sens.second);
-        }
-        uint32_t threshold = uint32_t(moisture_threshold->get());
-        debug.print("[MoistureLevels] ", id, " weighted total: ", weighted_sum, ", threshold: ", threshold);
-        // Compare weighted soil moisture values to threshold.
-        if(weighted_sum > uint32_t(moisture_threshold->get()))
-        {
-            // And water the plants.
-            act_feeder.start_feed(position, uint32_t(feed_quantity->get()));
-        }
+        // Obtain soil moisture.
+        uint32_t measurement = sens.first->get();
+        weighted_sum += uint32_t(double(measurement) * sens.second / normalizer);
+        debug.print("[MoistureLevels] ", id, " measurement: ", measurement, ", weight: ", sens.second);
+    }
+    uint32_t threshold = uint32_t(moisture_threshold->get());
+    debug.print("[MoistureLevels] ", id, " weighted total: ", weighted_sum, ", threshold: ", threshold);
+    // Compare weighted soil moisture values to threshold.
+    if(weighted_sum > uint32_t(moisture_threshold->get()))
+    {
+        // And water the plants.
+        act_feeder.start_feed(position, uint32_t(feed_quantity->get()));
     }
 }
 

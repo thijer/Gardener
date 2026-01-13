@@ -9,7 +9,11 @@ class WateringLogic
 {
     public:
         virtual void begin();
-        virtual void loop();
+        void loop();
+        virtual void execute();
+        void enable()  { enabled = true; }
+        void disable() { enabled = false; }
+    
     protected:
         WateringLogic(
             const char* id,
@@ -27,6 +31,7 @@ class WateringLogic
         IntegerProperty* timeout;
         uint32_t last_state_change = 0;
         bool ready = false;
+        bool enabled = true;
     private:
 };
 
@@ -58,8 +63,16 @@ void WateringLogic::begin()
 
 void WateringLogic::loop()
 {
-
+    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
+    {
+        last_state_change = millis();
+        execute();
+    }
 }
- 
+
+void WateringLogic::execute()
+{
+    
+}
 
 #endif

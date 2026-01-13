@@ -14,7 +14,7 @@ class FixedQuantity: public WateringLogic
             Debug& output
         );
         void begin();
-        void loop();
+        void execute();
     
     private:
 
@@ -36,15 +36,12 @@ void FixedQuantity::begin()
     WateringLogic::begin();
 } 
 
-void FixedQuantity::loop()
+void FixedQuantity::execute()
 {
-    if(ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
-    {
-        last_state_change = millis();
-        uint32_t quantity = uint32_t(feed_quantity->get());
-        debug.print("[Watering] ", id, ": watering fixed quantity: ", quantity);
-        act_feeder.start_feed(position, quantity);
-    }
+    uint32_t quantity = uint32_t(feed_quantity->get());
+    debug.print("[Watering] ", id, ": watering fixed quantity: ", quantity);
+    act_feeder.start_feed(position, quantity);
+    
 }
 
 #endif
