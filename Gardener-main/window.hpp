@@ -8,21 +8,24 @@
 // #define POSITION_OPEN true
 // #define POSITION_CLOSED false
 
+#define WINDOW_STATES(P) \
+    P(ERROR) \
+    P(STARTUP) \
+    P(CLOSED) \
+    P(OPENING_1) \
+    P(OPENING_2) \
+    P(OPENED) \
+    P(CLOSING) \
+    P(HALTED) 
+
 class Window
 {
     public:
         enum STATE 
         {
-            ERROR,
-            STARTUP,
-            CLOSED,
-            OPENING_1,
-            OPENING_2,
-            OPENED,
-            CLOSING,
-            HALTED
+            WINDOW_STATES(GENERATE_STATE_ENUM)
         };
-        
+
         Window(uint ctrl_1, uint ctrl_2, uint endstop, Debug& output = emptydebug):
             pin_ctrl_1(ctrl_1),
             pin_ctrl_2(ctrl_2),
@@ -46,6 +49,8 @@ class Window
         // IntegerProperty window_open_duration;
     
     private:
+        static const char* const STATE_KEYS[]; 
+            
         bool open_window = false;       // Desired state of the window, open = true, closed = false.
         STATE state = STATE::CLOSING;
     
@@ -62,6 +67,10 @@ class Window
 
         void set_state(STATE new_state);
 
+};
+
+const char* const Window::STATE_KEYS[] = {
+    WINDOW_STATES(GENERATE_STATE_STRING)
 };
 
 bool Window::begin()
@@ -128,7 +137,7 @@ void Window::set_state(STATE new_state)
     }
     last_state_change = millis();
     state = new_state;
-    PRINT.print("[Window]: New state = ", new_state);
+    PRINT.print("[Window] state: ", STATE_KEYS[new_state]);
 }
 
 void Window::loop()

@@ -1,6 +1,22 @@
 #include <Servo.h>
 #include "ServoValve.hpp"
 
+#define GENERATE_STATE_ENUM(STATE) STATE,
+#define GENERATE_STATE_STRING(STATE) #STATE,
+
+// FEEDER_STATES should be exactly equal to the FEEDER_STATES definition in Gardener-main/feeder.hpp
+#define FEEDER_STATES(P) \
+    P(IDLE) \
+    P(WAITING) \
+    P(MOVE_RIGHT) \
+    P(MOVE_LEFT) \
+    P(EXTRUDING_NOZZLE) \
+    P(PREPARE_RETRACTION) \
+    P(RETRACTING_NOZZLE) \
+    P(RETURNING_TO_ZERO_1) \
+    P(RETURNING_TO_ZERO_2) \
+    P(ERROR)
+
 #define RIGHT 0
 #define LEFT !RIGHT
 #define RIGHT_1 RIGHT
@@ -121,33 +137,15 @@ bool abort_action = false;
 String buffer;
 
 enum STATE {
-    IDLE,
-    WAITING,
-    MOVE_RIGHT,
-    MOVE_LEFT,
-    EXTRUDING_NOZZLE,
-    PREPARE_RETRACTION,
-    RETRACTING_NOZZLE,
-    RETURNING_TO_ZERO_1,
-    RETURNING_TO_ZERO_2,
-    ERROR
+    FEEDER_STATES(GENERATE_STATE_ENUM)
 };
 STATE state = STATE::IDLE;
 
 const char* STATE_KEYS[] = {
-    "IDLE",
-    "WAITING",
-    "MOVE_RIGHT",
-    "MOVE_LEFT",
-    "EXTRUDING_NOZZLE",
-    "PREPARE_RETRACTION",
-    "RETRACTING_NOZZLE",
-    "RETURNING_TO_ZERO_1",
-    "RETURNING_TO_ZERO_2",
-    "ERROR"
+    FEEDER_STATES(GENERATE_STATE_STRING)
 };
 
-const uint8_t n_keys = sizeof(STATE_KEYS) / sizeof(const char*);
+const uint32_t n_keys = sizeof(STATE_KEYS) / sizeof(*STATE_KEYS);
 
 template<typename... Args>
 void PRINT(Args... args);
