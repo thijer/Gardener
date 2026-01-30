@@ -4,6 +4,7 @@
 #include <DHT_U.h>
 #include <DHT.h>
 #include "property.hpp"
+#include "debug.hpp"
 
 class TempHumSensor
 {
@@ -11,7 +12,7 @@ class TempHumSensor
         TempHumSensor(uint8_t pin, RealProperty* temp = nullptr, RealProperty* hum = nullptr);
         void property_reading_interval(IntegerProperty* p) { reading_interval = p; }
         void loop();
-        void begin();
+        void begin(Debug& debugger = emptydebug);
         bool get_error() { return error; }
         // void apply_setting(settings* config);
         // double temp;
@@ -29,6 +30,7 @@ class TempHumSensor
         bool error = false;
 
         DHT sensor;
+        Debug* debug;
 };
 
 TempHumSensor::TempHumSensor(uint8_t pin, RealProperty* temp, RealProperty* hum):
@@ -54,8 +56,9 @@ bool TempHumSensor::read()
     return true;
 }
 
-void TempHumSensor::begin()
+void TempHumSensor::begin(Debug& debugger)
 {
+    debug = &debugger;
     sensor.begin();
     error = !read();
     last_update = millis();

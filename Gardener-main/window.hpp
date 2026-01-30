@@ -26,16 +26,15 @@ class Window
             WINDOW_STATES(GENERATE_STATE_ENUM)
         };
 
-        Window(uint ctrl_1, uint ctrl_2, uint endstop, Debug& output = emptydebug):
+        Window(uint ctrl_1, uint ctrl_2, uint endstop):
             pin_ctrl_1(ctrl_1),
             pin_ctrl_2(ctrl_2),
             pin_endstop(endstop),
             window_open_duration(nullptr),
-            window_duration_margin(nullptr),
-            PRINT(output)
+            window_duration_margin(nullptr)
         {};
 
-        bool begin();
+        bool begin(Debug& debugger = emptydebug);
         void loop();
         void set_position(bool pos) { set_position(window_open_duration->get(), pos); }
         void set_position(uint32_t duration, bool direction);
@@ -63,7 +62,7 @@ class Window
         IntegerProperty* window_open_duration;
         IntegerProperty* window_duration_margin;
         // BooleanProperty* window_endstop;
-        Debug& PRINT;
+        Debug* debug;
 
         void set_state(STATE new_state);
 
@@ -73,11 +72,12 @@ const char* const Window::STATE_KEYS[] = {
     WINDOW_STATES(GENERATE_STATE_STRING)
 };
 
-bool Window::begin()
+bool Window::begin(Debug& debugger)
 {
+    debug = &debugger;
     if(window_duration_margin == nullptr || window_open_duration == nullptr)
     {
-        PRINT.print("[Window] ERROR - Properties not assigned.");
+        debug->print("[Window] ERROR - Properties not assigned.");
         return false;
     }
     
@@ -88,7 +88,7 @@ bool Window::begin()
     digitalWrite(pin_ctrl_1, 0);
     digitalWrite(pin_ctrl_2, 0);
 
-    PRINT.print("[Window]: Initialised.");
+    debug->print("[Window]: Initialised.");
     set_state(STATE::CLOSING);
     return true;
 }
@@ -137,7 +137,7 @@ void Window::set_state(STATE new_state)
     }
     last_state_change = millis();
     state = new_state;
-    PRINT.print("[Window] state: ", STATE_KEYS[new_state]);
+    debug->print("[Window] state: ", STATE_KEYS[new_state]);
 }
 
 void Window::loop()

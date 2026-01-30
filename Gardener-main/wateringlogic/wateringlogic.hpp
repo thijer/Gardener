@@ -8,7 +8,7 @@
 class WateringLogic
 {
     public:
-        virtual void begin();
+        virtual void begin(Debug& debugger = emptydebug);
         void loop();
         virtual void execute();
         void enable()  { enabled = true; }
@@ -20,12 +20,11 @@ class WateringLogic
             uint32_t position,
             IntegerProperty& feed_quantity, 
             IntegerProperty& timeout,
-            Feeder& act_feeder, 
-            Debug& output
+            Feeder& act_feeder
         );
         const char* id;
         Feeder& act_feeder;
-        Debug& debug;
+        Debug* debug;
         uint32_t position;
         IntegerProperty* feed_quantity;
         IntegerProperty* timeout;
@@ -40,19 +39,18 @@ WateringLogic::WateringLogic(
     uint32_t position,
     IntegerProperty& feed_quantity, 
     IntegerProperty& timeout,
-    Feeder& feeder, 
-    Debug& output = emptydebug
+    Feeder& feeder
 ):
     id(id),    
     position(position),
     feed_quantity(&feed_quantity),
     timeout(&timeout),
-    act_feeder(feeder),
-    debug(output)
+    act_feeder(feeder)
 {}
 
-void WateringLogic::begin()
+void WateringLogic::begin(Debug& debugger)
 {
+    debug = &debugger;
     ready = true;
     if(feed_quantity == nullptr || timeout == nullptr)
     {

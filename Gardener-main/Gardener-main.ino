@@ -52,7 +52,7 @@ IntegerProperty  window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN)
 #define N_PROP_WINDOW 4
 // BooleanProperty  window_switch("window_switch");
 #define N_VARS_WINDOW 0
-Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, debug);
+Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP);
 #else
 #define N_PROP_WINDOW 0
 #define N_VARS_WINDOW 0
@@ -122,7 +122,7 @@ IntegerProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_PO
 #define N_PROP_FEEDER 2
 #define N_VARS_FEEDER 0
 
-Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, debug);
+Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX);
 
 bool start_feed(uint32_t position, uint32_t duration)
 {
@@ -139,7 +139,7 @@ IntegerProperty gr0_feed_quantity("gr0_fd_quantity", 360);      // 6 min
 IntegerProperty gr0_timeout("gr0_timeout", 24*60*60);           // daily
 #define N_PROP_WATERING_FIXED 2
 #define N_VARS_WATERING_FIXED 0
-FixedQuantity group0("group0", 25, gr0_feed_quantity, gr0_timeout, act_feeder, debug);
+FixedQuantity group0("group0", 25, gr0_feed_quantity, gr0_timeout, act_feeder);
 #else
 #define N_PROP_WATERING_FIXED 0
 #define N_VARS_WATERING_FIXED 0
@@ -152,7 +152,7 @@ IntegerProperty gr1_timeout("gr1_timeout", 24*60*60);           // daily
 IntegerProperty gr1_threshold("gr1_threshold", 10000);          // 10 kOhm
 #define N_PROP_WATERING_MOISTURE 3
 #define N_VARS_WATERING_MOISTURE 0
-MoistureLevels group1("group1", 50, gr1_feed_quantity, gr1_timeout, gr1_threshold, act_feeder, debug);
+MoistureLevels group1("group1", 50, gr1_feed_quantity, gr1_timeout, gr1_threshold, act_feeder);
 #else
 #define N_PROP_WATERING_MOISTURE 0
 #define N_VARS_WATERING_MOISTURE 0
@@ -231,7 +231,7 @@ void setup()
     attachInterrupt(PIN_SENS_WEBGUI_ENABLE, webgui_button_isr, CHANGE);
 
     webgui_buffer.reserve(51);
-    bool success = webgui.begin(&debug);
+    bool success = webgui.begin(debug);
     debug.print("[WebGUI] ", success ? "configured." : "ERROR: failed to set up webserver.");
     #endif
 
@@ -249,23 +249,23 @@ void setup()
     act_window.property_window_duration_margin(&window_duration_margin);
     // act_window.telemetry_window_endstop(&window_switch);
     
-    act_window.begin();
+    act_window.begin(debug);
     #endif
 
     #ifdef ENABLE_TEMP
     th_interior.property_reading_interval(&temp_measurement_interval);
     th_exterior.property_reading_interval(&temp_measurement_interval);
-    th_interior.begin();
-    th_exterior.begin();
+    th_interior.begin(debug);
+    th_exterior.begin(debug);
     #endif
 
     #ifdef ENABLE_FEEDER
     act_feeder.set_properties(feeder_nozzle_extrude_pos, feeder_nozzle_retract_pos);
-    act_feeder.begin();
+    act_feeder.begin(debug);
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
-    group0.begin();
+    group0.begin(debug);
     #endif
 
     #ifdef ENABLE_WATERING_MOISTURE
@@ -275,7 +275,7 @@ void setup()
             {&moisture_sensor_1, 0.5}
         }
     );
-    group1.begin();
+    group1.begin(debug);
     #endif
 
     debug.print("[Gardener] Ready.");

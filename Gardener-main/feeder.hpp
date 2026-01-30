@@ -37,16 +37,14 @@ class Feeder
         Feeder(
             HardwareSerial& port,
             uint8_t pin_port_tx,
-            uint8_t pin_port_rx,
-            Debug& output
+            uint8_t pin_port_rx
         ):
             port(port),
             pin_port_tx(pin_port_tx),
-            pin_port_rx(pin_port_rx),
-            debug(output)
+            pin_port_rx(pin_port_rx)
         {}
         void loop();
-        void begin();
+        void begin(Debug& debugger = emptydebug);
         void set_properties(IntegerProperty& nozzle_extrude_pos, IntegerProperty& nozzle_retract_pos);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
@@ -59,7 +57,7 @@ class Feeder
         const uint8_t pin_port_rx;
         const uint8_t pin_port_tx;
         HardwareSerial& port;
-        Debug& debug;
+        Debug* debug;
 
         IntegerProperty* nozzle_extrude_pos = nullptr;
         IntegerProperty* nozzle_retract_pos = nullptr;
@@ -107,15 +105,15 @@ void Feeder::abort()
     print_to_feeder("[Feeder] abort");
 }
 
-void Feeder::begin()
+void Feeder::begin(Debug& debugger)
 {
     // pinMode(pin_port_en, OUTPUT);
-    
+    debug = &debugger;
     buffer.reserve(51);
     buffer = "";
     port.begin(9600, SERIAL_8N1, pin_port_rx, pin_port_tx);
     delay(10);
-    debug.print("[Feeder] started.");
+    debug->print("[Feeder] started.");
 
     uint32_t pos = uint32_t(nozzle_extrude_pos->get());
     print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
@@ -160,11 +158,11 @@ void Feeder::serial_input()
 {
     while(port.available() > 0)
     {
-        // debug.print("[Feeder] received stuff");
+        // debug->print("[Feeder] received stuff");
         char c = port.read();
         if(c == '\r' || c == '\n') // carriage return
         {
-            debug.print(buffer);
+            debug->print(buffer);
             if(false) ;
             else
             {
@@ -203,20 +201,20 @@ void Feeder::parse_state(String& val)
     {
         if(val == STATE_KEYS[i])
         {
-            // debug.print("[Feeder] state ", val, " found.");
+            // debug->print("[Feeder] state ", val, " found.");
             STATE newstate = static_cast<STATE>(i);
             set_state(newstate);
             return;
         }
     }
-    debug.print("[Feeder] ERROR: state ", val, " not found.");
+    debug->print("[Feeder] ERROR: state ", val, " not found.");
 }
 
 void Feeder::set_state(STATE newstate)
 {
     last_state_change = millis();
     state = newstate;
-    // debug.print("[Feeder] newstate is ", state);
+    // debug->print("[Feeder] newstate is ", state);
     
 }
 

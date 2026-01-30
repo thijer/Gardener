@@ -10,10 +10,9 @@ class FixedQuantity: public WateringLogic
             uint32_t position,
             IntegerProperty& feed_quantity, 
             IntegerProperty& timeout,
-            Feeder& act_feeder, 
-            Debug& output
+            Feeder& act_feeder
         );
-        void begin();
+        void begin(Debug& debugger = emptydebug);
         void execute();
     
     private:
@@ -25,21 +24,20 @@ FixedQuantity::FixedQuantity(
     uint32_t position,
     IntegerProperty& feed_quantity, 
     IntegerProperty& timeout,
-    Feeder& act_feeder, 
-    Debug& output
+    Feeder& act_feeder
 ):
-    WateringLogic(id, position, feed_quantity, timeout, act_feeder, output)
+    WateringLogic(id, position, feed_quantity, timeout, act_feeder)
 {}
 
-void FixedQuantity::begin()
+void FixedQuantity::begin(Debug& debugger)
 {
-    WateringLogic::begin();
+    WateringLogic::begin(debugger);
 } 
 
 void FixedQuantity::execute()
 {
     uint32_t quantity = uint32_t(feed_quantity->get());
-    debug.print("[Watering] ", id, ": watering fixed quantity: ", quantity);
+    debug->print("[Watering] ", id, ": watering fixed quantity: ", quantity);
     act_feeder.start_feed(position, quantity);
     
 }

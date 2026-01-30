@@ -29,8 +29,7 @@ class WebInterface : public Stream
     public:
         WebInterface(uint16_t port = 80, uint8_t ledpin = 0);
         // Management
-        bool begin(Debug* debugger);
-        bool begin();
+        bool begin(Debug& debugger = emptydebug);
         bool start();
         bool stop();
         void loop();
@@ -101,11 +100,11 @@ WebInterface::WebInterface(uint16_t port, uint8_t ledpin):
 {}
 
 // bool WebInterface::begin()
-bool WebInterface::begin(Debug* debugger)
+bool WebInterface::begin(Debug& debugger)
 {
     using namespace std::placeholders;
 
-    debug = debugger;
+    debug = &debugger;
     // debug->print("[WebGUI] test.");
     
     // Timeout property needs to be set before calling begin().
@@ -180,11 +179,6 @@ bool WebInterface::begin(Debug* debugger)
     return true;
 }
 
-bool WebInterface::begin()
-{
-    return begin(&emptydebug);
-}
-
 bool WebInterface::start()
 {
     debug->print("[WebGUI] starting.");
@@ -214,17 +208,10 @@ bool WebInterface::stop()
     return is_running;
 }
 
-/* void WebInterface::loop()
+void WebInterface::loop()
 {
-    if(
-        is_running && 
-        ws.count() == 0 && 
-        (millis() - last_activity) >= uint32_t(ap_timeout->get())
-    ){
-        stop();
-    }
+
 }
-*/
 
 bool WebInterface::running()
 {
