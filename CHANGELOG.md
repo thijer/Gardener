@@ -1,4 +1,8 @@
 # Changelog
+## [2.2.1] - 31-1-2026
+### Fixed
+- `Feeder` will now wait for 2s after sending a command before sending a follow-up command, to give the `Gardener-waterer` time to respond. 
+
 ## [2.2.0] - 13-1-2026
 ### Added
 - The `WateringLogic` base class, which provides a standard framework from which classes can be derived that each implement custom logic for watering a specific area of the greenhouse connected to the `Feeder`. 
