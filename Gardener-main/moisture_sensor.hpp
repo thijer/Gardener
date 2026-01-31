@@ -16,7 +16,7 @@ class MoistureSensorArray
             uint8_t pin_sens0,
             uint8_t pin_sens1,
             std::initializer_list<std::pair<IntegerProperty*, uint8_t>> sensors,
-            IntegerProperty* update_interval
+            IntegerProperty& update_interval
         );
         void begin(Debug& debugger = emptydebug);
         void loop();
@@ -32,7 +32,7 @@ class MoistureSensorArray
         const uint8_t pin_sens1;
         
         std::vector<std::pair<IntegerProperty*, uint8_t>> sensors;
-        IntegerProperty* update_interval;
+        IntegerProperty& update_interval;
         Debug* debug;
         uint8_t iterator = 0;
         uint32_t last_check = 0;
@@ -49,7 +49,7 @@ MoistureSensorArray::MoistureSensorArray(
     uint8_t pin_sens0,
     uint8_t pin_sens1,
     std::initializer_list<std::pair<IntegerProperty*, uint8_t>> sensors,
-    IntegerProperty* update_interval
+    IntegerProperty& update_interval
 ):
     pin_enable(pin_enable),
     pin_addr0(pin_addr0),
@@ -77,7 +77,7 @@ void MoistureSensorArray::begin(Debug& debugger)
 void MoistureSensorArray::loop()
 {
     // This loop will only process one sensor at each call, to prevent blocking other loops for too long.
-    if((millis() - last_check) >= update_interval->get())
+    if((millis() - last_check) >= update_interval.get())
     {
         // Record starting time.
         if(iterator == 0)

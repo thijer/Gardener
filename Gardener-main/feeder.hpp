@@ -37,15 +37,18 @@ class Feeder
         Feeder(
             HardwareSerial& port,
             uint8_t pin_port_tx,
-            uint8_t pin_port_rx
+            uint8_t pin_port_rx,
+            IntegerProperty& nozzle_extrude_pos, 
+            IntegerProperty& nozzle_retract_pos
         ):
             port(port),
             pin_port_tx(pin_port_tx),
-            pin_port_rx(pin_port_rx)
+            pin_port_rx(pin_port_rx),
+            nozzle_extrude_pos(nozzle_extrude_pos),
+            nozzle_retract_pos(nozzle_retract_pos)
         {}
         void loop();
         void begin(Debug& debugger = emptydebug);
-        void set_properties(IntegerProperty& nozzle_extrude_pos, IntegerProperty& nozzle_retract_pos);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
         template<typename T, typename... Args>
@@ -59,8 +62,8 @@ class Feeder
         HardwareSerial& port;
         Debug* debug;
 
-        IntegerProperty* nozzle_extrude_pos = nullptr;
-        IntegerProperty* nozzle_retract_pos = nullptr;
+        IntegerProperty& nozzle_extrude_pos;
+        IntegerProperty& nozzle_retract_pos;
         
         String buffer;
 
@@ -94,12 +97,6 @@ const char* const Feeder::STATE_KEYS[] = {
 
 const uint32_t Feeder::n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS); 
 
-void Feeder::set_properties(IntegerProperty& extrude_pos, IntegerProperty& retract_pos)
-{
-    nozzle_extrude_pos = &extrude_pos;
-    nozzle_retract_pos = &retract_pos;
-}
-
 void Feeder::abort()
 {
     print_to_feeder("[Feeder] abort");
@@ -115,10 +112,10 @@ void Feeder::begin(Debug& debugger)
     delay(10);
     debug->print("[Feeder] started.");
 
-    uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+    uint32_t pos = uint32_t(nozzle_extrude_pos.get());
     print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
 
-    pos = uint32_t(nozzle_retract_pos->get());
+    pos = uint32_t(nozzle_retract_pos.get());
     print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
 }
 
@@ -135,14 +132,14 @@ void Feeder::loop()
         command_queue.pop_front();
     }
     
-    if(nozzle_extrude_pos->is_updated())
+    if(nozzle_extrude_pos.is_updated())
     {
-        uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+        uint32_t pos = uint32_t(nozzle_extrude_pos.get());
         print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
     }
-    if(nozzle_retract_pos->is_updated())
+    if(nozzle_retract_pos.is_updated())
     {
-        uint32_t pos = uint32_t(nozzle_retract_pos->get());
+        uint32_t pos = uint32_t(nozzle_retract_pos.get());
         print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
     }
 }

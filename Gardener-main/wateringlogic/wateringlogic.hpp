@@ -26,8 +26,8 @@ class WateringLogic
         Feeder& act_feeder;
         Debug* debug;
         uint32_t position;
-        IntegerProperty* feed_quantity;
-        IntegerProperty* timeout;
+        IntegerProperty& feed_quantity;
+        IntegerProperty& timeout;
         uint32_t last_state_change = 0;
         bool ready = false;
         bool enabled = true;
@@ -43,8 +43,8 @@ WateringLogic::WateringLogic(
 ):
     id(id),    
     position(position),
-    feed_quantity(&feed_quantity),
-    timeout(&timeout),
+    feed_quantity(feed_quantity),
+    timeout(timeout),
     act_feeder(feeder)
 {}
 
@@ -52,16 +52,11 @@ void WateringLogic::begin(Debug& debugger)
 {
     debug = &debugger;
     ready = true;
-    if(feed_quantity == nullptr || timeout == nullptr)
-    {
-        // ERROR properties not set.
-        ready = false;
-    }
 }
 
 void WateringLogic::loop()
 {
-    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
+    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(timeout.get()) * 1000ul))
     {
         last_state_change = millis();
         execute();

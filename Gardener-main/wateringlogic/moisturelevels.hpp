@@ -44,7 +44,7 @@ class MoistureLevels: public WateringLogic
     private:
         
         std::vector<std::pair<IntegerProperty*, double>> weighted_sensors;
-        IntegerProperty* moisture_threshold;
+        IntegerProperty& moisture_threshold;
 
         
         double normalizer = 0.0;
@@ -59,7 +59,7 @@ MoistureLevels::MoistureLevels(
     Feeder& act_feeder
 ):
     WateringLogic(id, position, feed_quantity, timeout, act_feeder),
-    moisture_threshold(&moisture_threshold)
+    moisture_threshold(moisture_threshold)
 {}
 
 void MoistureLevels::add_sensor(IntegerProperty* sensor, double weight)
@@ -77,12 +77,6 @@ void MoistureLevels::add_sensors(std::initializer_list<std::pair<IntegerProperty
 void MoistureLevels::begin(Debug& debugger)
 {
     WateringLogic::begin(debugger);
-    // Check for nullpointers
-    if(feed_quantity == nullptr || timeout == nullptr || moisture_threshold == nullptr)
-    {
-        // ERROR properties not set.
-        ready = false;
-    }
     normalizer = 0.0;
     for(std::pair<IntegerProperty*, double>& sens : weighted_sensors)
     {
@@ -107,13 +101,13 @@ void MoistureLevels::execute()
         weighted_sum += uint32_t(double(measurement) * sens.second / normalizer);
         debug->print("[MoistureLevels] ", id, " measurement: ", measurement, ", weight: ", sens.second);
     }
-    uint32_t threshold = uint32_t(moisture_threshold->get());
+    uint32_t threshold = uint32_t(moisture_threshold.get());
     debug->print("[MoistureLevels] ", id, " weighted total: ", weighted_sum, ", threshold: ", threshold);
     // Compare weighted soil moisture values to threshold.
-    if(weighted_sum > uint32_t(moisture_threshold->get()))
+    if(weighted_sum > uint32_t(moisture_threshold.get()))
     {
         // And water the plants.
-        act_feeder.start_feed(position, uint32_t(feed_quantity->get()));
+        act_feeder.start_feed(position, uint32_t(feed_quantity.get()));
     }
 }
 

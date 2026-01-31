@@ -26,26 +26,19 @@ class Window
             WINDOW_STATES(GENERATE_STATE_ENUM)
         };
 
-        Window(uint ctrl_1, uint ctrl_2, uint endstop):
+        Window(uint ctrl_1, uint ctrl_2, uint endstop, IntegerProperty& open_duration, IntegerProperty& duration_margin):
             pin_ctrl_1(ctrl_1),
             pin_ctrl_2(ctrl_2),
             pin_endstop(endstop),
-            window_open_duration(nullptr),
-            window_duration_margin(nullptr)
+            window_open_duration(open_duration),
+            window_duration_margin(duration_margin)
         {};
 
         bool begin(Debug& debugger = emptydebug);
         void loop();
-        void set_position(bool pos) { set_position(window_open_duration->get(), pos); }
+        void set_position(bool pos) { set_position(window_open_duration.get(), pos); }
         void set_position(uint32_t duration, bool direction);
         bool get_position() { return open_window; }
-
-
-        // Register properties.
-        void property_window_opening_duration(IntegerProperty* p)   { window_open_duration = p; }
-        void property_window_duration_margin(IntegerProperty* p)    { window_duration_margin = p; }
-        // void telemetry_window_endstop(BooleanProperty* p)          { window_endstop = p; }
-        // IntegerProperty window_open_duration;
     
     private:
         static const char* const STATE_KEYS[]; 
@@ -59,8 +52,8 @@ class Window
         ulong last_state_change;
         ulong open_duration = 0;
         bool direction = true;
-        IntegerProperty* window_open_duration;
-        IntegerProperty* window_duration_margin;
+        IntegerProperty& window_open_duration;
+        IntegerProperty& window_duration_margin;
         // BooleanProperty* window_endstop;
         Debug* debug;
 
@@ -75,11 +68,6 @@ const char* const Window::STATE_KEYS[] = {
 bool Window::begin(Debug& debugger)
 {
     debug = &debugger;
-    if(window_duration_margin == nullptr || window_open_duration == nullptr)
-    {
-        debug->print("[Window] ERROR - Properties not assigned.");
-        return false;
-    }
     
     pinMode(pin_ctrl_1, OUTPUT);
     pinMode(pin_ctrl_2, OUTPUT);
@@ -152,7 +140,7 @@ void Window::loop()
         // if(open_window)                     set_state(STATE::HALTED);
         if(
             !digitalRead(pin_endstop) ||
-            (millis() - last_state_change) >= (window_open_duration->get() + window_duration_margin->get())
+            (millis() - last_state_change) >= (window_open_duration.get() + window_duration_margin.get())
         )                                   set_state(STATE::CLOSED);
     }
     else if(state == STATE::CLOSED)

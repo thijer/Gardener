@@ -52,7 +52,7 @@ IntegerProperty  window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN)
 #define N_PROP_WINDOW 4
 // BooleanProperty  window_switch("window_switch");
 #define N_VARS_WINDOW 0
-Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP);
+Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, window_open_duration, window_duration_margin);
 #else
 #define N_PROP_WINDOW 0
 #define N_VARS_WINDOW 0
@@ -78,8 +78,8 @@ IntegerProperty  window_update_interval("wd_update_int", WINDOW_UPDATE_INTERVAL)
 
 #define N_VARS_TEMP 4
 
-TempHumSensor th_interior(PIN_SENS_TEMP_HUM_INTERIOR, &temp_int, &hum_int);
-TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, &temp_ext, &hum_ext);
+TempHumSensor th_interior(PIN_SENS_TEMP_HUM_INTERIOR, temp_int, hum_int, temp_measurement_interval);
+TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, temp_ext, hum_ext, temp_measurement_interval);
 #else
 #define N_PROP_TEMP 0
 #define N_VARS_TEMP 0
@@ -106,7 +106,7 @@ MoistureSensorArray moisture_sensors(
         {&moisture_sensor_0, 0},
         {&moisture_sensor_1, 1}
     },
-    &moisture_measurement_interval
+    moisture_measurement_interval
 );
 #else
 #define N_PROP_MOISTURE 0
@@ -122,7 +122,7 @@ IntegerProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_PO
 #define N_PROP_FEEDER 2
 #define N_VARS_FEEDER 0
 
-Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX);
+Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, feeder_nozzle_extrude_pos, feeder_nozzle_retract_pos);
 
 bool start_feed(uint32_t position, uint32_t duration)
 {
@@ -244,23 +244,15 @@ void setup()
     #endif
 
     #ifdef ENABLE_WINDOW
-    // Assign properties to sensors and actuators
-    act_window.property_window_opening_duration(&window_open_duration);
-    act_window.property_window_duration_margin(&window_duration_margin);
-    // act_window.telemetry_window_endstop(&window_switch);
-    
     act_window.begin(debug);
     #endif
 
     #ifdef ENABLE_TEMP
-    th_interior.property_reading_interval(&temp_measurement_interval);
-    th_exterior.property_reading_interval(&temp_measurement_interval);
     th_interior.begin(debug);
     th_exterior.begin(debug);
     #endif
 
     #ifdef ENABLE_FEEDER
-    act_feeder.set_properties(feeder_nozzle_extrude_pos, feeder_nozzle_retract_pos);
     act_feeder.begin(debug);
     #endif
 

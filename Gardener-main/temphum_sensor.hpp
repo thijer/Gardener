@@ -9,8 +9,7 @@
 class TempHumSensor
 {
     public:
-        TempHumSensor(uint8_t pin, RealProperty* temp = nullptr, RealProperty* hum = nullptr);
-        void property_reading_interval(IntegerProperty* p) { reading_interval = p; }
+        TempHumSensor(uint8_t pin, RealProperty& temp, RealProperty& hum, IntegerProperty& interval);
         void loop();
         void begin(Debug& debugger = emptydebug);
         bool get_error() { return error; }
@@ -20,9 +19,9 @@ class TempHumSensor
         
     private:
         bool read();
-        RealProperty* temp;
-        RealProperty* hum;
-        IntegerProperty* reading_interval;
+        RealProperty& temp;
+        RealProperty& hum;
+        IntegerProperty& reading_interval;
         
         bool desired_state = false;
 
@@ -33,26 +32,23 @@ class TempHumSensor
         Debug* debug;
 };
 
-TempHumSensor::TempHumSensor(uint8_t pin, RealProperty* temp, RealProperty* hum):
+TempHumSensor::TempHumSensor(uint8_t pin, RealProperty& temp, RealProperty& hum, IntegerProperty& interval):
     sensor(pin, DHT22),
     temp(temp),
-    hum(hum)
+    hum(hum),
+    reading_interval(interval)
 {}
 
 bool TempHumSensor::read()
 {
-    if(temp != nullptr)
-    {
-        float t = sensor.readTemperature();
-        if(isnan(t)) return false;
-        temp->set(double(t));
-    }
-    if(hum  != nullptr)
-    {
-        float h = sensor.readHumidity();
-        if(isnan(h)) return false;
-        hum->set(double(h));
-    }
+    float t = sensor.readTemperature();
+    if(isnan(t)) return false;
+    temp.set(double(t));
+
+    float h = sensor.readHumidity();
+    if(isnan(h)) return false;
+    hum.set(double(h));
+    
     return true;
 }
 
@@ -66,13 +62,10 @@ void TempHumSensor::begin(Debug& debugger)
 
 void TempHumSensor::loop()
 {
-    if(reading_interval != nullptr)
+    if(millis() - last_update >= uint32_t(reading_interval.get()))
     {
-        if(millis() - last_update >= uint32_t(reading_interval->get()))
-        {
-            last_update = millis();
-            error = !read();
-        }
+        last_update = millis();
+        error = !read();
     }
 }
 
