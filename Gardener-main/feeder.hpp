@@ -79,7 +79,7 @@ class Feeder
         bool active = false;
         bool command_set = false;
         
-        ulong last_state_change = 0;
+        uint32_t last_state_change = 0;
         
         std::deque<FeedCommand> command_queue;
         // template<typename... Args>

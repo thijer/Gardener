@@ -26,7 +26,7 @@ class Window
             WINDOW_STATES(GENERATE_STATE_ENUM)
         };
 
-        Window(uint ctrl_1, uint ctrl_2, uint endstop, IntegerProperty& open_duration, IntegerProperty& duration_margin):
+        Window(uint8_t ctrl_1, uint8_t ctrl_2, uint8_t endstop, IntegerProperty& open_duration, IntegerProperty& duration_margin):
             pin_ctrl_1(ctrl_1),
             pin_ctrl_2(ctrl_2),
             pin_endstop(endstop),
@@ -46,11 +46,11 @@ class Window
         bool open_window = false;       // Desired state of the window, open = true, closed = false.
         STATE state = STATE::CLOSING;
     
-        const uint pin_ctrl_1;
-        const uint pin_ctrl_2;
-        const uint pin_endstop;
-        ulong last_state_change;
-        ulong open_duration = 0;
+        const uint8_t pin_ctrl_1;
+        const uint8_t pin_ctrl_2;
+        const uint8_t pin_endstop;
+        uint32_t last_state_change;
+        uint32_t open_duration = 0;
         bool direction = true;
         IntegerProperty& window_open_duration;
         IntegerProperty& window_duration_margin;
@@ -84,7 +84,7 @@ bool Window::begin(Debug& debugger)
 void Window::set_position(uint32_t duration, bool direction)
 {
     open_window = direction;
-    open_duration = ulong(duration);
+    open_duration = duration;
 }
 
 void Window::set_state(STATE new_state)

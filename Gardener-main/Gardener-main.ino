@@ -489,7 +489,7 @@ void webgui_management()
 void decision_window()
 {
     #ifdef ENABLE_TEMP
-    static ulong last_check = 0;
+    static uint32_t last_check = 0;
     
     // Manually control window, using the 'window_manual_pos' property.
     if(window_manual || th_interior.get_error() || th_exterior.get_error())
