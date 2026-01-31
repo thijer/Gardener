@@ -89,6 +89,7 @@ class Feeder
         ulong last_state_change = 0;
 
         std::deque<FeedCommand> command_queue;
+        uint32_t last_command = 0;
         // template<typename... Args>
         // void print_to_feeder(Args... args);
 
@@ -130,9 +131,14 @@ void Feeder::loop()
 {
     serial_input();
 
-    // Check if there is a command in the queue and the waterer is not doing anything.
-    if(command_queue.size() > 0 && (state == STATE::IDLE || state == STATE::WAITING))
+    if(
+        command_queue.size() > 0 &&                             // There are commands in the queue
+        (state == STATE::IDLE || state == STATE::WAITING) &&    // The Waterer is not doing anything.
+        millis() - last_command > 2000                          // The last command was sent more than 2s ago, 
+        // so the Waterer had plenty of time to react to the command and let the Feeder know it is working.
+    )
     {
+        last_command = millis();
         FeedCommand cmd = command_queue.front();
         print_to_feeder("[Feeder] feed:", cmd.position, ",", cmd.duration);
         // No command reception verification taking place for now.
