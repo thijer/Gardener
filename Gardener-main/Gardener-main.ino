@@ -3,6 +3,7 @@
 // Enable this definition when the existing memory on the chip needs to be wiped.
 // #define WIPE_MEMORY
 
+#define ENABLE_THINGSBOARD
 #define ENABLE_WEBGUI
 #define ENABLE_OTA
 #define ENABLE_WINDOW
@@ -11,6 +12,12 @@
 #define ENABLE_MOISTURE_SENSORS
 #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
 #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
+
+// Disable WEBGUI if thingsboard is enabled
+#ifdef ENABLE_THINGSBOARD
+#undef ENABLE_WEBGUI
+#include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
+#endif
 
 // Disable watering logic if the Feeder is unavailable.
 #if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
@@ -27,6 +34,25 @@
 #include "property.hpp"
 #include "propertystore.hpp"
 #include "debug.hpp"
+
+#ifdef ENABLE_THINGSBOARD
+#include "WiFi.h"
+#include "WiFiClient.h"
+#include "tb_credentials.h"
+#include "ThingGateway.hpp"
+
+time_t timesource()
+{
+    time_t time_now;
+    time(&time_now);
+    return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
+}
+
+WiFiClient client;
+ThingGateway<1> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
+ThingDevice tb_device("Gardener", "greenhouse-control");
+
+#endif
 
 #ifdef ENABLE_WEBGUI
 #include "webinterface/webinterface.hpp"
@@ -221,6 +247,30 @@ void setup()
     delay(5000);
     debug.print("[Gardener] Starting.");
     serial_buffer.reserve(51);
+    
+    #ifdef ENABLE_THINGSBOARD
+    debug.print("[Gardener] Conencting to WiFi.");
+    WiFi.mode(WIFI_STA);
+    WiFi.begin(SSID, WPA2PSK);
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        Serial.print('.');
+        delay(1000);
+    }
+    Serial.println(WiFi.localIP());
+
+    debug.print("[Gardener] Getting time from NTP");
+    configTime(3600, 0, "pool.ntp.org");
+
+    debug.print("[Gardener] configuring Thingsboard.");
+    tb_device.add_shared_attributes(properties);
+    tb_device.add_telemetry(variables);
+
+    tb_gateway.add_devices({&tb_device});
+    tb_gateway.add_timesource(timesource);
+    tb_gateway.begin();
+    debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    #endif
 
     #ifdef ENABLE_WEBGUI
     pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
@@ -282,6 +332,12 @@ void loop()
     #endif
 
     serial_input();
+
+    #ifdef ENABLE_THINGSBOARD
+    tb_device.loop();
+    tb_gateway.loop();
+    #endif
+
     #ifdef ENABLE_WEBGUI
     websocket_input();
     webgui_management();
