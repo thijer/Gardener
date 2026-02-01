@@ -5,14 +5,7 @@
 #define GENERATE_STATE_ENUM(STATE) STATE,       // Generates STATE entries for enums
 #define GENERATE_STATE_STRING(STATE) #STATE,    // Generates STATE entries for a c string array.
 
-#define DEBUG Serial
-#define PORT_SENSORS Serial2
-#define PORT_ENABLE 4
-// 
-#define PROPERTIES_SAVE_INTERVAL 10000
-
 // WEBGUI
-#define WEBGUI_AP_TIMEOUT 60000 * 10
 #define WEBGUI_PORT 80
 
 // TEMPERATURE MANAGEMENT
@@ -43,21 +36,16 @@
 #define PORT_FEEDER Serial2
 #define PIN_FEEDER_TX 17
 #define PIN_FEEDER_RX 16
-#define PIN_ACT_FEEDER_VALVE 26
-#define PIN_ACT_FEEDER_PUMP 27
 
 #define PIN_SENS_WEBGUI_ENABLE 36
 #define PIN_ACT_WEBGUI_ACTIVE 2
 
 // FEEDER
-#define FEEDER_RANGE 65123
 #define FEEDER_NOZZLE_RETRACT_POS 60
 #define FEEDER_NOZZLE_EXTRUDE_POS 160
 
 // MOISTURE SENSORS
 #define MS_MAX_SENSORS 12
-#define MS_RESPONSE_TIMEOUT 5000
-#define MS_MEASUREMENT_DURATION 5000
 #define MS_UPDATE_INTERVAL  10 * 60             // s
 #define MS_READINGS         10ul                // Number of measurements to take to average out noise.
 #define MS_FIXED_RESISTOR   4600l               // Resistor divider fixed resistance (Ohm).
