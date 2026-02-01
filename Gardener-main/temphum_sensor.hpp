@@ -13,9 +13,6 @@ class TempHumSensor
         void loop();
         void begin(Debug& debugger = emptydebug);
         bool get_error() { return error; }
-        // void apply_setting(settings* config);
-        // double temp;
-        // double hum;
         
     private:
         bool read();
@@ -69,20 +66,5 @@ void TempHumSensor::loop()
     }
 }
 
-/* 
-    void TempHumSensor::calc_desired_state()
-    {
-        if(temp_interior > window_open_temp) desired_state = true;
-        else if( temp_interior < window_close_temp) desired_state = false;
-    }
-
-    void TempHumSensor::apply_setting(settings* config)
-    {
-        reading_interval = config->get_int("temp_measurement_interval");
-        window_open_temp = config->get_double("window_open_temp");
-        window_close_temp = config->get_double("window_close_temp");
-    }
-
-*/
 
 #endif

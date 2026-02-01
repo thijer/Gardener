@@ -6,7 +6,7 @@
 #define GENERATE_STATE_STRING(STATE) #STATE,    // Generates STATE entries for a c string array.
 
 #define DEBUG Serial
-#define PORT_SENSORS Serial2 // [TODO] change to spare serial port
+#define PORT_SENSORS Serial2
 #define PORT_ENABLE 4
 // 
 #define PROPERTIES_SAVE_INTERVAL 10000
