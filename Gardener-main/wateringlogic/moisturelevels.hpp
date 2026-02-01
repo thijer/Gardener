@@ -18,14 +18,14 @@ class MoistureLevels: public WateringLogic
         /// @param id A string identifying this watering group.
         /// @param position The position on the feeder watering carriage this group is connected to.
         /// @param feed_quantity (s) The amount of seconds the feeder valve needs to be open for a single watering session.
-        /// @param timeout (s) Minimum time required to let the supplied water to sink into the ground before checking the moisture sensors again.
+        /// @param update_interval (s) Minimum time required to let the supplied water to sink into the ground before checking the moisture sensors again.
         /// @param moisture_threshold (Ohm) The sensor resistance above which water needs to be supplied to the plants.
         /// @param act_feeder The `Feeder` object that will water the plants.
         MoistureLevels(
             const char* id,
             uint32_t position,
             IntegerProperty& feed_quantity, 
-            IntegerProperty& timeout,
+            IntegerProperty& update_interval,
             IntegerProperty& moisture_threshold,
             Feeder& act_feeder
         );
@@ -54,11 +54,11 @@ MoistureLevels::MoistureLevels(
     const char* id,
     uint32_t position,
     IntegerProperty& feed_quantity, 
-    IntegerProperty& timeout,
+    IntegerProperty& update_interval,
     IntegerProperty& moisture_threshold,
     Feeder& act_feeder
 ):
-    WateringLogic(id, position, feed_quantity, timeout, act_feeder),
+    WateringLogic(id, position, feed_quantity, update_interval, act_feeder),
     moisture_threshold(moisture_threshold)
 {}
 

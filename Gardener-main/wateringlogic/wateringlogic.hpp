@@ -19,7 +19,7 @@ class WateringLogic
             const char* id,
             uint32_t position,
             IntegerProperty& feed_quantity, 
-            IntegerProperty& timeout,
+            IntegerProperty& update_interval,
             Feeder& act_feeder
         );
         const char* id;
@@ -27,7 +27,7 @@ class WateringLogic
         Debug* debug;
         uint32_t position;
         IntegerProperty& feed_quantity;
-        IntegerProperty& timeout;
+        IntegerProperty& update_interval;
         uint32_t last_state_change = 0;
         bool ready = false;
         bool enabled = true;
@@ -38,13 +38,13 @@ WateringLogic::WateringLogic(
     const char* id,
     uint32_t position,
     IntegerProperty& feed_quantity, 
-    IntegerProperty& timeout,
+    IntegerProperty& update_interval,
     Feeder& feeder
 ):
     id(id),    
     position(position),
     feed_quantity(feed_quantity),
-    timeout(timeout),
+    update_interval(update_interval),
     act_feeder(feeder)
 {}
 
@@ -56,7 +56,7 @@ void WateringLogic::begin(Debug& debugger)
 
 void WateringLogic::loop()
 {
-    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(timeout.get()) * 1000ul))
+    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(update_interval.get()) * 1000ul))
     {
         last_state_change = millis();
         execute();

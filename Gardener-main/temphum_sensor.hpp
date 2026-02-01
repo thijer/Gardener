@@ -21,7 +21,7 @@ class TempHumSensor
         bool read();
         RealProperty& temp;
         RealProperty& hum;
-        IntegerProperty& reading_interval;
+        IntegerProperty& update_interval;
         
         bool desired_state = false;
 
@@ -36,7 +36,7 @@ TempHumSensor::TempHumSensor(uint8_t pin, RealProperty& temp, RealProperty& hum,
     sensor(pin, DHT22),
     temp(temp),
     hum(hum),
-    reading_interval(interval)
+    update_interval(interval)
 {}
 
 bool TempHumSensor::read()
@@ -62,7 +62,7 @@ void TempHumSensor::begin(Debug& debugger)
 
 void TempHumSensor::loop()
 {
-    if(millis() - last_update >= uint32_t(reading_interval.get()))
+    if(millis() - last_update >= uint32_t(update_interval.get()))
     {
         last_update = millis();
         error = !read();

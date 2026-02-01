@@ -9,7 +9,7 @@ class FixedQuantity: public WateringLogic
             const char* id,
             uint32_t position,
             IntegerProperty& feed_quantity, 
-            IntegerProperty& timeout,
+            IntegerProperty& update_interval,
             Feeder& act_feeder
         );
         void begin(Debug& debugger = emptydebug);
@@ -23,10 +23,10 @@ FixedQuantity::FixedQuantity(
     const char* id,
     uint32_t position,
     IntegerProperty& feed_quantity, 
-    IntegerProperty& timeout,
+    IntegerProperty& update_interval,
     Feeder& act_feeder
 ):
-    WateringLogic(id, position, feed_quantity, timeout, act_feeder)
+    WateringLogic(id, position, feed_quantity, update_interval, act_feeder)
 {}
 
 void FixedQuantity::begin(Debug& debugger)
