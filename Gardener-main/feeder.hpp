@@ -83,9 +83,6 @@ class Feeder
         
         std::deque<FeedCommand> command_queue;
         uint32_t last_command = 0;
-        // template<typename... Args>
-        // void print_to_feeder(Args... args);
-        
         
         void serial_input();
         void parse_state(String& val);
@@ -105,7 +102,6 @@ void Feeder::abort()
 
 void Feeder::begin(Debug& debugger)
 {
-    // pinMode(pin_port_en, OUTPUT);
     debug = &debugger;
     buffer.reserve(51);
     buffer = "";
@@ -161,9 +157,8 @@ void Feeder::serial_input()
 {
     while(port.available() > 0)
     {
-        // debug->print("[Feeder] received stuff");
         char c = port.read();
-        if(c == '\r' || c == '\n') // carriage return
+        if(c == '\r' || c == '\n')
         {
             debug->print(buffer);
             if(false) ;
@@ -204,7 +199,6 @@ void Feeder::parse_state(String& val)
     {
         if(val == STATE_KEYS[i])
         {
-            // debug->print("[Feeder] state ", val, " found.");
             STATE newstate = static_cast<STATE>(i);
             set_state(newstate);
             return;
@@ -217,8 +211,6 @@ void Feeder::set_state(STATE newstate)
 {
     last_state_change = millis();
     state = newstate;
-    // debug->print("[Feeder] newstate is ", state);
-    
 }
 
 template<typename T, typename... Args>

@@ -146,12 +146,6 @@ uint32_t MoistureSensorArray::get_resistance(uint8_t address)
 
     // debug->print("[Moisture] raw: ", average, " resistance (ohm): ", resistance);
 
-    // #ifdef SERIAL_DEBUG
-    //     Serial.println("Sample1\tSample2");
-    // #endif
-    
-    // debug->print("Vsupply:\t", vcc, "\tMoisture:\t", average);
-
     return resistance;
 }
 

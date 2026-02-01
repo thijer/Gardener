@@ -213,11 +213,7 @@ TelemetryStore<N_VARS> variables({
 #endif
 });
 
-// DEVICES
-
 String serial_buffer;
-
-// const size_t l = sizeof(uint);
 
 void setup()
 {
@@ -451,38 +447,6 @@ void webgui_management()
     
 }
 
-/* void webgui_management()
-{
-    bool state = webgui_button.loop();
-    // FALLING
-    if(state != webgui_btn_state)
-    {
-        webgui_btn_state = state;
-        if(!state)
-        {
-            debug.print("[WebGUI] button pressed.");
-            bool des_state = webgui_des_state.get();
-            webgui_des_state.set(!des_state);
-        }
-    }
-    if(webgui_des_state.get() && !webgui.running())
-    {
-        webgui.start();
-    }
-    else if(!webgui_des_state.get() && webgui.running())
-    {
-        debug.print("[WebGUI] disabled by property.");
-        webgui.stop();
-        webgui_des_state.set(false);
-    }
-    else if(webgui.no_reason_to_live())
-    {
-        debug.print("[WebGUI] no reason to live.");
-        webgui.stop();
-        webgui_des_state.set(false);
-    }
-}
- */
 #endif
 
 #ifdef ENABLE_WINDOW
@@ -527,18 +491,3 @@ void decision_window()
 }
 #endif
 
-/* void decision_feeder()
-{
-    uint looper = 0;
-    if(waterer.idle())
-    {
-        plant& p = plants[looper];
-        if(p.updated && p.reading > p.threshold)
-        {
-            waterer.water_plant(p);
-            p.updated = false;
-        }
-        looper++;
-    }
-}
- */

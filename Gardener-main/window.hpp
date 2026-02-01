@@ -5,9 +5,6 @@
 #include "debug.hpp"
 #include "config.h"
 
-// #define POSITION_OPEN true
-// #define POSITION_CLOSED false
-
 #define WINDOW_STATES(P) \
     P(ERROR) \
     P(STARTUP) \
@@ -169,5 +166,4 @@ void Window::loop()
     }
 }
 
-const uint test = 1000ul - (UINT32_MAX - 1000ul); 
 #endif

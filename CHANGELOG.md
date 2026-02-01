@@ -1,4 +1,11 @@
 # Changelog
+## [2.2.3] - 1-2-2026
+### Removed
+- unused commented-out code.
+- unused config definitions.
+### Fixed
+- defaults for interval properties are now also in seconds.
+
 ## [2.2.2] - 1-2-2026
 ### Changed
 - `Feeder` and `Window` FSM states are now sourced from a single preprocessor definition.
