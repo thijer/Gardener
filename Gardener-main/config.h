@@ -18,12 +18,12 @@
 // TEMPERATURE MANAGEMENT
 #define TEMP_MAX 28.0
 #define TEMP_MIN 26.0
-#define TEMP_MEASUREMENT_INTERVAL 60000
+#define TEMP_MEASUREMENT_INTERVAL 60    // s
 
 // WINDOW ACTUATOR DEFAULTS
-#define WINDOW_DURATION 40000
-#define WINDOW_DURATION_MARGIN 5000
-#define WINDOW_UPDATE_INTERVAL 60000
+#define WINDOW_DURATION 40000           // ms
+#define WINDOW_DURATION_MARGIN 5000     // ms
+#define WINDOW_UPDATE_INTERVAL 60       // s
 
 // PINS
 #define PIN_SENS_TEMP_HUM_INTERIOR 14
@@ -58,7 +58,7 @@
 #define MS_MAX_SENSORS 12
 #define MS_RESPONSE_TIMEOUT 5000
 #define MS_MEASUREMENT_DURATION 5000
-#define MS_UPDATE_INTERVAL  10 * 60 * 1000
+#define MS_UPDATE_INTERVAL  10 * 60             // s
 #define MS_READINGS         10ul                // Number of measurements to take to average out noise.
 #define MS_FIXED_RESISTOR   4600l               // Resistor divider fixed resistance (Ohm).
 #define MS_ADC_RESOLUTION   12
