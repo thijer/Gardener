@@ -4,14 +4,14 @@
 #include <DHT_U.h>
 #include <DHT.h>
 #include "property.hpp"
+#include "debug.hpp"
 
 class TempHumSensor
 {
     public:
-        TempHumSensor(uint8_t pin, RealProperty* temp = nullptr, RealProperty* hum = nullptr);
-        void property_reading_interval(IntegerProperty* p) { reading_interval = p; }
+        TempHumSensor(uint8_t pin, RealProperty& temp, RealProperty& hum, IntegerProperty& interval);
         void loop();
-        void begin();
+        void begin(Debug& debugger = emptydebug);
         bool get_error() { return error; }
         // void apply_setting(settings* config);
         // double temp;
@@ -19,9 +19,9 @@ class TempHumSensor
         
     private:
         bool read();
-        RealProperty* temp;
-        RealProperty* hum;
-        IntegerProperty* reading_interval;
+        RealProperty& temp;
+        RealProperty& hum;
+        IntegerProperty& update_interval;
         
         bool desired_state = false;
 
@@ -29,33 +29,32 @@ class TempHumSensor
         bool error = false;
 
         DHT sensor;
+        Debug* debug;
 };
 
-TempHumSensor::TempHumSensor(uint8_t pin, RealProperty* temp, RealProperty* hum):
+TempHumSensor::TempHumSensor(uint8_t pin, RealProperty& temp, RealProperty& hum, IntegerProperty& interval):
     sensor(pin, DHT22),
     temp(temp),
-    hum(hum)
+    hum(hum),
+    update_interval(interval)
 {}
 
 bool TempHumSensor::read()
 {
-    if(temp != nullptr)
-    {
-        float t = sensor.readTemperature();
-        if(isnan(t)) return false;
-        temp->set(double(t));
-    }
-    if(hum  != nullptr)
-    {
-        float h = sensor.readHumidity();
-        if(isnan(h)) return false;
-        hum->set(double(h));
-    }
+    float t = sensor.readTemperature();
+    if(isnan(t)) return false;
+    temp.set(double(t));
+
+    float h = sensor.readHumidity();
+    if(isnan(h)) return false;
+    hum.set(double(h));
+    
     return true;
 }
 
-void TempHumSensor::begin()
+void TempHumSensor::begin(Debug& debugger)
 {
+    debug = &debugger;
     sensor.begin();
     error = !read();
     last_update = millis();
@@ -63,13 +62,10 @@ void TempHumSensor::begin()
 
 void TempHumSensor::loop()
 {
-    if(reading_interval != nullptr)
+    if(millis() - last_update >= (uint32_t(update_interval.get()) * 1000ul))
     {
-        if(millis() - last_update >= uint32_t(reading_interval->get()))
-        {
-            last_update = millis();
-            error = !read();
-        }
+        last_update = millis();
+        error = !read();
     }
 }
 

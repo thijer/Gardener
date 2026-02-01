@@ -8,7 +8,7 @@
 class WateringLogic
 {
     public:
-        virtual void begin();
+        virtual void begin(Debug& debugger = emptydebug);
         void loop();
         virtual void execute();
         void enable()  { enabled = true; }
@@ -19,16 +19,15 @@ class WateringLogic
             const char* id,
             uint32_t position,
             IntegerProperty& feed_quantity, 
-            IntegerProperty& timeout,
-            Feeder& act_feeder, 
-            Debug& output
+            IntegerProperty& update_interval,
+            Feeder& act_feeder
         );
         const char* id;
         Feeder& act_feeder;
-        Debug& debug;
+        Debug* debug;
         uint32_t position;
-        IntegerProperty* feed_quantity;
-        IntegerProperty* timeout;
+        IntegerProperty& feed_quantity;
+        IntegerProperty& update_interval;
         uint32_t last_state_change = 0;
         bool ready = false;
         bool enabled = true;
@@ -39,31 +38,25 @@ WateringLogic::WateringLogic(
     const char* id,
     uint32_t position,
     IntegerProperty& feed_quantity, 
-    IntegerProperty& timeout,
-    Feeder& feeder, 
-    Debug& output = emptydebug
+    IntegerProperty& update_interval,
+    Feeder& feeder
 ):
     id(id),    
     position(position),
-    feed_quantity(&feed_quantity),
-    timeout(&timeout),
-    act_feeder(feeder),
-    debug(output)
+    feed_quantity(feed_quantity),
+    update_interval(update_interval),
+    act_feeder(feeder)
 {}
 
-void WateringLogic::begin()
+void WateringLogic::begin(Debug& debugger)
 {
+    debug = &debugger;
     ready = true;
-    if(feed_quantity == nullptr || timeout == nullptr)
-    {
-        // ERROR properties not set.
-        ready = false;
-    }
 }
 
 void WateringLogic::loop()
 {
-    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(timeout->get()) * 1000ul))
+    if(enabled && ready && ((millis() - last_state_change) >= (uint32_t(update_interval.get()) * 1000ul)))
     {
         last_state_change = millis();
         execute();

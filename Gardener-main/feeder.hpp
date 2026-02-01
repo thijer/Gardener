@@ -1,6 +1,7 @@
 #ifndef FEEDER_HPP
 #define FEEDER_HPP
 #include "Arduino.h"
+#include "config.h"
 // #include "helpers.hpp"
 #include "debug.hpp"
 #include <deque>
@@ -17,6 +18,19 @@ class FeedCommand
     uint32_t duration = 0;
 };
 
+// FEEDER_STATES should be exactly equal to the FEEDER_STATES definition in Gardener-waterer/Gardener-waterer.ino
+#define FEEDER_STATES(P) \
+    P(IDLE) \
+    P(WAITING) \
+    P(MOVE_RIGHT) \
+    P(MOVE_LEFT) \
+    P(EXTRUDING_NOZZLE) \
+    P(PREPARE_RETRACTION) \
+    P(RETRACTING_NOZZLE) \
+    P(RETURNING_TO_ZERO_1) \
+    P(RETURNING_TO_ZERO_2) \
+    P(ERROR)
+
 class Feeder
 {
     public:
@@ -24,16 +38,17 @@ class Feeder
             HardwareSerial& port,
             uint8_t pin_port_tx,
             uint8_t pin_port_rx,
-            Debug& output
+            IntegerProperty& nozzle_extrude_pos, 
+            IntegerProperty& nozzle_retract_pos
         ):
             port(port),
             pin_port_tx(pin_port_tx),
             pin_port_rx(pin_port_rx),
-            debug(output)
+            nozzle_extrude_pos(nozzle_extrude_pos),
+            nozzle_retract_pos(nozzle_retract_pos)
         {}
         void loop();
-        void begin();
-        void set_properties(IntegerProperty& nozzle_extrude_pos, IntegerProperty& nozzle_retract_pos);
+        void begin(Debug& debugger = emptydebug);
         bool start_feed(uint32_t position, uint32_t duration);
         void abort();
         template<typename T, typename... Args>
@@ -45,85 +60,63 @@ class Feeder
         const uint8_t pin_port_rx;
         const uint8_t pin_port_tx;
         HardwareSerial& port;
-        Debug& debug;
+        Debug* debug;
 
-        IntegerProperty* nozzle_extrude_pos = nullptr;
-        IntegerProperty* nozzle_retract_pos = nullptr;
+        IntegerProperty& nozzle_extrude_pos;
+        IntegerProperty& nozzle_retract_pos;
         
         String buffer;
 
         enum STATE {
-            IDLE,
-            WAITING,
-            MOVE_RIGHT,
-            MOVE_LEFT,
-            EXTRUDING_NOZZLE,
-            PREPARE_RETRACTION,
-            RETRACTING_NOZZLE,
-            RETURNING_TO_ZERO_1,
-            RETURNING_TO_ZERO_2,
-            ERROR
+            FEEDER_STATES(GENERATE_STATE_ENUM)
         };
         STATE state = STATE::IDLE;
+        static const uint32_t n_keys;
+        static const char* const STATE_KEYS[];
         
-        const char* STATE_KEYS[10] = {
-            "IDLE",
-            "WAITING",
-            "MOVE_RIGHT",
-            "MOVE_LEFT",
-            "EXTRUDING_NOZZLE",
-            "PREPARE_RETRACTION",
-            "RETRACTING_NOZZLE",
-            "RETURNING_TO_ZERO_1",
-            "RETURNING_TO_ZERO_2",
-            "ERROR"
-        };
-
-        const uint32_t n_keys = sizeof(STATE_KEYS) / sizeof(*STATE_KEYS);
-
         uint32_t feed_position = 0;
         uint32_t feed_duration = 0;
         bool active = false;
         bool command_set = false;
-
-        ulong last_state_change = 0;
-
+        
+        uint32_t last_state_change = 0;
+        
         std::deque<FeedCommand> command_queue;
         uint32_t last_command = 0;
         // template<typename... Args>
         // void print_to_feeder(Args... args);
-
+        
         
         void serial_input();
         void parse_state(String& val);
         void set_state(STATE newstate);
 };
 
-void Feeder::set_properties(IntegerProperty& extrude_pos, IntegerProperty& retract_pos)
-{
-    nozzle_extrude_pos = &extrude_pos;
-    nozzle_retract_pos = &retract_pos;
-}
+const char* const Feeder::STATE_KEYS[] = {
+    FEEDER_STATES(GENERATE_STATE_STRING)
+};
+
+const uint32_t Feeder::n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS); 
 
 void Feeder::abort()
 {
     print_to_feeder("[Feeder] abort");
 }
 
-void Feeder::begin()
+void Feeder::begin(Debug& debugger)
 {
     // pinMode(pin_port_en, OUTPUT);
-    
+    debug = &debugger;
     buffer.reserve(51);
     buffer = "";
     port.begin(9600, SERIAL_8N1, pin_port_rx, pin_port_tx);
     delay(10);
-    debug.print("[Feeder] started.");
+    debug->print("[Feeder] started.");
 
-    uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+    uint32_t pos = uint32_t(nozzle_extrude_pos.get());
     print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
 
-    pos = uint32_t(nozzle_retract_pos->get());
+    pos = uint32_t(nozzle_retract_pos.get());
     print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
 }
 
@@ -145,14 +138,14 @@ void Feeder::loop()
         command_queue.pop_front();
     }
     
-    if(nozzle_extrude_pos->is_updated())
+    if(nozzle_extrude_pos.is_updated())
     {
-        uint32_t pos = uint32_t(nozzle_extrude_pos->get());
+        uint32_t pos = uint32_t(nozzle_extrude_pos.get());
         print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
     }
-    if(nozzle_retract_pos->is_updated())
+    if(nozzle_retract_pos.is_updated())
     {
-        uint32_t pos = uint32_t(nozzle_retract_pos->get());
+        uint32_t pos = uint32_t(nozzle_retract_pos.get());
         print_to_feeder("[Feeder] nozzle_retract_pos:", pos);
     }
 }
@@ -168,11 +161,11 @@ void Feeder::serial_input()
 {
     while(port.available() > 0)
     {
-        // debug.print("[Feeder] received stuff");
+        // debug->print("[Feeder] received stuff");
         char c = port.read();
         if(c == '\r' || c == '\n') // carriage return
         {
-            debug.print(buffer);
+            debug->print(buffer);
             if(false) ;
             else
             {
@@ -211,20 +204,20 @@ void Feeder::parse_state(String& val)
     {
         if(val == STATE_KEYS[i])
         {
-            // debug.print("[Feeder] state ", val, " found.");
+            // debug->print("[Feeder] state ", val, " found.");
             STATE newstate = static_cast<STATE>(i);
             set_state(newstate);
             return;
         }
     }
-    debug.print("[Feeder] ERROR: state ", val, " not found.");
+    debug->print("[Feeder] ERROR: state ", val, " not found.");
 }
 
 void Feeder::set_state(STATE newstate)
 {
     last_state_change = millis();
     state = newstate;
-    // debug.print("[Feeder] newstate is ", state);
+    // debug->print("[Feeder] newstate is ", state);
     
 }
 

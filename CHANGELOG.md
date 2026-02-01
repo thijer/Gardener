@@ -1,4 +1,13 @@
 # Changelog
+## [2.2.2] - 1-2-2026
+### Changed
+- `Feeder` and `Window` FSM states are now sourced from a single preprocessor definition.
+- debugging is now implemented the same across all objects.
+- All `Property`s assigned to an object are now passed as reference to the object's constructor.
+- Changed `uint` and `ulong` datatypes to standard int types whereever they occured.
+- All `IntegerProperty`s that were compared to unsigned datatypes are now cast as `uint32_t`.
+- All `IntegerProperty`s that describe a time value (intervals) are now interpreted as seconds instead of milliseconds, and are called `update_interval`.
+
 ## [2.2.1] - 31-1-2026
 ### Fixed
 - `Feeder` will now wait for 2s after sending a command before sending a follow-up command, to give the `Gardener-waterer` time to respond. 

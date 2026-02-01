@@ -1,6 +1,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// STATE MACHINE MACROS
+#define GENERATE_STATE_ENUM(STATE) STATE,       // Generates STATE entries for enums
+#define GENERATE_STATE_STRING(STATE) #STATE,    // Generates STATE entries for a c string array.
+
 #define DEBUG Serial
 #define PORT_SENSORS Serial2 // [TODO] change to spare serial port
 #define PORT_ENABLE 4
