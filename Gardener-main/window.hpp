@@ -140,7 +140,7 @@ void Window::loop()
         // if(open_window)                     set_state(STATE::HALTED);
         if(
             !digitalRead(pin_endstop) ||
-            (millis() - last_state_change) >= (window_open_duration.get() + window_duration_margin.get())
+            (millis() - last_state_change) >= uint32_t(window_open_duration.get() + window_duration_margin.get())
         )                                   set_state(STATE::CLOSED);
     }
     else if(state == STATE::CLOSED)
