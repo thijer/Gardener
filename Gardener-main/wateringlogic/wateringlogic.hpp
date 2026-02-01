@@ -56,7 +56,7 @@ void WateringLogic::begin(Debug& debugger)
 
 void WateringLogic::loop()
 {
-    if(enabled && ready && ((millis() - last_state_change) >= uint32_t(update_interval.get()) * 1000ul))
+    if(enabled && ready && ((millis() - last_state_change) >= (uint32_t(update_interval.get()) * 1000ul)))
     {
         last_state_change = millis();
         execute();

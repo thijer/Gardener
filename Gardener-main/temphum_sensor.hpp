@@ -62,7 +62,7 @@ void TempHumSensor::begin(Debug& debugger)
 
 void TempHumSensor::loop()
 {
-    if(millis() - last_update >= uint32_t(update_interval.get()))
+    if(millis() - last_update >= (uint32_t(update_interval.get()) * 1000ul))
     {
         last_update = millis();
         error = !read();

@@ -77,7 +77,7 @@ void MoistureSensorArray::begin(Debug& debugger)
 void MoistureSensorArray::loop()
 {
     // This loop will only process one sensor at each call, to prevent blocking other loops for too long.
-    if((millis() - last_check) >= uint32_t(update_interval.get()))
+    if((millis() - last_check) >= (uint32_t(update_interval.get()) * 1000ul))
     {
         // Record starting time.
         if(iterator == 0)

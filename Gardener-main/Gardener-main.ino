@@ -501,7 +501,7 @@ void decision_window()
             act_window.set_position(pos);
         }
     }
-    else if(uint32_t(window_update_interval.get()) <= (millis() - last_check))
+    else if((uint32_t(window_update_interval.get()) * 1000ul) <= (millis() - last_check))
     {
         last_check = millis();
         // if temperature in greenhouse is higher than the upper limit.
