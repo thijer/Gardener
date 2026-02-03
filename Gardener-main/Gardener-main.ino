@@ -41,6 +41,11 @@
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
+#ifdef ENABLE_MOISTURE_SENSORS
+#define TB_DEVICES 1 + MS_MAX_SENSORS
+#else
+#define TB_DEVICES 1
+#endif
 time_t timesource()
 {
     time_t time_now;
@@ -49,8 +54,8 @@ time_t timesource()
 }
 
 WiFiClient client;
-ThingGateway<1> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
-ThingDevice tb_device("Gardener", "greenhouse-control");
+ThingGateway<TB_DEVICES> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
+ThingDevice tb_device("Gardener", "Gardener-control");
 
 #endif
 
@@ -113,14 +118,32 @@ TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, temp_ext, hum_ext, temp_me
 
 // MOISTURE SENSOR CONFIG
 #ifdef ENABLE_MOISTURE_SENSORS
-#include "moisture_sensor.hpp"
+#include "moisture_sensors/moisture_sensor_interface.hpp"
 IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
-IntegerProperty moisture_sensor_0("ms_0");
-IntegerProperty moisture_sensor_1("ms_1");
-#define N_PROP_MOISTURE 1
-#define N_VARS_MOISTURE 2
 
-MoistureSensorArray moisture_sensors(
+#ifdef ENABLE_THINGSBOARD
+#include "moisture_sensors/moisture_sensor_device.hpp"
+#define N_VARS_MOISTURE 0
+#else
+#include "moisture_sensors/moisture_sensor.hpp"
+#define N_VARS_MOISTURE 12
+#endif
+#define N_PROP_MOISTURE 13
+
+MoistureSensor moisture_sensor_00("m_sens_00",  0);
+MoistureSensor moisture_sensor_01("m_sens_01",  1);
+MoistureSensor moisture_sensor_02("m_sens_02",  2, false);
+MoistureSensor moisture_sensor_03("m_sens_03",  3, false);
+MoistureSensor moisture_sensor_04("m_sens_04",  4, false);
+MoistureSensor moisture_sensor_05("m_sens_05",  5, false);
+MoistureSensor moisture_sensor_06("m_sens_06",  6, false);
+MoistureSensor moisture_sensor_07("m_sens_07",  7, false);
+MoistureSensor moisture_sensor_08("m_sens_08",  8, false);
+MoistureSensor moisture_sensor_09("m_sens_09",  9, false);
+MoistureSensor moisture_sensor_10("m_sens_10", 10, false);
+MoistureSensor moisture_sensor_11("m_sens_11", 11, false);
+
+MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
     PIN_SENS_MOISTURE_ADDR_0,
     PIN_SENS_MOISTURE_ADDR_1,
@@ -129,11 +152,22 @@ MoistureSensorArray moisture_sensors(
     PIN_SENS_MOISTURE_P0,
     PIN_SENS_MOISTURE_P1,
     {
-        {&moisture_sensor_0, 0},
-        {&moisture_sensor_1, 1}
+        &moisture_sensor_00,
+        &moisture_sensor_01,
+        &moisture_sensor_02,
+        &moisture_sensor_03,
+        &moisture_sensor_04,
+        &moisture_sensor_05,
+        &moisture_sensor_06,
+        &moisture_sensor_07,
+        &moisture_sensor_08,
+        &moisture_sensor_09,
+        &moisture_sensor_10,
+        &moisture_sensor_11
     },
     moisture_measurement_interval
 );
+
 #else
 #define N_PROP_MOISTURE 0
 #define N_VARS_MOISTURE 0
@@ -206,6 +240,18 @@ PropertyStore<N_PROP> properties({
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
     &moisture_measurement_interval,
+    moisture_sensor_00.get_enabler(),
+    moisture_sensor_01.get_enabler(),
+    moisture_sensor_02.get_enabler(),
+    moisture_sensor_03.get_enabler(),
+    moisture_sensor_04.get_enabler(),
+    moisture_sensor_05.get_enabler(),
+    moisture_sensor_06.get_enabler(),
+    moisture_sensor_07.get_enabler(),
+    moisture_sensor_08.get_enabler(),
+    moisture_sensor_09.get_enabler(),
+    moisture_sensor_10.get_enabler(),
+    moisture_sensor_11.get_enabler(),
 #endif
 #ifdef ENABLE_FEEDER
     &feeder_nozzle_extrude_pos,
@@ -233,9 +279,19 @@ TelemetryStore<N_VARS> variables({
 #ifdef WINDOW
     // &window_switch
 #endif
-#ifdef ENABLE_MOISTURE_SENSORS
-    &moisture_sensor_0,
-    &moisture_sensor_1,
+#if defined(ENABLE_MOISTURE_SENSORS) && !defined(ENABLE_THINGSBOARD)
+    moisture_sensor_00.get_moisture(),
+    moisture_sensor_01.get_moisture(),
+    moisture_sensor_02.get_moisture(),
+    moisture_sensor_03.get_moisture(),
+    moisture_sensor_04.get_moisture(),
+    moisture_sensor_05.get_moisture(),
+    moisture_sensor_06.get_moisture(),
+    moisture_sensor_07.get_moisture(),
+    moisture_sensor_08.get_moisture(),
+    moisture_sensor_09.get_moisture(),
+    moisture_sensor_10.get_moisture(),
+    moisture_sensor_11.get_moisture(),
 #endif
 });
 
@@ -266,7 +322,21 @@ void setup()
     tb_device.add_shared_attributes(properties);
     tb_device.add_telemetry(variables);
 
-    tb_gateway.add_devices({&tb_device});
+    tb_gateway.add_devices({
+        &tb_device, 
+        &moisture_sensor_00,
+        &moisture_sensor_01,
+        &moisture_sensor_02,
+        &moisture_sensor_03,
+        &moisture_sensor_04,
+        &moisture_sensor_05,
+        &moisture_sensor_06,
+        &moisture_sensor_07,
+        &moisture_sensor_08,
+        &moisture_sensor_09,
+        &moisture_sensor_10,
+        &moisture_sensor_11
+    });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
     debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
@@ -285,8 +355,21 @@ void setup()
     properties.begin();
     
     #ifdef ENABLE_MOISTURE_SENSORS
-    analogReadResolution(MS_ADC_RESOLUTION);
     moisture_sensors.begin(debug);
+    #ifdef ENABLE_THINGSBOARD
+    moisture_sensor_00.begin();
+    moisture_sensor_01.begin();
+    moisture_sensor_02.begin();
+    moisture_sensor_03.begin();
+    moisture_sensor_04.begin();
+    moisture_sensor_05.begin();
+    moisture_sensor_06.begin();
+    moisture_sensor_07.begin();
+    moisture_sensor_08.begin();
+    moisture_sensor_09.begin();
+    moisture_sensor_10.begin();
+    moisture_sensor_11.begin();
+    #endif
     #endif
 
     #ifdef ENABLE_WINDOW
@@ -309,8 +392,8 @@ void setup()
     #ifdef ENABLE_WATERING_MOISTURE
     group1.add_sensors(
         {
-            {&moisture_sensor_0, 1.0},
-            {&moisture_sensor_1, 0.5}
+            {moisture_sensor_00.get_moisture(), 1.0},
+            {moisture_sensor_01.get_moisture(), 0.5}
         }
     );
     group1.begin(debug);
@@ -329,6 +412,18 @@ void loop()
 
     #ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensors.loop();
+    moisture_sensor_00.loop();
+    moisture_sensor_01.loop();
+    moisture_sensor_02.loop();
+    moisture_sensor_03.loop();
+    moisture_sensor_04.loop();
+    moisture_sensor_05.loop();
+    moisture_sensor_06.loop();
+    moisture_sensor_07.loop();
+    moisture_sensor_08.loop();
+    moisture_sensor_09.loop();
+    moisture_sensor_10.loop();
+    moisture_sensor_11.loop();
     #endif
 
     serial_input();

@@ -48,7 +48,7 @@
 #define MS_MAX_SENSORS 12
 #define MS_UPDATE_INTERVAL  10 * 60             // s
 #define MS_READINGS         10ul                // Number of measurements to take to average out noise.
-#define MS_FIXED_RESISTOR   4600l               // Resistor divider fixed resistance (Ohm).
+#define MS_FIXED_RESISTOR   4640l               // Resistor divider fixed resistance (Ohm).
 #define MS_ADC_RESOLUTION   12
 #define MS_VCC_VOLT         3300l               // Sensor supply voltage (mV).
 #define MS_RANGE_UPPER_VOLT 3100l               // ADC upper voltage limit (mV) for ADC_ATTEN_DB_11.
