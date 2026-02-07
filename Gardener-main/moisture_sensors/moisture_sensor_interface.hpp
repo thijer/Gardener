@@ -1,13 +1,26 @@
-#ifndef MOISTURE_SENSOR_H
-#define MOISTURE_SENSOR_H
+#ifndef MOISTURE_SENSOR_INTERFACE_HPP
+#define MOISTURE_SENSOR_INTERFACE_HPP
 #include "property.hpp"
 #include "config.h"
 #include "debug.hpp"
+#include "moisture_sensors/moisture_sensor_base.hpp"
 
-class MoistureSensorArray
+/// @brief An interface that controls the HC4067 multiplexer to which up to 12 soil
+/// moisture sensors can be connected. 
+class MoistureSensorInterface
 {
     public:
-        MoistureSensorArray(
+        /// @brief 
+        /// @param pin_enable Enable pin of the multiplexer.
+        /// @param pin_addr0 Address pin 0
+        /// @param pin_addr1 Address pin 1
+        /// @param pin_addr2 Address pin 2
+        /// @param pin_addr3 Address pin 3
+        /// @param pin_sens0 Control/measurement pin 0
+        /// @param pin_sens1 Control/measurement pin 1
+        /// @param sensors List of `MoistureSensor`s to measure 
+        /// @param update_interval How often to update the measurements. All sensors are updated at once.
+        MoistureSensorInterface(
             uint8_t pin_enable,
             uint8_t pin_addr0,
             uint8_t pin_addr1,
@@ -15,12 +28,17 @@ class MoistureSensorArray
             uint8_t pin_addr3,
             uint8_t pin_sens0,
             uint8_t pin_sens1,
-            std::initializer_list<std::pair<IntegerProperty*, uint8_t>> sensors,
+            std::initializer_list<MoistureSensorBase*> sensors,
             IntegerProperty& update_interval
         );
+        /// @brief Initialize the interface.
+        /// @param debugger An optional `Debug` instance.
         void begin(Debug& debugger = emptydebug);
         void loop();
     private:
+        /// @brief Get the resistance (Ohm) of the soil moisture sensor connected to the given address.
+        /// @param address The address of the moisture sensor.
+        /// @return The resistance in Ohms.
         uint32_t get_resistance(uint8_t address);
 
         const uint8_t pin_enable;
@@ -31,7 +49,7 @@ class MoistureSensorArray
         const uint8_t pin_sens0;
         const uint8_t pin_sens1;
         
-        std::vector<std::pair<IntegerProperty*, uint8_t>> sensors;
+        std::vector<MoistureSensorBase*> sensors;
         IntegerProperty& update_interval;
         Debug* debug;
         uint8_t iterator = 0;
@@ -40,7 +58,7 @@ class MoistureSensorArray
         bool error = false;
 };
 
-MoistureSensorArray::MoistureSensorArray(
+MoistureSensorInterface::MoistureSensorInterface(
     uint8_t pin_enable,
     uint8_t pin_addr0,
     uint8_t pin_addr1,
@@ -48,7 +66,7 @@ MoistureSensorArray::MoistureSensorArray(
     uint8_t pin_addr3,
     uint8_t pin_sens0,
     uint8_t pin_sens1,
-    std::initializer_list<std::pair<IntegerProperty*, uint8_t>> sensors,
+    std::initializer_list<MoistureSensorBase*> sensors,
     IntegerProperty& update_interval
 ):
     pin_enable(pin_enable),
@@ -62,19 +80,19 @@ MoistureSensorArray::MoistureSensorArray(
     update_interval(update_interval)
 {}
 
-void MoistureSensorArray::begin(Debug& debugger)
+void MoistureSensorInterface::begin(Debug& debugger)
 {
-    // error = 
     debug = &debugger;
     pinMode(pin_addr0, OUTPUT); digitalWrite(pin_addr0, 0);
     pinMode(pin_addr1, OUTPUT); digitalWrite(pin_addr1, 0);
     pinMode(pin_addr2, OUTPUT); digitalWrite(pin_addr2, 0);
     pinMode(pin_addr3, OUTPUT); digitalWrite(pin_addr3, 0);
+    // Disable multiplexer.
     pinMode(pin_enable, OUTPUT); digitalWrite(pin_enable, 1);
     analogReadResolution(MS_ADC_RESOLUTION);
 }
 
-void MoistureSensorArray::loop()
+void MoistureSensorInterface::loop()
 {
     // This loop will only process one sensor at each call, to prevent blocking other loops for too long.
     if((millis() - last_check) >= (uint32_t(update_interval.get()) * 1000ul))
@@ -85,20 +103,31 @@ void MoistureSensorArray::loop()
             measurement_ts = millis();
             debug->print("[Moisture] Starting measuring.");
         }
-        
-        std::pair<IntegerProperty*, uint8_t>& sensor = sensors.at(iterator);
-        uint32_t resistance = get_resistance(sensor.second);
-        sensor.first->set(int32_t(resistance));
-        debug->print("[Moisture] Sensor: ", sensor.first->get_name(), ",", int(sensor.second), ": ", resistance);
-        // Increase iterator.
-        iterator = (iterator + 1) % sensors.size();
-
-        // Set last_check only when all sensors have been read.
-        if(iterator == 0) last_check = measurement_ts;
+        bool searching_sensor = true;
+        // Loop until the next enabled sensor
+        while(searching_sensor)
+        {
+            MoistureSensorBase* sensor = sensors.at(iterator);
+            if(sensor->is_enabled())
+            {
+                searching_sensor = false;
+                uint32_t resistance = get_resistance(sensor->get_address());
+                sensor->get_moisture()->set(int32_t(resistance));
+                debug->print("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
+            }
+            // Increase iterator.
+            iterator = (iterator + 1) % sensors.size();
+            // Set last_check only when all sensors have been read.
+            if(iterator == 0)
+            {
+                last_check = measurement_ts;
+                searching_sensor = false;
+            }
+        }
     }
 }
 
-uint32_t MoistureSensorArray::get_resistance(uint8_t address)
+uint32_t MoistureSensorInterface::get_resistance(uint8_t address)
 {
     // 150 - 3100 mV -> 0 - 4096 -> 151 - 95k5 ohm
     uint32_t total = MS_READINGS;
@@ -121,10 +150,9 @@ uint32_t MoistureSensorArray::get_resistance(uint8_t address)
         delayMicroseconds(10);
         digitalWrite(pin_sens0, 0);
         
-        // Serial.println(m);
         delayMicroseconds(950);
         
-        // reverse polarization
+        // reverse polarity
         pinMode(pin_sens0, INPUT);
         pinMode(pin_sens1, OUTPUT);
         
@@ -135,7 +163,6 @@ uint32_t MoistureSensorArray::get_resistance(uint8_t address)
         delayMicroseconds(10);
         digitalWrite(pin_sens1, 0);
         
-        // Serial.println(m);
         delayMicroseconds(950);
     }
     
@@ -148,5 +175,6 @@ uint32_t MoistureSensorArray::get_resistance(uint8_t address)
 
     return resistance;
 }
+
 
 #endif
