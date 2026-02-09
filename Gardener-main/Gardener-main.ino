@@ -10,6 +10,7 @@
 #define ENABLE_FEEDER
 #define ENABLE_TEMP
 #define ENABLE_MOISTURE_SENSORS
+#define ENABLE_LEVEL_SENSOR
 #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
 #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
 
@@ -116,6 +117,21 @@ TempHumSensor th_exterior(PIN_SENS_TEMP_HUM_EXTERIOR, temp_ext, hum_ext, temp_me
 #define N_VARS_TEMP 0
 #endif
 
+// TANK LEVEL SENSOR CONFIG
+#ifdef ENABLE_LEVEL_SENSOR
+#include "TankLevelSensor/TankLevelSensor.hpp"
+RealProperty tl_volume("tank_volume");
+RealProperty tl_bottomlevel("tank_b_level");
+IntegerProperty tl_interval("tank_meas_int");
+
+TankLevelSensor tanklevel(tl_volume, tl_bottomlevel, tl_interval);
+#define N_PROP_LEVEL 2
+#define N_VARS_LEVEL 1
+#else
+#define N_PROP_LEVEL 0
+#define N_VARS_LEVEL 0
+#endif 
+ 
 // MOISTURE SENSOR CONFIG
 #ifdef ENABLE_MOISTURE_SENSORS
 #include "moisture_sensors/moisture_sensor_interface.hpp"
@@ -220,7 +236,7 @@ MoistureLevels group1("group1", 50, gr1_feed_quantity, gr1_timeout, gr1_threshol
 
 
 // MEASURED VARIABLES
-#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_MOISTURE + N_PROP_FEEDER + N_PROP_WATERING_FIXED + N_PROP_WATERING_MOISTURE)
+#define N_PROP (N_PROP_WINDOW + N_PROP_TEMP + N_PROP_LEVEL + N_PROP_MOISTURE + N_PROP_FEEDER + N_PROP_WATERING_FIXED + N_PROP_WATERING_MOISTURE)
 PropertyStore<N_PROP> properties({
 #ifdef ENABLE_WINDOW
     &window_manual, 
@@ -235,6 +251,10 @@ PropertyStore<N_PROP> properties({
 #endif
 #ifdef ENABLE_TEMP
     &temp_measurement_interval,
+#endif
+#ifdef ENABLE_LEVEL_SENSOR
+    &tl_bottomlevel,
+    &tl_interval,
 #endif
 #ifdef ENABLE_WEBGUI
 #endif
@@ -268,13 +288,16 @@ PropertyStore<N_PROP> properties({
 #endif
 });
 
-#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE)
+#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_LEVEL + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE)
 TelemetryStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
     &hum_int,
     &temp_ext, 
     &hum_ext,
+#endif
+#ifdef ENABLE_LEVEL_SENSOR
+    &tl_volume,
 #endif
 #ifdef WINDOW
     // &window_switch
@@ -381,6 +404,10 @@ void setup()
     th_exterior.begin(debug);
     #endif
 
+    #ifdef ENABLE_LEVEL_SENSOR
+    tanklevel.begin(debug);
+    #endif
+
     #ifdef ENABLE_FEEDER
     act_feeder.begin(debug);
     #endif
@@ -408,6 +435,10 @@ void loop()
     #ifdef ENABLE_TEMP
     th_interior.loop();
     th_exterior.loop();
+    #endif
+
+    #ifdef ENABLE_LEVEL_SENSOR
+    tanklevel.loop();
     #endif
 
     #ifdef ENABLE_MOISTURE_SENSORS
