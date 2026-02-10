@@ -35,7 +35,7 @@ class MoistureSensor: public ThingDevice, public MoistureSensorBase
 
     private:
         IntegerProperty moisture;
-        TelemetryStore<1> store;
+        PropertyStore<1> store;
 };
 
 
