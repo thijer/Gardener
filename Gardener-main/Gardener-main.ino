@@ -33,6 +33,8 @@
 #include "config.h"
 #include "property.hpp"
 #include "propertystore.hpp"
+#include "PropertyMemory.hpp"
+#include "PropertyTextInterface.hpp"
 #include "debug.hpp"
 
 #ifdef ENABLE_THINGSBOARD
@@ -269,7 +271,7 @@ PropertyStore<N_PROP> properties({
 });
 
 #define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE)
-TelemetryStore<N_VARS> variables({
+PropertyStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
     &hum_int,
@@ -295,6 +297,9 @@ TelemetryStore<N_VARS> variables({
 #endif
 });
 
+PropertyMemory memory(properties);
+PropertyTextInterface prop_interface(properties);
+PropertyTextInterface vars_interface(variables);
 String serial_buffer;
 
 void setup()
@@ -352,7 +357,7 @@ void setup()
     #endif
 
     
-    properties.begin();
+    memory.begin();
     
     #ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensors.begin(debug);
@@ -455,7 +460,7 @@ void loop()
     group1.loop();
     #endif
 
-    properties.save();
+    memory.save();
     // delay(1);
 }
 
@@ -468,7 +473,7 @@ void parse_command(String& message)
         String key = message.substring(0, i);
         String value = message.substring(i + 1);
         // if(key == "plant")  plants.config_plant(value);
-        properties.apply_setting(key, value);
+        prop_interface.apply_setting(key, value);
     }
     else if(j != -1)
     {
@@ -517,9 +522,9 @@ void parse_command(String& message)
     #endif
     else if(message == "print")
     {
-        properties.print_to(debug);
+        prop_interface.print_to(debug);
     }
-    else if(message == "print_tel") variables.print_to(debug);
+    else if(message == "print_tel") vars_interface.print_to(debug);
 
     #ifdef ENABLE_WEBGUI
     else if(message == "[WebGUI] start")
