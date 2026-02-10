@@ -40,6 +40,17 @@
 #define PIN_SENS_WEBGUI_ENABLE 36
 #define PIN_ACT_WEBGUI_ACTIVE 2
 
+#define PIN_SENS_LEVEL_ECHO 35
+#define PIN_ACT_LEVEL_TRIGGER 2
+
+// TANK LEVEL SENSOR
+#define TL_UPDATE_INTERVAL 60           // s
+#define TL_SOUND_VELOCITY 343.0         // sound velocity at 20deg C (m/s)
+#define TL_BARREL_RADIUS_END 20.0       // Barrel top and bottom radius (cm)
+#define TL_BARREL_RADIUS_CENTER 30.0    // Barrel center (bilge) radius (cm)
+#define TL_BARREL_HEIGHT 100.0          // Barrel height (cm)
+#define TL_BARREL_HALF (TL_BARREL_HEIGHT / 2.0)
+
 // FEEDER
 #define FEEDER_NOZZLE_RETRACT_POS 60
 #define FEEDER_NOZZLE_EXTRUDE_POS 160

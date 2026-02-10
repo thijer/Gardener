@@ -1,4 +1,8 @@
 # Changelog
+## [2.3.0] - 10-2-2026
+### Added
+- `TankLevelSensor`, a class that can operate a standard HC_SR04 ultrasonic sensor to measure the stored volume in the rain water barrel.
+
 ## [2.2.4] - 10-2-2026
 ### Changed
 - Added support for Properties v3
