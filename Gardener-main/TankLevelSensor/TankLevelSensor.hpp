@@ -10,6 +10,108 @@ constexpr T power(T num, int32_t exp)
     return (exp == 0) ? 1 : num * power(num, exp - 1);
 }
 
+class TankModel
+{
+    public: virtual float calc_volume(float level) = 0;
+};
+
+template<float RADIUS_END = 20.0f, float RADIUS_CENTER = 30.0f, float HEIGHT = 100.0f>
+class DoubleFrustrumBarrel: public TankModel
+{   
+    /*
+       ___________
+      /           \
+     /             \
+    /               \
+    \               /
+     \             /
+      \___________/
+    */
+    private:
+        // Coefficients for volume calculation
+        // Bottom frustrum of the barrel
+        static constexpr float c0_0 = power(RADIUS_END, 2);
+        static constexpr float c0_1 = (2.0 * RADIUS_END * (RADIUS_CENTER - RADIUS_END)) / HEIGHT;
+        
+        // Top frustrum of the barrel
+        static constexpr float c1_0 = power(RADIUS_CENTER, 2);
+        static constexpr float c1_1 = (-2.0 * RADIUS_CENTER * (RADIUS_CENTER - RADIUS_END)) / HEIGHT;
+        
+        // Last term is equal in both equations
+        static constexpr float cx_2 = (4.0 * power(RADIUS_CENTER - RADIUS_END, 2)) / (3.0 * power(HEIGHT, 2));
+        
+        // Precalculated bottom half of barrel if measured level is higher than half the barrel's height.
+        static constexpr float bottom_half = c0_0 * (HEIGHT / 2) + c0_1 * power((HEIGHT / 2), 2) + cx_2 * power((HEIGHT / 2), 3);
+
+    public:
+        float calc_volume(float level)
+        {
+            float v = 0;
+            if(level > (HEIGHT / 2))
+            {
+                // Calculate volume of the top half of the double frustrum barrel 
+                // model and add the precalculated lower half to it.
+                level -= (HEIGHT / 2);
+                v = c1_0 * level + c1_1 * power(level, 2) + cx_2 * power(level, 3) + bottom_half; // cm^3
+            }
+            else if(level < (HEIGHT / 2))
+            {
+                v = c0_0 * level + c0_1 * power(level, 2) + cx_2 * power(level, 3);
+            }
+            else v = bottom_half;
+
+            // Convert cm^3 to dm^3 (L) and multiply with PI to get volume.
+            return v * PI / 1000.0;
+        }
+};
+
+template<float RADIUS_END = 20.0f, float RADIUS_CENTER = 30.0f, float HEIGHT_FRUSTRUM = 20.0f>
+class SingleFrustrumBarrel: public TankModel
+{
+    /*
+     _______________
+    |               |
+    |               |
+    |               |
+    \               /
+     \             /
+      \___________/
+    */
+    private:
+        // Coefficients for volume calculation
+        // Bottom frustrumed section of the barrel
+        static constexpr float c0_0 = power(RADIUS_END, 2);
+        static constexpr float c0_1 = (2.0 * RADIUS_END * (RADIUS_CENTER - RADIUS_END)) / HEIGHT_FRUSTRUM;
+        static constexpr float c0_2 = (power(RADIUS_CENTER - RADIUS_END, 2)) / (3.0 * power(HEIGHT_FRUSTRUM, 2));
+
+        // Upper straight section
+        static constexpr float c1_0 = power(RADIUS_CENTER, 2);
+        
+        // Precalculated bottom half of barrel if measured level is higher than half the barrel's height.
+        static constexpr float bottom_half = c0_0 * HEIGHT_FRUSTRUM + c0_1 * power(HEIGHT_FRUSTRUM, 2) + c0_2 * power(HEIGHT_FRUSTRUM, 3);
+
+    public:
+        float calc_volume(float level)
+        {
+            float v = 0;
+            if(level > HEIGHT_FRUSTRUM)
+            {
+                // Calculate volume of the top half of the double frustrum barrel 
+                // model and add the precalculated lower half to it.
+                level -= HEIGHT_FRUSTRUM;
+                v = c1_0 * level + bottom_half; // cm^3
+            }
+            else if(level < HEIGHT_FRUSTRUM)
+            {
+                v = c0_0 * level + c0_1 * power(level, 2) + c0_2 * power(level, 3);
+            }
+            else v = bottom_half;
+
+            // Convert cm^3 to dm^3 (L) and multiply with PI to get volume.
+            return v * PI / 1000.0;
+        }
+};
+
 class TankLevelSensor
 {
     public:
@@ -19,7 +121,7 @@ class TankLevelSensor
             IntegerProperty& interval
         );
         ~TankLevelSensor(){}
-        void begin(Debug& debugger);
+        void begin(Debug& debugger = emptydebug);
         
         void loop();
 
@@ -35,21 +137,7 @@ class TankLevelSensor
         uint32_t last_update = 0;
         bool error = false;
 
-        // Coefficients for volume calculation
-        // Bottom half of double frustrum barrel model
-        static constexpr float c0_0 = power(TL_BARREL_RADIUS_END, 2);
-        static constexpr float c0_1 = (2.0 * TL_BARREL_RADIUS_END * (TL_BARREL_RADIUS_CENTER - TL_BARREL_RADIUS_END)) / TL_BARREL_HEIGHT;
-        
-        // Top half of double frustrum barrel model
-        static constexpr float c1_0 = power(TL_BARREL_RADIUS_CENTER, 2);
-        static constexpr float c1_1 = (-2.0 * TL_BARREL_RADIUS_CENTER * (TL_BARREL_RADIUS_CENTER - TL_BARREL_RADIUS_END)) / TL_BARREL_HEIGHT;
-        
-        // Last term is equal in both equations
-        static constexpr float cx_2 = (4.0 * power(TL_BARREL_RADIUS_CENTER - TL_BARREL_RADIUS_END, 2)) / (3.0 * power(TL_BARREL_HEIGHT, 2));
-
-        // Precalculated bottom half of barrel if measured level is higher than half the barrel's height.
-        static constexpr float bottom_half = c0_0 * TL_BARREL_HALF + c0_1 * power(TL_BARREL_HALF, 2) + cx_2 * power(TL_BARREL_HALF, 3);       
-        
+        SingleFrustrumBarrel<20.0f, 30.0f, 20.0f> barrel;
 };
 
 TankLevelSensor::TankLevelSensor(RealProperty& volume, RealProperty& bottomlevel, IntegerProperty& interval):
@@ -59,7 +147,7 @@ TankLevelSensor::TankLevelSensor(RealProperty& volume, RealProperty& bottomlevel
 {
 }
 
-void TankLevelSensor::begin(Debug &debugger = emptydebug)
+void TankLevelSensor::begin(Debug& debugger)
 {
     debug = &debugger;
     pinMode(PIN_ACT_LEVEL_TRIGGER, OUTPUT);
@@ -102,22 +190,7 @@ void TankLevelSensor::read()
     x = max(bottomlevel.get() - x, 0.0f);
     debug->print("[LevelSensor]    level (cm): ", x);
 
-    float v = 0;
-    if(x > TL_BARREL_HALF)
-    {
-        // Calculate volume of the top half of the double frustrum barrel 
-        // model and add the precalculated lower half to it.
-        x -= TL_BARREL_HALF;
-        v = c1_0 * x + c1_1 * power(x, 2) + cx_2 * power(x, 3) + bottom_half; // cm^3
-    }
-    else if(x < TL_BARREL_HALF)
-    {
-        v = c0_0 * x + c0_1 * power(x, 2) + cx_2 * power(x, 3);
-    }
-    else v = bottom_half;
-
-    // Convert cm^3 to dm^3 (L) and multiply with PI to get volume.
-    v = v * PI / 1000.0;
+    float v = barrel.calc_volume(x);
 
     debug->print("[LevelSensor]    volume (L): ", v);
     volume.set(v);
