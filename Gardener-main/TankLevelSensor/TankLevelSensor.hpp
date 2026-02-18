@@ -137,7 +137,7 @@ class TankLevelSensor
         uint32_t last_update = 0;
         bool error = false;
 
-        SingleFrustrumBarrel<20.0f, 30.0f, 20.0f> barrel;
+        SingleFrustrumBarrel<17.91f, 25.32f, 25.0f> barrel;
 };
 
 TankLevelSensor::TankLevelSensor(RealProperty& volume, RealProperty& bottomlevel, IntegerProperty& interval):
