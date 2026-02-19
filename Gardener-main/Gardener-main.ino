@@ -41,6 +41,7 @@
 #ifdef ENABLE_THINGSBOARD
 #include "WiFi.h"
 #include "WiFiClient.h"
+#include "WiFiManager/WiFiManager.hpp"
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
@@ -56,6 +57,7 @@ time_t timesource()
     return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
 }
 
+WiFiManager manager(SSID, WPA2PSK);
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
 ThingDevice tb_device("Gardener", "Gardener-control");
@@ -333,18 +335,7 @@ void setup()
     serial_buffer.reserve(51);
     
     #ifdef ENABLE_THINGSBOARD
-    debug.print("[Gardener] Conencting to WiFi.");
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(SSID, WPA2PSK);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print('.');
-        delay(1000);
-    }
-    Serial.println(WiFi.localIP());
-
-    debug.print("[Gardener] Getting time from NTP");
-    configTime(3600, 0, "pool.ntp.org");
+    manager.begin(debug);
 
     debug.print("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
@@ -367,7 +358,7 @@ void setup()
     });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
-    debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -465,6 +456,7 @@ void loop()
     serial_input();
 
     #ifdef ENABLE_THINGSBOARD
+    manager.loop();
     tb_device.loop();
     tb_gateway.loop();
     #endif
