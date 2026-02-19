@@ -44,6 +44,11 @@
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
+volatile bool       tb_switch_flipped = 1;           // Set to 1 to let webgui_management update the current state of the switch.
+volatile uint32_t   tb_switch_ts = 0;
+bool                tb_switch_state = false;
+
+
 #ifdef ENABLE_MOISTURE_SENSORS
 #define TB_DEVICES 1 + MS_MAX_SENSORS
 #else
@@ -345,6 +350,8 @@ void setup()
 
     debug.print("[Gardener] Getting time from NTP");
     configTime(3600, 0, "pool.ntp.org");
+    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
+    attachInterrupt(PIN_SENS_WEBGUI_ENABLE, tb_switch_isr, CHANGE);
 
     debug.print("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
@@ -367,7 +374,7 @@ void setup()
     });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
-    debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -465,6 +472,7 @@ void loop()
     serial_input();
 
     #ifdef ENABLE_THINGSBOARD
+    tb_management();
     tb_device.loop();
     tb_gateway.loop();
     #endif
@@ -586,6 +594,30 @@ void serial_input()
         }
     }
 }
+
+#ifdef ENABLE_THINGSBOARD
+void tb_switch_isr()
+{
+    tb_switch_ts = millis();
+    tb_switch_flipped = true;
+    detachInterrupt(PIN_SENS_WEBGUI_ENABLE);
+}
+
+void tb_management()
+{
+    if(tb_switch_flipped && (millis() - tb_switch_ts) > 30)
+    {
+        tb_switch_flipped = 0;
+        attachInterrupt(PIN_SENS_WEBGUI_ENABLE, tb_switch_isr, CHANGE);
+        tb_switch_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
+        debug.print("[Gardener] switch flipped: ", tb_switch_state);
+        
+        if(!tb_switch_state) tb_gateway.enable();
+        else if(tb_switch_state) tb_gateway.disable();
+    }
+}
+
+#endif
 
 #ifdef ENABLE_WEBGUI
 void websocket_input()
