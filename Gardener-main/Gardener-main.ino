@@ -457,8 +457,11 @@ void loop()
 
     #ifdef ENABLE_THINGSBOARD
     manager.loop();
-    tb_device.loop();
-    tb_gateway.loop();
+    if(manager.connected())
+    {
+        tb_device.loop();
+        tb_gateway.loop();
+    }
     #endif
 
     #ifdef ENABLE_WEBGUI
