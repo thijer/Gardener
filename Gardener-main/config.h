@@ -46,10 +46,9 @@
 // TANK LEVEL SENSOR
 #define TL_UPDATE_INTERVAL 60           // s
 #define TL_SOUND_VELOCITY 343.0         // sound velocity at 20deg C (m/s)
-#define TL_BARREL_RADIUS_END 20.0       // Barrel top and bottom radius (cm)
-#define TL_BARREL_RADIUS_CENTER 30.0    // Barrel center (bilge) radius (cm)
-#define TL_BARREL_HEIGHT 100.0          // Barrel height (cm)
-#define TL_BARREL_HALF (TL_BARREL_HEIGHT / 2.0)
+#define TL_BARREL_RADIUS_END 17.91f     // Barrel bottom radius (cm)
+#define TL_BARREL_RADIUS_CENTER 25.32f  // Barrel center (bilge) and top radius (cm)
+#define TL_BARREL_FRUSTRUM_HEIGHT 25.0f // Height of the lower frustrum section of the barrel (cm)
 
 // FEEDER
 #define FEEDER_NOZZLE_RETRACT_POS 60
