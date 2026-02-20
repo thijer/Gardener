@@ -42,6 +42,7 @@
 #include "WiFi.h"
 #include "WiFiClient.h"
 #include "WiFiManager/WiFiManager.hpp"
+#include "DebugWebsocket/DebugWebsocket.hpp"
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
@@ -66,7 +67,8 @@ WiFiManager manager(SSID, WPA2PSK);
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
 ThingDevice tb_device("Gardener", "Gardener-control");
-
+DebugWebsocket socket(DEBUGSOCKET_PORT);
+String         socket_buffer;
 #endif
 
 #ifdef ENABLE_WEBGUI
@@ -76,7 +78,12 @@ String              webgui_buffer;
 volatile bool       webgui_btn_state = 1;           // Set to 1 to let webgui_management update the current state of the switch.
 volatile uint32_t   webgui_btn_ts = 0;
 bool                webgui_des_state = false;
-Debug               debug({&webgui, &Serial});
+#endif
+
+#if defined(ENABLE_WEBGUI)
+Debug debug({&webgui, &Serial});
+#elif defined(ENABLE_THINGSBOARD)
+Debug debug({&socket, &Serial});
 #else
 Debug debug({&Serial});
 #endif
@@ -367,6 +374,7 @@ void setup()
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
     // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    socket.begin();
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -471,6 +479,8 @@ void loop()
         tb_device.loop();
         tb_gateway.loop();
     }
+    socket.loop();
+    websocket_input();
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -626,6 +636,25 @@ void tb_management()
         
         if(!tb_switch_state) tb_gateway.enable();
         else if(tb_switch_state) tb_gateway.disable();
+    }
+}
+
+void websocket_input()
+{
+    while(socket.available() > 0)
+    {
+        char c = socket.read();
+        if(c == '\r' || c == '\n') // carriage return
+        {
+            debug.print("[DebugSocket] processing line.");
+            debug.print(socket_buffer);
+            parse_command(socket_buffer);
+            socket_buffer.clear();
+        }
+        else
+        {
+            socket_buffer += c;
+        }
     }
 }
 
