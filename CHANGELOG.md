@@ -1,4 +1,11 @@
 # Changelog
+## [2.5.0] - 20-2-2026
+### Changed
+- Moved tank volume calculations to a dedicated class called `DoubleFrustrumBarrel`.
+
+### Added
+- Added a `SingleFrustrumBarrel` model that more closely approximates the shape of the greenhouse barrel.
+
 ## [2.4.0] - 20-2-2026
 ### Added
 - Thingsboard connection can now be enabled with a switch.
