@@ -1,4 +1,10 @@
 # Changelog
+## [2.5.1] - 20-2-2026
+### Fixed
+- Moved barrel parameters to `config.h`.
+- Removed unused barrel parameters from `config.h`
+
+
 ## [2.5.0] - 20-2-2026
 ### Changed
 - Moved tank volume calculations to a dedicated class called `DoubleFrustrumBarrel`.
