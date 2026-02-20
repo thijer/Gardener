@@ -571,6 +571,25 @@ void parse_command(String& message)
         webgui.stop();
     }
     #endif
+
+    #ifdef ENABLE_THINGSBOARD
+    if(message == "wifi")
+    {
+        debug.print("RSSI:   ", WiFi.RSSI());
+        debug.print("Status: ", WiFi.status());
+        /* 
+        WL_NO_SHIELD = 255,
+        WL_STOPPED = 254,
+        WL_IDLE_STATUS = 0,
+        WL_NO_SSID_AVAIL = 1,
+        WL_SCAN_COMPLETED = 2,
+        WL_CONNECTED = 3,
+        WL_CONNECT_FAILED = 4,
+        WL_CONNECTION_LOST = 5,
+        WL_DISCONNECTED = 6 
+        */
+    }
+    #endif
 }
 
 void serial_input()
