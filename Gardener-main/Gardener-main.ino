@@ -45,9 +45,9 @@
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
-volatile bool       tb_switch_flipped = 1;           // Set to 1 to let webgui_management update the current state of the switch.
-volatile uint32_t   tb_switch_ts = 0;
-bool                tb_switch_state = false;
+bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
+uint32_t   tb_switch_ts = 0;
+bool       tb_switch_state = false;
 
 
 #ifdef ENABLE_MOISTURE_SENSORS
@@ -341,7 +341,6 @@ void setup()
     
     #ifdef ENABLE_THINGSBOARD
     pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
-    attachInterrupt(PIN_SENS_WEBGUI_ENABLE, tb_switch_isr, CHANGE);
     manager.begin(debug);
 
     debug.print("[Gardener] configuring Thingsboard.");
@@ -349,7 +348,8 @@ void setup()
     tb_device.add_telemetry(variables);
 
     tb_gateway.add_devices({
-        &tb_device, 
+        &tb_device,
+        #ifdef ENABLE_MOISTURE_SENSORS
         &moisture_sensor_00,
         &moisture_sensor_01,
         &moisture_sensor_02,
@@ -362,6 +362,7 @@ void setup()
         &moisture_sensor_09,
         &moisture_sensor_10,
         &moisture_sensor_11
+        #endif
     });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
@@ -591,19 +592,16 @@ void serial_input()
 }
 
 #ifdef ENABLE_THINGSBOARD
-void tb_switch_isr()
-{
-    tb_switch_ts = millis();
-    tb_switch_flipped = true;
-    detachInterrupt(PIN_SENS_WEBGUI_ENABLE);
-}
-
 void tb_management()
 {
-    if(tb_switch_flipped && (millis() - tb_switch_ts) > 30)
+    if(digitalRead(PIN_SENS_WEBGUI_ENABLE) != tb_switch_state && !tb_switch_flipped)
+    {
+        tb_switch_flipped = true;
+        tb_switch_ts = millis();
+    }
+    else if(tb_switch_flipped && (millis() - tb_switch_ts) > 30ul)
     {
         tb_switch_flipped = 0;
-        attachInterrupt(PIN_SENS_WEBGUI_ENABLE, tb_switch_isr, CHANGE);
         tb_switch_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
         debug.print("[Gardener] switch flipped: ", tb_switch_state);
         
