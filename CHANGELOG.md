@@ -1,9 +1,12 @@
 # Changelog
+## [2.6.0] - 20-2-2026
+### Added
+- `DebugWebsocket`, allows for printing debug messages over a TCP connection.
+
 ## [2.5.1] - 20-2-2026
 ### Fixed
 - Moved barrel parameters to `config.h`.
 - Removed unused barrel parameters from `config.h`
-
 
 ## [2.5.0] - 20-2-2026
 ### Changed
