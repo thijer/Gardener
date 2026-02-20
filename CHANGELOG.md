@@ -1,4 +1,14 @@
 # Changelog
+## [2.4.0] - 20-2-2026
+### Added
+- Thingsboard connection can now be enabled with a switch.
+- `WiFiManager`, that maintains the WiFi connection.
+- WiFi status can now be printed to `debug` upon request.
+
+## Fixed
+- `ThingGateway` is now prevented from trying to connect when there is no WiFi.
+- Compilation error when moisture sensors are not `ENABLE`d but Thingsboard is.
+
 ## [2.3.0] - 10-2-2026
 ### Added
 - `TankLevelSensor`, a class that can operate a standard HC_SR04 ultrasonic sensor to measure the stored volume in the rain water barrel.

@@ -41,8 +41,14 @@
 #ifdef ENABLE_THINGSBOARD
 #include "WiFi.h"
 #include "WiFiClient.h"
+#include "WiFiManager/WiFiManager.hpp"
 #include "tb_credentials.h"
 #include "ThingGateway.hpp"
+
+bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
+uint32_t   tb_switch_ts = 0;
+bool       tb_switch_state = false;
+
 
 #ifdef ENABLE_MOISTURE_SENSORS
 #define TB_DEVICES 1 + MS_MAX_SENSORS
@@ -56,6 +62,7 @@ time_t timesource()
     return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
 }
 
+WiFiManager manager(SSID, WPA2PSK);
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
 ThingDevice tb_device("Gardener", "Gardener-control");
@@ -333,25 +340,16 @@ void setup()
     serial_buffer.reserve(51);
     
     #ifdef ENABLE_THINGSBOARD
-    debug.print("[Gardener] Conencting to WiFi.");
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(SSID, WPA2PSK);
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print('.');
-        delay(1000);
-    }
-    Serial.println(WiFi.localIP());
-
-    debug.print("[Gardener] Getting time from NTP");
-    configTime(3600, 0, "pool.ntp.org");
+    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
+    manager.begin(debug);
 
     debug.print("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
     tb_device.add_telemetry(variables);
 
     tb_gateway.add_devices({
-        &tb_device, 
+        &tb_device,
+        #ifdef ENABLE_MOISTURE_SENSORS
         &moisture_sensor_00,
         &moisture_sensor_01,
         &moisture_sensor_02,
@@ -364,10 +362,11 @@ void setup()
         &moisture_sensor_09,
         &moisture_sensor_10,
         &moisture_sensor_11
+        #endif
     });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
-    debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -465,8 +464,13 @@ void loop()
     serial_input();
 
     #ifdef ENABLE_THINGSBOARD
-    tb_device.loop();
-    tb_gateway.loop();
+    tb_management();
+    manager.loop();
+    if(manager.connected())
+    {
+        tb_device.loop();
+        tb_gateway.loop();
+    }
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -567,6 +571,25 @@ void parse_command(String& message)
         webgui.stop();
     }
     #endif
+
+    #ifdef ENABLE_THINGSBOARD
+    if(message == "wifi")
+    {
+        debug.print("RSSI:   ", WiFi.RSSI());
+        debug.print("Status: ", WiFi.status());
+        /* 
+        WL_NO_SHIELD = 255,
+        WL_STOPPED = 254,
+        WL_IDLE_STATUS = 0,
+        WL_NO_SSID_AVAIL = 1,
+        WL_SCAN_COMPLETED = 2,
+        WL_CONNECTED = 3,
+        WL_CONNECT_FAILED = 4,
+        WL_CONNECTION_LOST = 5,
+        WL_DISCONNECTED = 6 
+        */
+    }
+    #endif
 }
 
 void serial_input()
@@ -586,6 +609,27 @@ void serial_input()
         }
     }
 }
+
+#ifdef ENABLE_THINGSBOARD
+void tb_management()
+{
+    if(digitalRead(PIN_SENS_WEBGUI_ENABLE) != tb_switch_state && !tb_switch_flipped)
+    {
+        tb_switch_flipped = true;
+        tb_switch_ts = millis();
+    }
+    else if(tb_switch_flipped && (millis() - tb_switch_ts) > 30ul)
+    {
+        tb_switch_flipped = 0;
+        tb_switch_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
+        debug.print("[Gardener] switch flipped: ", tb_switch_state);
+        
+        if(!tb_switch_state) tb_gateway.enable();
+        else if(tb_switch_state) tb_gateway.disable();
+    }
+}
+
+#endif
 
 #ifdef ENABLE_WEBGUI
 void websocket_input()
