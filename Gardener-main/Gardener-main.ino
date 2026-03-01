@@ -166,11 +166,10 @@ IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL)
 
 #ifdef ENABLE_THINGSBOARD
 #include "moisture_sensors/moisture_sensor_device.hpp"
-#define N_VARS_MOISTURE 0
 #else
 #include "moisture_sensors/moisture_sensor.hpp"
-#define N_VARS_MOISTURE 12
 #endif
+#define N_VARS_MOISTURE 12
 #define N_PROP_MOISTURE 13
 
 MoistureSensor moisture_sensor_00("m_sens_00",  0);
@@ -335,7 +334,7 @@ PropertyStore<N_VARS> variables({
 #ifdef WINDOW
     // &window_switch
 #endif
-#if defined(ENABLE_MOISTURE_SENSORS) && !defined(ENABLE_THINGSBOARD)
+#ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensor_00.get_moisture(),
     moisture_sensor_01.get_moisture(),
     moisture_sensor_02.get_moisture(),
