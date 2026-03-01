@@ -1,4 +1,9 @@
 # Changelog
+## [2.7.0] - 1-3-2026
+### Added
+- `RuleEngine` a base class implementation of a rule engine based on TinyExpr++.
+- `WateringRuleEngine`, an implementation of `RuleEngine` that will water a specific area of the greenhouse based on math expressions that can be added at runtime.
+
 ## [2.6.0] - 20-2-2026
 ### Added
 - `DebugWebsocket`, allows for printing debug messages over a TCP connection.

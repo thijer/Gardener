@@ -11,13 +11,24 @@
 #define ENABLE_TEMP
 #define ENABLE_MOISTURE_SENSORS
 #define ENABLE_LEVEL_SENSOR
-#define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
-#define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
+#define ENABLE_WATERINGRULES
+// #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
+// #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
 
 // Disable WEBGUI if thingsboard is enabled
 #ifdef ENABLE_THINGSBOARD
 #undef ENABLE_WEBGUI
 #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
+#endif
+
+// Disable hard-coded logic
+#ifdef ENABLE_WATERINGRULES
+#ifndef ENABLE_FEEDER           // Depends on feeder presence.
+#undef ENABLE_WATERINGRULES
+#else
+#undef ENABLE_WATERING_FIXED
+#undef ENABLE_WATERING_MOISTURE
+#endif
 #endif
 
 // Disable watering logic if the Feeder is unavailable.
@@ -225,6 +236,12 @@ bool start_feed(uint32_t position, uint32_t duration)
 #define N_VARS_FEEDER 0
 #endif
 
+#ifdef ENABLE_WATERINGRULES
+#include "WateringRules/WateringRules.hpp"
+WateringRuleEngine engine(act_feeder);
+
+#endif
+
 #ifdef ENABLE_WATERING_FIXED
 #include "wateringlogic/fixedquantities.hpp"
 IntegerProperty gr0_feed_quantity("gr0_fd_quantity", 360);      // 6 min
@@ -424,6 +441,38 @@ void setup()
     act_feeder.begin(debug);
     #endif
 
+    #ifdef ENABLE_WATERINGRULES
+    engine.begin(debug);
+    engine.set_variables(
+    #ifdef ENABLE_TEMP
+        &temp_int, 
+        &hum_int,
+        &temp_ext, 
+        &hum_ext,
+    #endif
+    #ifdef ENABLE_LEVEL_SENSOR
+        &tl_volume,
+    #endif
+    #ifdef WINDOW
+        // &window_switch
+    #endif
+    #ifdef ENABLE_MOISTURE_SENSORS
+        moisture_sensor_00.get_moisture(),
+        moisture_sensor_01.get_moisture(),
+        moisture_sensor_02.get_moisture(),
+        moisture_sensor_03.get_moisture(),
+        moisture_sensor_04.get_moisture(),
+        moisture_sensor_05.get_moisture(),
+        moisture_sensor_06.get_moisture(),
+        moisture_sensor_07.get_moisture(),
+        moisture_sensor_08.get_moisture(),
+        moisture_sensor_09.get_moisture(),
+        moisture_sensor_10.get_moisture(),
+        moisture_sensor_11.get_moisture()
+    #endif
+    );
+    #endif
+
     #ifdef ENABLE_WATERING_FIXED
     group0.begin(debug);
     #endif
@@ -497,6 +546,10 @@ void loop()
     act_feeder.loop();
     #endif
 
+    #ifdef ENABLE_WATERINGRULES
+    engine.loop();
+    #endif
+
     #ifdef ENABLE_WATERING_FIXED
     group0.loop();
     #endif
@@ -513,7 +566,7 @@ void parse_command(String& message)
 {
     int i = message.indexOf('=');
     int j = message.indexOf(':');
-    if(i != -1)
+    if(i != -1 && j == -1)
     {
         String key = message.substring(0, i);
         String value = message.substring(i + 1);
@@ -551,6 +604,21 @@ void parse_command(String& message)
                 }
 
             }
+        }
+        #endif
+        
+        #ifdef ENABLE_WATERINGRULES
+        // {"test_rule":{"expression":"IF(((0.5 * m_sens_00) + (1.2 * m_sens_01)) / (0.5 + 1.2) > 1000, 360, 0)", "eval_interval": 10, "feeder_address": 25, "enabled": true}}
+        JsonDocument doc;
+        DeserializationError err = deserializeJson(doc, serial_buffer);
+        if(err)
+        {
+            debug.print(err.c_str());
+        }
+        else
+        {
+            debug.print("[Serial] processing rule.");
+            engine.process_attributes(doc.as<JsonObject>());
         }
         #endif
         
