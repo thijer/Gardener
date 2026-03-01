@@ -99,6 +99,13 @@ Debug debug({&socket, &Serial});
 Debug debug({&Serial});
 #endif
 
+#ifdef ENABLE_OTA
+#include "ArduinoOTA.h"
+#include "ota_credentials.h"
+void cb_ota_error(ota_error_t error);
+void cb_ota_start();
+void cb_ota_progress(uint32_t progress, uint32_t total);
+#endif
 
 // IMPORTANT: property keys can not exceed 15 characters.
 // WINDOW CONFIG
@@ -403,7 +410,15 @@ void setup()
     debug.print("[WebGUI] ", success ? "configured." : "ERROR: failed to set up webserver.");
     #endif
 
-    
+    #ifdef ENABLE_OTA
+    // OTA callbacks
+    ArduinoOTA.onError(cb_ota_error);
+    ArduinoOTA.onStart(cb_ota_start);
+    ArduinoOTA.onProgress(cb_ota_progress);
+    ArduinoOTA.setPasswordHash(passwordhash);
+    ArduinoOTA.begin();
+    #endif
+
     memory.begin();
     
     #ifdef ENABLE_MOISTURE_SENSORS
@@ -537,6 +552,10 @@ void loop()
     webgui_management();
     #endif
 
+    #ifdef ENABLE_OTA
+    ArduinoOTA.handle();
+    #endif
+    
     #ifdef ENABLE_WINDOW
     decision_window();
     act_window.loop();
@@ -775,6 +794,42 @@ void webgui_management()
     
 }
 
+#endif
+
+#ifdef ENABLE_OTA
+void cb_ota_error(ota_error_t error)
+{
+    if (error == OTA_AUTH_ERROR)
+    {
+        debug.print("[OTA] ERROR: Auth Failed");
+    }
+    else if (error == OTA_BEGIN_ERROR)
+    {
+        debug.print("[OTA] ERROR: Begin Failed");
+    }
+    else if (error == OTA_CONNECT_ERROR)
+    {
+        debug.print("[OTA] ERROR: Connect Failed");
+    }
+    else if (error == OTA_RECEIVE_ERROR)
+    {
+        debug.print("[OTA] ERROR: Receive Failed");
+    } 
+    else if (error == OTA_END_ERROR)
+    {
+        debug.print("[OTA] ERROR: End Failed");
+    }
+}
+
+void cb_ota_start()
+{
+    debug.print("[OTA] Starting update.");
+}
+
+void cb_ota_progress(uint32_t progress, uint32_t total)
+{
+    debug.print("[OTA] Progress: ", (progress * 100) / total);
+}
 #endif
 
 #ifdef ENABLE_WINDOW

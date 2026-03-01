@@ -1,4 +1,8 @@
 # Changelog
+## [2.8.0] - 1-3-2026
+### Added
+- Support for ArduinoOTA.
+
 ## [2.7.0] - 1-3-2026
 ### Added
 - `RuleEngine` a base class implementation of a rule engine based on TinyExpr++.
