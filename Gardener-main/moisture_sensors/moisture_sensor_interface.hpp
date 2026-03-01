@@ -112,7 +112,7 @@ void MoistureSensorInterface::loop()
             {
                 searching_sensor = false;
                 uint32_t resistance = get_resistance(sensor->get_address());
-                sensor->get_moisture()->set(int32_t(resistance));
+                sensor->set_moisture(resistance);
                 debug->print("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
             }
             // Increase iterator.

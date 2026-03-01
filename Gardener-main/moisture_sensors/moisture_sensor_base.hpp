@@ -16,6 +16,7 @@ class MoistureSensorBase
         uint8_t get_address() { return address; }
         virtual bool is_enabled() = 0;
         virtual IntegerProperty* get_moisture() = 0;
+        virtual void set_moisture(int32_t moist) = 0;
 
     private:
         uint8_t address;

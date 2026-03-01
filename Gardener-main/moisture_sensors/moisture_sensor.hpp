@@ -26,6 +26,7 @@ class MoistureSensor: public MoistureSensorBase
         // MoistureSensorBase overrides.
         bool is_enabled() { return enabled.get(); }
         IntegerProperty*    get_moisture()  { return &moisture; }
+        void set_moisture(int32_t moist) { moisture.set(moist); }
     private:
         IntegerProperty moisture;
         BooleanProperty enabled;

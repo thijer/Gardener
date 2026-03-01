@@ -1,4 +1,10 @@
 # Changelog
+## [2.8.1] - 1-3-2026
+### Changed
+- Moisture sensors are now also present in the `variables` `PropertyStore` when thingsboard is enabled.
+### Fixed
+- Moisture sensors now use unique names for their internal `IntegerProperty`s when Thingsboard is enabled, instead of "moisture".
+
 ## [2.8.0] - 1-3-2026
 ### Added
 - Support for ArduinoOTA.

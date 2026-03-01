@@ -17,8 +17,9 @@ class MoistureSensor: public ThingDevice, public MoistureSensorBase
         MoistureSensor(const char* name, uint8_t address, bool enabled = true):
             ThingDevice(name, "Gardener-moisture-sensor", enabled),  // Initialize a `ThingDevice` with the given name.
             MoistureSensorBase(name, address),
-            moisture("moisture"),                           // moisture measurements will appear in Thingsboard as "moisture" under telemetry.
-            store({&moisture})                             // Add the property to a `TelemetryStore` that in turn will be used by the `ThingDevice`.
+            moisture_tb("moisture"),                           // moisture measurements will appear in Thingsboard as "moisture" under telemetry.
+            moisture_local(name),
+            store({&moisture_tb})                             // Add the property to a `TelemetryStore` that in turn will be used by the `ThingDevice`.
         {}
 
         void begin()
@@ -28,13 +29,15 @@ class MoistureSensor: public ThingDevice, public MoistureSensorBase
         }
         // MoistureSensorBase overrides.
         bool is_enabled() { return ThingDevice::enabled.get(); }
-        IntegerProperty* get_moisture() { return &moisture; }
+        IntegerProperty* get_moisture() { return &moisture_local; }
+        void set_moisture(int32_t moist) { moisture_tb.set(moist); moisture_local.set(moist); }
 
         // Get access to the ThingDevice enabler.
         BooleanProperty* get_enabler()   { return &enabled; }
 
     private:
-        IntegerProperty moisture;
+        IntegerProperty moisture_tb;        // Used by thingboard with the name "moisture"
+        IntegerProperty moisture_local;     // Used locally with the name <name>.
         PropertyStore<1> store;
 };
 
