@@ -1,4 +1,8 @@
 # Changelog
+## [2.9.0] - 3-3-2026
+### Added
+- `ThingRuleEngine`, a `ThingDevice` inheriting wrapper that allows rules to be set from Thingsboard.
+
 ## [2.8.1] - 1-3-2026
 ### Changed
 - Moisture sensors are now also present in the `variables` `PropertyStore` when thingsboard is enabled.

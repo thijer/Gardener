@@ -17,18 +17,25 @@
 
 // Disable WEBGUI if thingsboard is enabled
 #ifdef ENABLE_THINGSBOARD
-#undef ENABLE_WEBGUI
-#include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
+    #undef ENABLE_WEBGUI
+    #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
+
+    #ifdef ENABLE_WATERINGRULES
+        #define N_DEV_WATERINGRULES 1
+    #endif
+    #ifdef ENABLE_MOISTURE_SENSORS
+        #define N_DEV_MOISTURE 12
+    #endif
 #endif
 
 // Disable hard-coded logic
 #ifdef ENABLE_WATERINGRULES
-#ifndef ENABLE_FEEDER           // Depends on feeder presence.
-#undef ENABLE_WATERINGRULES
-#else
-#undef ENABLE_WATERING_FIXED
-#undef ENABLE_WATERING_MOISTURE
-#endif
+    #ifndef ENABLE_FEEDER           // Depends on feeder presence.
+        #undef ENABLE_WATERINGRULES
+    #else
+        #undef ENABLE_WATERING_FIXED
+        #undef ENABLE_WATERING_MOISTURE
+    #endif
 #endif
 
 // Disable watering logic if the Feeder is unavailable.
@@ -62,11 +69,8 @@ uint32_t   tb_switch_ts = 0;
 bool       tb_switch_state = false;
 
 
-#ifdef ENABLE_MOISTURE_SENSORS
-#define TB_DEVICES 1 + MS_MAX_SENSORS
-#else
-#define TB_DEVICES 1
-#endif
+#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES)
+
 time_t timesource()
 {
     time_t time_now;
@@ -245,7 +249,10 @@ bool start_feed(uint32_t position, uint32_t duration)
 #ifdef ENABLE_WATERINGRULES
 #include "WateringRules/WateringRules.hpp"
 WateringRuleEngine engine(act_feeder);
-
+#ifdef ENABLE_THINGSBOARD
+#include "ThingRuleEngine/ThingRuleEngine.hpp"
+ThingRuleEngine tb_engine(engine, "Watering rule engine", "rule-engine");
+#endif
 #endif
 
 #ifdef ENABLE_WATERING_FIXED
@@ -391,7 +398,10 @@ void setup()
         &moisture_sensor_08,
         &moisture_sensor_09,
         &moisture_sensor_10,
-        &moisture_sensor_11
+        &moisture_sensor_11,
+        #endif
+        #if defined(ENABLE_WATERINGRULES) && defined(ENABLE_WATERINGRULES)
+        &tb_engine
         #endif
     });
     tb_gateway.add_timesource(timesource);
