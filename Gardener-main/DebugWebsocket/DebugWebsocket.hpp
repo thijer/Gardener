@@ -25,6 +25,7 @@ class DebugWebsocket: public Stream
     private:
         NetworkClient client;
         NetworkServer server;
+        uint32_t last_update = 0;
 };
 
 DebugWebsocket::DebugWebsocket(uint32_t port):
@@ -38,21 +39,24 @@ void DebugWebsocket::begin()
 
 void DebugWebsocket::loop()
 {
-    NetworkClient cl = server.accept();
-
-    if(cl.connected())
+    if(millis() - last_update >= 100ul)
     {
-        // No active connection yet
-        if(!client.connected())
+        NetworkClient cl = server.accept();
+
+        if(cl.connected())
         {
-            Serial.println("New client accepted.");
-            client = cl;
-        }
-        // There already is a client connected. Close new connection.
-        else 
-        {
-            Serial.println("New client refused.");
-            cl.stop();
+            // No active connection yet
+            if(!client.connected())
+            {
+                Serial.println("New client accepted.");
+                client = cl;
+            }
+            // There already is a client connected. Close new connection.
+            else 
+            {
+                Serial.println("New client refused.");
+                cl.stop();
+            }
         }
     }
 }
