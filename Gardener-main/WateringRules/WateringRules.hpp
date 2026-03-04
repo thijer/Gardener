@@ -139,8 +139,8 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     WateringRule newrule(
         rule_name,
         params["expression"].as<const char*>(),
-        params["feeder_address"].as<uint32_t>(),
         params["eval_interval"].as<uint32_t>(),
+        params["feeder_address"].as<uint32_t>(),
         params["enabled"].as<bool>(),
         base_parser,
         last_evaluation
