@@ -400,7 +400,7 @@ void setup()
         &moisture_sensor_10,
         &moisture_sensor_11,
         #endif
-        #if defined(ENABLE_WATERINGRULES) && defined(ENABLE_WATERINGRULES)
+        #if defined(ENABLE_WATERINGRULES)
         &tb_engine
         #endif
     });
@@ -576,6 +576,7 @@ void loop()
 
     #ifdef ENABLE_WATERINGRULES
     engine.loop();
+    tb_engine.loop();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
