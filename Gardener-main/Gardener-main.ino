@@ -400,7 +400,7 @@ void setup()
         &moisture_sensor_10,
         &moisture_sensor_11,
         #endif
-        #if defined(ENABLE_WATERINGRULES) && defined(ENABLE_WATERINGRULES)
+        #if defined(ENABLE_WATERINGRULES)
         &tb_engine
         #endif
     });
@@ -576,6 +576,7 @@ void loop()
 
     #ifdef ENABLE_WATERINGRULES
     engine.loop();
+    tb_engine.loop();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
@@ -638,9 +639,10 @@ void parse_command(String& message)
         #ifdef ENABLE_WATERINGRULES
         // {"test_rule":{"expression":"IF(((0.5 * m_sens_00) + (1.2 * m_sens_01)) / (0.5 + 1.2) > 1000, 360, 0)", "eval_interval": 10, "feeder_address": 25, "enabled": true}}
         JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, serial_buffer);
+        DeserializationError err = deserializeJson(doc, message);
         if(err)
         {
+            debug.print("[Serial] ERROR parsing JSON.");
             debug.print(err.c_str());
         }
         else
@@ -694,6 +696,13 @@ void parse_command(String& message)
         WL_CONNECTION_LOST = 5,
         WL_DISCONNECTED = 6 
         */
+    }
+    #endif
+
+    #ifdef ENABLE_WATERINGRULES
+    if(message == "rules")
+    {
+        engine.print();
     }
     #endif
 }

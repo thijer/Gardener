@@ -1,4 +1,15 @@
 # Changelog
+## [2.9.1] - 6-3-2026
+### Fixed
+- Create a semblance of activity from `ThingRuleEngine` to Thingsboard, to prevent Thingsboard from marking `ThingRuleEngine` as inactive and stop sending rules to it.
+- Fixed parameter swap during construction of a `WateringRule`.
+- `DebugSocket` will now only check for connections once every 100ms instead of every time `loop` is called.
+- Removed duplicate preprocessor condition check.
+- JSON deserialization errors are now introduced first.
+
+### Added
+- Rules can now be printed to debug.
+
 ## [2.9.0] - 3-3-2026
 ### Added
 - `ThingRuleEngine`, a `ThingDevice` inheriting wrapper that allows rules to be set from Thingsboard.
