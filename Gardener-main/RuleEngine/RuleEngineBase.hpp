@@ -39,6 +39,8 @@ class Rule
         /// @brief evaluate the expression and return the result.
         /// @return The result of the expression, or NaN if an error occured.
         te_type evaluate();
+
+        bool compile();
     protected:
         /// @brief Name of this rule 
         std::string name;
@@ -79,21 +81,7 @@ Rule::Rule(
     parser(baseparser),
     last_evaluation(last_eval)
 {
-    try
-    {
-        // compile expression.
-        compiled = parser.compile(expression);
-    }
-    catch(std::runtime_error err)
-    {
-        compiled = false;
-        enabled = false;
-    }
-    if(compiled)
-    {
-        // remove variables that are not used in this expression from this parser instance.
-        parser.remove_unused_variables_and_functions();
-    }
+    compile();
 }
 
 void Rule::print_to(Print& sink)
@@ -113,6 +101,26 @@ te_type Rule::evaluate()
         return parser.evaluate();
     }
     return te_type(NAN);
+}
+
+bool Rule::compile()
+{
+    try
+    {
+        // compile expression.
+        compiled = parser.compile(expression);
+    }
+    catch(std::runtime_error err)
+    {
+        compiled = false;
+        enabled = false;
+    }
+    if(compiled)
+    {
+        // remove variables that are not used in this expression from this parser instance.
+        parser.remove_unused_variables_and_functions();
+    }
+    return compiled;
 }
 
 /// @brief Helper function to extract a te_type type value from a templated `Property` instance.

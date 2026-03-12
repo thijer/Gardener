@@ -22,9 +22,18 @@
 
     #ifdef ENABLE_WATERINGRULES
         #define N_DEV_WATERINGRULES 1
+    #else
+        #define N_DEV_WATERINGRULES 0
+    #endif
+    #ifdef ENABLE_PROPERTYRULES
+        #define N_DEV_PROPERTYRULES 1
+    #else
+        #define N_DEV_PROPERTYRULES 0
     #endif
     #ifdef ENABLE_MOISTURE_SENSORS
         #define N_DEV_MOISTURE 12
+    #else
+        #define N_DEV_MOISTURE 0
     #endif
 #endif
 
@@ -69,7 +78,7 @@ uint32_t   tb_switch_ts = 0;
 bool       tb_switch_state = false;
 
 
-#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES)
+#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
 
 time_t timesource()
 {
@@ -253,6 +262,22 @@ WateringRuleEngine engine(act_feeder);
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
 ThingRuleEngine tb_engine(engine, "Watering rule engine", "rule-engine");
 #endif
+// simple hack to prevent the compiler throwing a tantrum when there are as many comma's as input 
+// arguments to `RuleEngine::set_variables`
+IntegerProperty rule_engine_dummy("dummy");
+#endif
+
+#ifdef ENABLE_PROPERTYRULES
+#include "PropertyRuleEngine/PropertyRuleEngine.hpp"
+PropertyRuleEngine prop_engine;
+
+#ifdef ENABLE_THINGSBOARD
+#include "ThingRuleEngine/ThingRuleEngine.hpp"
+ThingRuleEngine tb_prop_engine(prop_engine, "Property rule engine", "rule-engine");
+#endif
+#ifndef ENABLE_WATERINGRULES
+IntegerProperty rule_engine_dummy("dummy");
+#endif
 #endif
 
 #ifdef ENABLE_WATERING_FIXED
@@ -401,7 +426,10 @@ void setup()
         &moisture_sensor_11,
         #endif
         #if defined(ENABLE_WATERINGRULES)
-        &tb_engine
+        &tb_engine,
+        #endif
+        #if defined(ENABLE_PROPERTYRULES)
+        &tb_prop_engine,
         #endif
     });
     tb_gateway.add_timesource(timesource);
@@ -492,8 +520,42 @@ void setup()
         moisture_sensor_08.get_moisture(),
         moisture_sensor_09.get_moisture(),
         moisture_sensor_10.get_moisture(),
-        moisture_sensor_11.get_moisture()
+        moisture_sensor_11.get_moisture(),
     #endif
+        &rule_engine_dummy
+    );
+    #endif
+
+    #ifdef ENABLE_PROPERTYRULES
+    prop_engine.begin(debug);
+    prop_engine.set_variables(
+    #ifdef ENABLE_TEMP
+        &temp_int, 
+        &hum_int,
+        &temp_ext, 
+        &hum_ext,
+    #endif
+    #ifdef ENABLE_LEVEL_SENSOR
+        &tl_volume,
+    #endif
+    #ifdef WINDOW
+        // &window_switch
+    #endif
+    #ifdef ENABLE_MOISTURE_SENSORS
+        moisture_sensor_00.get_moisture(),
+        moisture_sensor_01.get_moisture(),
+        moisture_sensor_02.get_moisture(),
+        moisture_sensor_03.get_moisture(),
+        moisture_sensor_04.get_moisture(),
+        moisture_sensor_05.get_moisture(),
+        moisture_sensor_06.get_moisture(),
+        moisture_sensor_07.get_moisture(),
+        moisture_sensor_08.get_moisture(),
+        moisture_sensor_09.get_moisture(),
+        moisture_sensor_10.get_moisture(),
+        moisture_sensor_11.get_moisture(),
+    #endif
+        &rule_engine_dummy
     );
     #endif
 
@@ -577,6 +639,11 @@ void loop()
     #ifdef ENABLE_WATERINGRULES
     engine.loop();
     tb_engine.loop();
+    #endif
+
+    #ifdef ENABLE_PROPERTYRULES
+    prop_engine.loop();
+    tb_prop_engine.loop();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
@@ -703,6 +770,12 @@ void parse_command(String& message)
     if(message == "rules")
     {
         engine.print();
+    }
+    #endif
+    #ifdef ENABLE_PROPERTYRULES
+    if(message == "rules")
+    {
+        prop_engine.print();
     }
     #endif
 }
