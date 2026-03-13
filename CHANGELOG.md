@@ -1,4 +1,15 @@
 # Changelog
+## [2.10.0] - 13-3-2026
+### Added
+- `PropertyRuleEngine`, a `RuleEngine` implementation that stores the results of evaluated expressions in a `Property`.
+
+### Fixed
+- Compile error when some arguments to `RuleEngine::set_variables` are disabled, and the number of comma's are incorrect.
+- Missing N_DEV_* defines when their corresponding components were not enabled.
+  
+### Changed
+- `Rule`s can now also be compiled after construction.
+
 ## [2.9.1] - 6-3-2026
 ### Fixed
 - Create a semblance of activity from `ThingRuleEngine` to Thingsboard, to prevent Thingsboard from marking `ThingRuleEngine` as inactive and stop sending rules to it.
