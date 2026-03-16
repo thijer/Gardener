@@ -163,22 +163,29 @@ void PropertyRuleEngine::loop()
     // Loop through all the rules 
     for(BasePropertyRule* rule : internal_rules)
     {
-        // Its time to evaluate one
-        if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
+        if(rule->enabled)
         {
-            rule->last_evaluation = millis();
-            debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
-            rule->update();   
+            // Its time to evaluate one
+            if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
+            {
+                rule->last_evaluation = millis();
+                debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
+                rule->update();   
+            }
         }
     }
     for(BasePropertyRule* rule : external_rules)
     {
-        // Its time to evaluate one
-        if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
+        
+        if(rule->enabled)
         {
-            rule->last_evaluation = millis();
-            debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
-            rule->update();
+            // Its time to evaluate one
+            if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
+            {
+                rule->last_evaluation = millis();
+                debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
+                rule->update();
+            }
         }
     }
 }
