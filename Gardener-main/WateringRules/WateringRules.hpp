@@ -71,19 +71,22 @@ void WateringRuleEngine::loop()
     // Loop through all the rules 
     for(WateringRule& rule : rules)
     {
-        // Its time to evaluate one
-        if(millis() - rule.last_evaluation >= (rule.eval_interval * 1000ul))
+        if(rule.enabled)
         {
-            rule.last_evaluation = millis();
-            debug->print("[WateringRuleEngine] evaluating ", rule.get_name());
-            te_type res = rule.evaluate();
-            debug->print("[WateringRuleEngine] result: ", res);
-
-            // The rule shoudl return 0.0 if the section should not be watered, else 
-            // it returns the quantity it should be watered with.
-            if(res > 0.0)
+            // Its time to evaluate one
+            if(millis() - rule.last_evaluation >= (rule.eval_interval * 1000ul))
             {
-                feeder.start_feed(rule.feeder_address, uint32_t(res));
+                rule.last_evaluation = millis();
+                debug->print("[WateringRuleEngine] evaluating ", rule.get_name());
+                te_type res = rule.evaluate();
+                debug->print("[WateringRuleEngine] result: ", res);
+
+                // The rule shoudl return 0.0 if the section should not be watered, else 
+                // it returns the quantity it should be watered with.
+                if(res > 0.0)
+                {
+                    feeder.start_feed(rule.feeder_address, uint32_t(res));
+                }
             }
         }
     }

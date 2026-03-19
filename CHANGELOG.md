@@ -1,4 +1,8 @@
 # Changelog
+## [2.10.1] - 19-3-2026
+### Fixed
+- Actually check if rule is enabled before processing them.
+
 ## [2.10.0] - 13-3-2026
 ### Added
 - `PropertyRuleEngine`, a `RuleEngine` implementation that stores the results of evaluated expressions in a `Property`.
