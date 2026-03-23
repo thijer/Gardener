@@ -23,7 +23,7 @@ class WateringRule: public Rule
             uint32_t eval_interval,
             uint32_t feeder_address,
             bool enabled,
-            te_parser baseparser,
+            te_parser baseparser = te_parser(),
             uint32_t last_eval = 0
         ):
             Rule(name, expression, eval_interval, enabled, baseparser, last_eval),
@@ -40,16 +40,23 @@ class WateringRuleEngine: public RuleEngine
     public:
         /// @brief Construct the rule engine.
         /// @param feeder A `Feeder` instance that will receive the command to water a specific are of the greenhouse.
+        /// @param rules A set of `WateringRule` pointers.
+        /// @param debugger A `Debug` instance where debug messages will be printed to.
         WateringRuleEngine(
-            Feeder& feeder
+            Feeder& feeder,
+            std::initializer_list<WateringRule*> rules,
+            Debug& debugger = emptydebug
         ):
-            RuleEngine(),
-            feeder(feeder)
+            RuleEngine(&debugger),
+            feeder(feeder),
+            rules(rules)
         {}
+
         ~WateringRuleEngine(){}
 
         /// @brief Run the engine
         void loop();
+
         /// @brief Print details about this rule engine and its rules to `debug`.
         void print();
 
@@ -59,36 +66,48 @@ class WateringRuleEngine: public RuleEngine
         /// @return true if the rule is processed successfully.
         bool process_rule(JsonPair pair);
 
+        /// @brief Compile all rules.
+        void compile_rules();
     private:
+        /// @brief A reference to the Feeder object.
         Feeder& feeder;
         
         /// @brief The set of rules to evaluate.
-        std::vector<WateringRule> rules;
+        std::vector<WateringRule*> rules;
 };
 
 void WateringRuleEngine::loop()
 {
     // Loop through all the rules 
-    for(WateringRule& rule : rules)
+    for(WateringRule* rule : rules)
     {
-        if(rule.enabled)
+        if(rule->enabled)
         {
             // Its time to evaluate one
-            if(millis() - rule.last_evaluation >= (rule.eval_interval * 1000ul))
+            if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
             {
-                rule.last_evaluation = millis();
-                debug->print("[WateringRuleEngine] evaluating ", rule.get_name());
-                te_type res = rule.evaluate();
+                rule->last_evaluation = millis();
+                debug->print("[WateringRuleEngine] evaluating ", rule->get_name());
+                te_type res = rule->evaluate();
                 debug->print("[WateringRuleEngine] result: ", res);
 
                 // The rule shoudl return 0.0 if the section should not be watered, else 
                 // it returns the quantity it should be watered with.
                 if(res > 0.0)
                 {
-                    feeder.start_feed(rule.feeder_address, uint32_t(res));
+                    feeder.start_feed(rule->feeder_address, uint32_t(res));
                 }
             }
         }
+    }
+}
+
+void WateringRuleEngine::compile_rules()
+{
+    for(WateringRule* rule : rules)
+    {
+        rule->set_parser(base_parser);
+        rule->compile();
     }
 }
 
@@ -97,7 +116,6 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     // JsonPair pair needs to have the following structure:
     // "rule_id": {
     //     "expression": "gerrit + henk == chaos",
-    //     "feeder_address": 0,
     //     "eval_interval": 600,
     //     "enabled": true
     // }
@@ -115,7 +133,6 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     if(!(
         params["expression"].is<const char*>() &&
         params["eval_interval"].is<uint32_t>() &&
-        params["feeder_address"].is<uint32_t>() &&
         params["enabled"].is<bool>()
     )){
         // JsonObject does not contain correct keys.
@@ -123,64 +140,44 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
         return false;
     }  
     
-    uint32_t last_evaluation = 0;
-    WateringRule* oldrule = nullptr;
-
-    for(WateringRule& rule : rules)
+    for(WateringRule* rule : rules)
     {
-        // Rule already exists.
-        if(strcmp(rule.get_name(), rule_name) == 0)
+        // Found rule
+        if(rule->name == rule_name)
         {
             debug->print("[WateringRuleEngine] Found existing rule with name ", rule_name);
-            oldrule = &rule;
-            last_evaluation = rule.last_evaluation;
-            break;
+            rule->expression    = params["expression"].as<std::string>(),
+            rule->eval_interval = params["eval_interval"].as<uint32_t>(),
+            rule->enabled       = params["enabled"].as<bool>(),
+            rule->set_parser(base_parser);
+            rule->compile();
+
+            if(!rule->compiled)
+            {
+                // Expression compilation error.
+                debug->print("[WateringRuleEngine] ERROR: Expression compilation failed");
+                debug->print(rule->parser.get_last_error_position());
+                debug->print(rule->parser.get_last_error_message().c_str());
+                return false;
+            }
+            else
+            {
+                debug->print("[WateringRuleEngine] Rule updated");
+                return true;
+            }
         }
     }
-
-    // Create rule
-    WateringRule newrule(
-        rule_name,
-        params["expression"].as<const char*>(),
-        params["eval_interval"].as<uint32_t>(),
-        params["feeder_address"].as<uint32_t>(),
-        params["enabled"].as<bool>(),
-        base_parser,
-        last_evaluation
-    );
-    
-    if(!newrule.compiled)
-    {
-        // Expression compilation error.
-        debug->print("[WateringRuleEngine] ERROR: Expression compilation failed");
-        debug->print(newrule.parser.get_last_error_position());
-        debug->print(newrule.parser.get_last_error_message().c_str());
-        
-        return false;
-    }
-    // Replace old rule
-    if(oldrule)
-    { 
-        debug->print("[WateringRuleEngine] Replacing old rule");
-        *oldrule = newrule;
-    }
-    // Append new rule otherwise.
-    else
-    {
-        debug->print("[WateringRuleEngine] Adding new rule");
-        rules.push_back(newrule);
-    }
-    return true;
+    debug->print("[WateringRuleEngine] Rule not found");
 }
 
 void WateringRuleEngine::print()
 {
     debug->print("[WateringRuleEngine] with ", rules.size(), " rules.");
 
-    for(WateringRule& rule : rules)
+    for(WateringRule* rule : rules)
     {
-        rule.print_to(*debug);
-        debug->print("feeder addr: ", rule.feeder_address);
+        rule->print_to(*debug);
+        debug->print("feeder addr: ", rule->feeder_address);
     }
 }
 

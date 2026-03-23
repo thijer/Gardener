@@ -42,6 +42,10 @@ class Rule
 
         bool compile();
     protected:
+        /// @brief Update the parser with a version that likely contains references to more variables.
+        /// @param base_parser A `te_parser` instance from the `RuleEngine` that is already furnaced with the available variables.
+        void set_parser(te_parser base_parser){ parser = base_parser; }
+
         /// @brief Name of this rule 
         std::string name;
 
@@ -181,8 +185,7 @@ class RuleEngine
         void set_variables();
         
         /// @brief Start the engine
-        /// @param debugger A `Debug` instance to send the debug messages to.
-        void begin(Debug& debugger = emptydebug);
+        void begin();
 
         /// @brief Processes a JsonDocument with one or more rules to add or update.
         /// @param obj 
@@ -190,30 +193,39 @@ class RuleEngine
         /// value a nested Json object containing the rrequired parameters of the rule. Exactly what parameters 
         /// depends on the specific implementation of the rule engine derived from this base class.
         void process_attributes(JsonObject obj);
+
         /// @brief Runs the engine. Should be implemented in derived classes.
         virtual void loop() = 0;
         
-        /// @brief Print information about the rule engine to the `debug`er passed to `begin()`.
+        /// @brief Print information about the rule engine to the `debug`er passed to the constructor.
         virtual void print() = 0;
         
     protected:
         /// @brief 
-        RuleEngine();
+        /// @param debugger The debug interface to print messages to.
+        RuleEngine(Debug* debugger);
+
         /// @brief Add or update a rule with the parameters contained in `pair`.
         /// @param pair The parameters needed by the rule.
         /// @return true, if the rule was constructed successfully.
         virtual bool process_rule(JsonPair pair) = 0;
         
+        /// @brief All the variables have been set, so the rules can now be compiled.
+        virtual void compile_rules() = 0;
+
         /// @brief A base expression parser that is provided with the variables, and is copied to all 
         /// rules to be compiled with an expression.
         te_parser base_parser;
+
         /// @brief Stores the `te_Property` function pointer objects.
         std::vector<te_Property*> functionpointers;
+        
         /// @brief A pointer to a `Debug` object that prints debug messages to the relevant outputs.
         Debug* debug;
 };
 
-RuleEngine::RuleEngine()
+RuleEngine::RuleEngine(Debug* debugger):
+    debug(debugger)
 {}
 
 RuleEngine::~RuleEngine()
@@ -250,9 +262,9 @@ void RuleEngine::set_variables()
     return;
 }
 
-void RuleEngine::begin(Debug& debugger)
+void RuleEngine::begin()
 {
-    debug = &debugger;
+    compile_rules();
 }
 
 void RuleEngine::process_attributes(JsonObject obj)
