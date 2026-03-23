@@ -106,7 +106,7 @@ class PropertyRule: public Property<T>, public BasePropertyRule
 class PropertyRuleEngine: public RuleEngine
 {
     public:
-        PropertyRuleEngine(){}
+        PropertyRuleEngine(Debug& debugger = emptydebug);
         ~PropertyRuleEngine();
         void loop();
         void print();
@@ -136,7 +136,7 @@ class PropertyRuleEngine: public RuleEngine
         bool process_rule(JsonPair pair);
     private:
         /// @brief Recompile all uncompiled rules with an updated parser.
-        void recompile_rules();
+        void compile_rules();
 
         /// @brief Find rule by name
         /// @param name The name
@@ -149,6 +149,10 @@ class PropertyRuleEngine: public RuleEngine
         std::vector<BasePropertyRule*> external_rules;
         
 };
+
+PropertyRuleEngine::PropertyRuleEngine(Debug& debugger):
+    RuleEngine(&debugger)
+{}
 
 PropertyRuleEngine::~PropertyRuleEngine()
 {
@@ -247,7 +251,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
         debug->print("[PropertyRuleEngine] Adding new rule");
         internal_rules.push_back(newrule);
         set_variables(newrule);
-        recompile_rules();
+        compile_rules();
         return true;
     }
     else
@@ -258,7 +262,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
         existing_rule->eval_interval = params["eval_interval"].as<uint32_t>();
         existing_rule->enabled = params["enabled"].as<bool>();
         existing_rule->compiled = false;
-        recompile_rules();
+        compile_rules();
         return true;
     }
 
@@ -308,7 +312,7 @@ void PropertyRuleEngine::set_ext_rules()
     return;
 }
 
-void PropertyRuleEngine::recompile_rules()
+void PropertyRuleEngine::compile_rules()
 {
     for(BasePropertyRule* rule : external_rules)
     {

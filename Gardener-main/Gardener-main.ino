@@ -547,7 +547,6 @@ void setup()
     #endif
 
     #ifdef ENABLE_PROPERTYRULES
-    prop_engine.begin(debug);
     prop_engine.set_variables(
     #ifdef ENABLE_TEMP
         &temp_int, 
@@ -577,6 +576,7 @@ void setup()
     #endif
         &rule_engine_dummy
     );
+    prop_engine.begin();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
