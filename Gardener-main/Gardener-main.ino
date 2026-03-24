@@ -257,7 +257,27 @@ bool start_feed(uint32_t position, uint32_t duration)
 
 #ifdef ENABLE_WATERINGRULES
 #include "WateringRules/WateringRules.hpp"
-WateringRuleEngine engine(act_feeder);
+
+WateringRule section_l0("section_l0", "", 86400,   0, false);
+WateringRule section_l1("section_l1", "", 86400,  25, false);
+WateringRule section_l2("section_l2", "", 86400,  50, false);
+WateringRule section_r0("section_r0", "", 86400,  75, false);
+WateringRule section_r1("section_r1", "", 86400, 100, false);
+WateringRule section_r2("section_r2", "", 86400, 125, false);
+
+WateringRuleEngine engine(
+    act_feeder,
+    {
+        &section_l0,
+        &section_l1,
+        &section_l2,
+        &section_r0,
+        &section_r1,
+        &section_r2
+    },
+    debug
+);
+
 #ifdef ENABLE_THINGSBOARD
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
 ThingRuleEngine tb_engine(engine, "Watering rule engine", "rule-engine");
@@ -269,7 +289,7 @@ IntegerProperty rule_engine_dummy("dummy");
 
 #ifdef ENABLE_PROPERTYRULES
 #include "PropertyRuleEngine/PropertyRuleEngine.hpp"
-PropertyRuleEngine prop_engine;
+PropertyRuleEngine prop_engine(debug);
 
 #ifdef ENABLE_THINGSBOARD
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
@@ -494,7 +514,6 @@ void setup()
     #endif
 
     #ifdef ENABLE_WATERINGRULES
-    engine.begin(debug);
     engine.set_variables(
     #ifdef ENABLE_TEMP
         &temp_int, 
@@ -524,10 +543,10 @@ void setup()
     #endif
         &rule_engine_dummy
     );
+    engine.begin();
     #endif
 
     #ifdef ENABLE_PROPERTYRULES
-    prop_engine.begin(debug);
     prop_engine.set_variables(
     #ifdef ENABLE_TEMP
         &temp_int, 
@@ -557,6 +576,7 @@ void setup()
     #endif
         &rule_engine_dummy
     );
+    prop_engine.begin();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED

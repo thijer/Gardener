@@ -6,7 +6,44 @@
 #include "../src/TinyExpr/tinyexpr.h"
 #include "ArduinoJson.h"
 #include "property.hpp"
+#include "propertystore.hpp"
 #include "debug.hpp"
+
+/// @brief A helper class to pass `std::vector`s as `BaseStore`s. 
+class VectorBaseStore: public BaseStore
+{
+    public:
+        /// @brief 
+        /// @tparam T The type of the vector. This should be castable to BaseProperty* 
+        /// @param props A vector with pointers to a `BaseProperty` derived class.
+        template<typename T>
+        VectorBaseStore(std::vector<T>& props):
+            BaseStore(props.size()),
+            properties(props.begin(), props.end())
+        {}
+
+        VectorBaseStore():
+            BaseStore(0)
+        {}
+
+        /// @brief 
+        /// @tparam T The type of the vector. This should be castable to BaseProperty* 
+        /// @param props A vector with pointers to a `BaseProperty` derived class.
+        template<typename T>
+        void set(std::vector<T>& props) { properties = std::vector<BaseProperty*>(props.begin(), props.end()); }
+        
+        // Convert vector iterators to BaseStore iterators.
+        Iterator begin() { return Iterator(static_cast<BaseProperty** const>(properties.begin().base())); }
+        Iterator end()   { return Iterator(static_cast<BaseProperty** const>(properties.end().base())); }
+        
+        BaseProperty* get_property(uint32_t i)
+        {
+            if(i >= properties.size()) return nullptr;
+            else return static_cast<BaseProperty*>(properties[i]);
+        }
+    private:
+        std::vector<BaseProperty*> properties;
+};
 
 /// @brief A self-contained expression that will be evaluated at a certain interval. 
 class Rule
@@ -34,7 +71,7 @@ class Rule
         
         /// @brief Get the name of this rule.
         /// @return The name.
-        const char* get_name() { return name.c_str(); }
+        const char* get_name() { return rulename.c_str(); }
        
         /// @brief evaluate the expression and return the result.
         /// @return The result of the expression, or NaN if an error occured.
@@ -42,8 +79,12 @@ class Rule
 
         bool compile();
     protected:
+        /// @brief Update the parser with a version that likely contains references to more variables.
+        /// @param base_parser A `te_parser` instance from the `RuleEngine` that is already furnaced with the available variables.
+        void set_parser(te_parser base_parser){ parser = base_parser; }
+
         /// @brief Name of this rule 
-        std::string name;
+        std::string rulename;
 
         /// @brief Expression formatted according to the reference (https://github.com/Blake-Madden/tinyexpr-plusplus)
         std::string expression;
@@ -74,7 +115,7 @@ Rule::Rule(
     te_parser baseparser,
     uint32_t last_eval
 ):
-    name(name),
+    rulename(name),
     expression(expression),
     eval_interval(eval_interval),
     enabled(enabled),
@@ -86,7 +127,7 @@ Rule::Rule(
 
 void Rule::print_to(Print& sink)
 {
-    sink.print("name:        "); sink.println(name.c_str());
+    sink.print("name:        "); sink.println(rulename.c_str());
     sink.print("expression:  "); sink.println(expression.c_str());
     sink.print("compiled:    "); sink.println(compiled);
     sink.print("interval:    "); sink.println(eval_interval);
@@ -181,8 +222,7 @@ class RuleEngine
         void set_variables();
         
         /// @brief Start the engine
-        /// @param debugger A `Debug` instance to send the debug messages to.
-        void begin(Debug& debugger = emptydebug);
+        void begin();
 
         /// @brief Processes a JsonDocument with one or more rules to add or update.
         /// @param obj 
@@ -190,30 +230,41 @@ class RuleEngine
         /// value a nested Json object containing the rrequired parameters of the rule. Exactly what parameters 
         /// depends on the specific implementation of the rule engine derived from this base class.
         void process_attributes(JsonObject obj);
+
         /// @brief Runs the engine. Should be implemented in derived classes.
         virtual void loop() = 0;
         
-        /// @brief Print information about the rule engine to the `debug`er passed to `begin()`.
+        /// @brief Print information about the rule engine to the `debug`er passed to the constructor.
         virtual void print() = 0;
+
+        virtual BaseStore& get_rules() = 0;
         
     protected:
         /// @brief 
-        RuleEngine();
+        /// @param debugger The debug interface to print messages to.
+        RuleEngine(Debug* debugger);
+
         /// @brief Add or update a rule with the parameters contained in `pair`.
         /// @param pair The parameters needed by the rule.
         /// @return true, if the rule was constructed successfully.
         virtual bool process_rule(JsonPair pair) = 0;
         
+        /// @brief All the variables have been set, so the rules can now be compiled.
+        virtual void compile_rules() = 0;
+
         /// @brief A base expression parser that is provided with the variables, and is copied to all 
         /// rules to be compiled with an expression.
         te_parser base_parser;
+
         /// @brief Stores the `te_Property` function pointer objects.
         std::vector<te_Property*> functionpointers;
+        
         /// @brief A pointer to a `Debug` object that prints debug messages to the relevant outputs.
         Debug* debug;
 };
 
-RuleEngine::RuleEngine()
+RuleEngine::RuleEngine(Debug* debugger):
+    debug(debugger)
 {}
 
 RuleEngine::~RuleEngine()
@@ -250,9 +301,9 @@ void RuleEngine::set_variables()
     return;
 }
 
-void RuleEngine::begin(Debug& debugger)
+void RuleEngine::begin()
 {
-    debug = &debugger;
+    compile_rules();
 }
 
 void RuleEngine::process_attributes(JsonObject obj)

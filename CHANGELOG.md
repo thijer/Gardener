@@ -1,4 +1,12 @@
 # Changelog
+## [2.11.0] - 24-3-2026
+### Changed
+- `WateringRuleEngine` now works with externally defined `WateringRule`s of which the parameters can be modified in Thingsboard.
+- The `Debug` instance is now passed to the constructor of `RuleEngine` and derivations instead of to `begin()`. 
+
+### Fixed
+- Rules are now requested from Thingsboard at startup.
+
 ## [2.10.1] - 19-3-2026
 ### Fixed
 - Actually check if rule is enabled before processing them.
