@@ -1,10 +1,11 @@
 #ifndef WATERINGRULES_HPP
 #define WATERINGRULES_HPP
 #include "../RuleEngine/RuleEngineBase.hpp"
+#include "../PropertyRuleEngine/PropertyRuleEngine.hpp"
 #include "../feeder.hpp"
 
 /// @brief Construct a rule that governs the watering of a specific area of the greenhouse.
-class WateringRule: public Rule
+class WateringRule: public PropertyRule<int32_t>
 {
     friend class WateringRuleEngine;
 
@@ -26,7 +27,7 @@ class WateringRule: public Rule
             te_parser baseparser = te_parser(),
             uint32_t last_eval = 0
         ):
-            Rule(name, expression, eval_interval, enabled, baseparser, last_eval),
+            PropertyRule<int32_t>(name, expression, eval_interval, enabled, baseparser, last_eval),
             feeder_address(feeder_address)
         {}
     private:
@@ -44,12 +45,13 @@ class WateringRuleEngine: public RuleEngine
         /// @param debugger A `Debug` instance where debug messages will be printed to.
         WateringRuleEngine(
             Feeder& feeder,
-            std::initializer_list<WateringRule*> rules,
+            std::initializer_list<WateringRule*> rules_list,
             Debug& debugger = emptydebug
         ):
             RuleEngine(&debugger),
             feeder(feeder),
-            rules(rules)
+            rules(rules_list),
+            rules_basestore(rules)
         {}
 
         ~WateringRuleEngine(){}
@@ -59,6 +61,8 @@ class WateringRuleEngine: public RuleEngine
 
         /// @brief Print details about this rule engine and its rules to `debug`.
         void print();
+
+        BaseStore& get_rules();
 
     protected:
         /// @brief Process a new rule or update an existing one.
@@ -74,6 +78,8 @@ class WateringRuleEngine: public RuleEngine
         
         /// @brief The set of rules to evaluate.
         std::vector<WateringRule*> rules;
+        
+        VectorBaseStore rules_basestore;
 };
 
 void WateringRuleEngine::loop()
@@ -100,6 +106,11 @@ void WateringRuleEngine::loop()
             }
         }
     }
+}
+
+BaseStore& WateringRuleEngine::get_rules()
+{
+    return rules_basestore;
 }
 
 void WateringRuleEngine::compile_rules()
@@ -143,7 +154,7 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     for(WateringRule* rule : rules)
     {
         // Found rule
-        if(rule->name == rule_name)
+        if(rule->rulename == rule_name)
         {
             debug->print("[WateringRuleEngine] Found existing rule with name ", rule_name);
             rule->expression    = params["expression"].as<std::string>(),

@@ -6,7 +6,44 @@
 #include "../src/TinyExpr/tinyexpr.h"
 #include "ArduinoJson.h"
 #include "property.hpp"
+#include "propertystore.hpp"
 #include "debug.hpp"
+
+/// @brief A helper class to pass `std::vector`s as `BaseStore`s. 
+class VectorBaseStore: public BaseStore
+{
+    public:
+        /// @brief 
+        /// @tparam T The type of the vector. This should be castable to BaseProperty* 
+        /// @param props A vector with pointers to a `BaseProperty` derived class.
+        template<typename T>
+        VectorBaseStore(std::vector<T>& props):
+            BaseStore(props.size()),
+            properties(props.begin(), props.end())
+        {}
+
+        VectorBaseStore():
+            BaseStore(0)
+        {}
+
+        /// @brief 
+        /// @tparam T The type of the vector. This should be castable to BaseProperty* 
+        /// @param props A vector with pointers to a `BaseProperty` derived class.
+        template<typename T>
+        void set(std::vector<T>& props) { properties = std::vector<BaseProperty*>(props.begin(), props.end()); }
+        
+        // Convert vector iterators to BaseStore iterators.
+        Iterator begin() { return Iterator(static_cast<BaseProperty** const>(properties.begin().base())); }
+        Iterator end()   { return Iterator(static_cast<BaseProperty** const>(properties.end().base())); }
+        
+        BaseProperty* get_property(uint32_t i)
+        {
+            if(i >= properties.size()) return nullptr;
+            else return static_cast<BaseProperty*>(properties[i]);
+        }
+    private:
+        std::vector<BaseProperty*> properties;
+};
 
 /// @brief A self-contained expression that will be evaluated at a certain interval. 
 class Rule
@@ -34,7 +71,7 @@ class Rule
         
         /// @brief Get the name of this rule.
         /// @return The name.
-        const char* get_name() { return name.c_str(); }
+        const char* get_name() { return rulename.c_str(); }
        
         /// @brief evaluate the expression and return the result.
         /// @return The result of the expression, or NaN if an error occured.
@@ -47,7 +84,7 @@ class Rule
         void set_parser(te_parser base_parser){ parser = base_parser; }
 
         /// @brief Name of this rule 
-        std::string name;
+        std::string rulename;
 
         /// @brief Expression formatted according to the reference (https://github.com/Blake-Madden/tinyexpr-plusplus)
         std::string expression;
@@ -78,7 +115,7 @@ Rule::Rule(
     te_parser baseparser,
     uint32_t last_eval
 ):
-    name(name),
+    rulename(name),
     expression(expression),
     eval_interval(eval_interval),
     enabled(enabled),
@@ -90,7 +127,7 @@ Rule::Rule(
 
 void Rule::print_to(Print& sink)
 {
-    sink.print("name:        "); sink.println(name.c_str());
+    sink.print("name:        "); sink.println(rulename.c_str());
     sink.print("expression:  "); sink.println(expression.c_str());
     sink.print("compiled:    "); sink.println(compiled);
     sink.print("interval:    "); sink.println(eval_interval);
@@ -199,6 +236,8 @@ class RuleEngine
         
         /// @brief Print information about the rule engine to the `debug`er passed to the constructor.
         virtual void print() = 0;
+
+        virtual BaseStore& get_rules() = 0;
         
     protected:
         /// @brief 

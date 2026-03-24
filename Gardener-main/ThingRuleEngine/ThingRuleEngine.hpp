@@ -31,6 +31,7 @@ ThingRuleEngine::ThingRuleEngine(RuleEngine &engine, const char *name, const cha
     store({&last_update})
 {
     ThingDevice::add_client_attributes(store);
+    ThingDevice::add_shared_attributes(engine.get_rules());
 }
 
 void ThingRuleEngine::loop()
@@ -45,6 +46,7 @@ void ThingRuleEngine::loop()
 
 void ThingRuleEngine::process_attributes(JsonObject obj)
 {
+    download_attributes = false;
     engine.process_attributes(obj);
 }
 

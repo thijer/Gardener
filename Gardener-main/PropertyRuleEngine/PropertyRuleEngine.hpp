@@ -2,6 +2,7 @@
 #define PROPERTYRULEENGINE_HPP
 #include <functional>
 #include "property.hpp"
+#include "propertystore.hpp"
 #include "../RuleEngine/RuleEngineBase.hpp"
 
 /// @brief The non-templated base class for `PropertyRuleEngine` rules that store the results of expressions into a `Property`.
@@ -34,7 +35,7 @@ class BasePropertyRule: public Rule
         /// @brief Print information about this rule to:
         /// @param sink A `Print` interface.
         virtual void print_to(Print& sink) {}
-    private:
+    protected:
         /// @brief Update the parser with a version that likely contains references to more variables.
         /// @param base_parser A `te_parser` instance from the `RuleEngine` that is already furnaced with the available variables.
         void set_parser(te_parser base_parser){ parser = base_parser; }
@@ -122,6 +123,7 @@ class PropertyRuleEngine: public RuleEngine
         /// @brief End of the recursive `set_variables` function.
         void set_ext_rules();
 
+        BaseStore& get_rules();
     protected:
         /// @brief Add or update a rule with the parameters contained in `pair`.
         /// @param pair The parameters needed by the rule.
@@ -147,6 +149,10 @@ class PropertyRuleEngine: public RuleEngine
         std::vector<BasePropertyRule*> internal_rules;
         /// @brief A set of rules that are defined outside this class, This vector only stores pointers to these rules.
         std::vector<BasePropertyRule*> external_rules;
+        // Store the `Property`component of external rules so we can request them from thingsboard.
+        std::vector<BaseProperty*> external_properties;
+        
+        VectorBaseStore rules_basestore;
         
 };
 
@@ -295,6 +301,7 @@ void PropertyRuleEngine::set_ext_rules(PropertyRule<T>* rule, Args... rules)
 {
     debug->print("[PropertyRuleEngine]: Adding ", rule->get_name(), " to rules.");
     external_rules.push_back(rule);
+    external_properties.push_back(rule);
     // Pass the rule to the parser variables so the result of the rule's expression is available to other rules.
     set_variables(rule);
 
@@ -309,7 +316,14 @@ void PropertyRuleEngine::set_ext_rules()
         rule->set_parser(base_parser);
         rule->compile();
     }
+    
+    rules_basestore.set(external_properties);
     return;
+}
+
+BaseStore& PropertyRuleEngine::get_rules()
+{
+    return rules_basestore;
 }
 
 void PropertyRuleEngine::compile_rules()

@@ -289,7 +289,7 @@ IntegerProperty rule_engine_dummy("dummy");
 
 #ifdef ENABLE_PROPERTYRULES
 #include "PropertyRuleEngine/PropertyRuleEngine.hpp"
-PropertyRuleEngine prop_engine;
+PropertyRuleEngine prop_engine(debug);
 
 #ifdef ENABLE_THINGSBOARD
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
