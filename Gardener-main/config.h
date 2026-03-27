@@ -5,6 +5,23 @@
 #define GENERATE_STATE_ENUM(STATE) STATE,       // Generates STATE entries for enums
 #define GENERATE_STATE_STRING(STATE) #STATE,    // Generates STATE entries for a c string array.
 
+// TEST/PRODUCTION
+#ifdef GARDENER_TEST
+#define TB_GARDENER_CONTROL_NAME "Test-gardener-control"
+#define TB_GARDENER_GATEWAY_NAME "Test-gardener-gateway"
+#define TB_GARDENER_WATERINGRULEENGINE_NAME "Test-watering-rule-engine"
+#define TB_GARDENER_PROPERTYRULEENGINE_NAME "Test-property-rule-engine"
+
+#include "tb_test_credentials.h"
+#else
+#define TB_GARDENER_CONTROL_NAME "Gardener-control"
+#define TB_GARDENER_GATEWAY_NAME "Gardener-gateway"
+#define TB_GARDENER_WATERINGRULEENGINE_NAME "Watering-rule-engine"
+#define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
+#include "tb_credentials.h"
+#endif
+
+
 // WEBGUI
 #define WEBGUI_PORT 80
 
@@ -71,6 +88,10 @@
 #define MS_RANGE_LOWER_ADC  (((0 - MS_RANGE_LOWER_VOLT) * (1 << MS_ADC_RESOLUTION)) / MS_RANGE_VOLT)             // Ground voltage in ADC units.
 #define MS_RANGE_ADC        (MS_RANGE_UPPER_ADC - MS_RANGE_LOWER_ADC)
 
-
+#ifdef GARDENER_TEST
+#define M_SENS_NAME(i) "Test-m-sens-" #i
+#else
+#define M_SENS_NAME(i) "m-sens-" #i
+#endif
 
 #endif

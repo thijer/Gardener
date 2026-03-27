@@ -1,4 +1,8 @@
 # Changelog
+## [2.11.1] - 27-3-2026
+### Fixed
+- All thingsboard devices use a "Test-" prefix in their names when `GARDENER_TEST` is defined.
+
 ## [2.11.0] - 24-3-2026
 ### Changed
 - `WateringRuleEngine` now works with externally defined `WateringRule`s of which the parameters can be modified in Thingsboard.
