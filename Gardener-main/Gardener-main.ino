@@ -13,6 +13,7 @@
 #define ENABLE_MOISTURE_SENSORS
 #define ENABLE_LEVEL_SENSOR
 #define ENABLE_WATERINGRULES
+#define ENABLE_PROPERTYRULES
 // #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
 // #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
 
@@ -280,7 +281,7 @@ WateringRuleEngine engine(
 
 #ifdef ENABLE_THINGSBOARD
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
-ThingRuleEngine tb_engine(engine, "Watering rule engine", "rule-engine");
+ThingRuleEngine tb_engine(engine, TB_GARDENER_WATERINGRULEENGINE_NAME, "rule-engine");
 #endif
 // simple hack to prevent the compiler throwing a tantrum when there are as many comma's as input 
 // arguments to `RuleEngine::set_variables`
@@ -293,7 +294,7 @@ PropertyRuleEngine prop_engine(debug);
 
 #ifdef ENABLE_THINGSBOARD
 #include "ThingRuleEngine/ThingRuleEngine.hpp"
-ThingRuleEngine tb_prop_engine(prop_engine, "Property rule engine", "rule-engine");
+ThingRuleEngine tb_prop_engine(prop_engine, TB_GARDENER_PROPERTYRULEENGINE_NAME, "rule-engine");
 #endif
 #ifndef ENABLE_WATERINGRULES
 IntegerProperty rule_engine_dummy("dummy");
