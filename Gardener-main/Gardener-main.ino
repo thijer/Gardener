@@ -3,6 +3,7 @@
 // Enable this definition when the existing memory on the chip needs to be wiped.
 // #define WIPE_MEMORY
 
+// #define GARDENER_TEST
 #define ENABLE_THINGSBOARD
 #define ENABLE_WEBGUI
 #define ENABLE_OTA
@@ -70,7 +71,6 @@
 #include "WiFiClient.h"
 #include "WiFiManager/WiFiManager.hpp"
 #include "DebugWebsocket/DebugWebsocket.hpp"
-#include "tb_credentials.h"
 #include "ThingGateway.hpp"
 
 bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
@@ -87,10 +87,10 @@ time_t timesource()
     return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
 }
 
-WiFiManager manager(SSID, WPA2PSK);
+WiFiManager manager(GARDENER_SSID, GARDENER_WPA2PSK);
 WiFiClient client;
-ThingGateway<TB_DEVICES> tb_gateway(client, tb_server, tb_accesstoken, "Gardener-gateway");
-ThingDevice tb_device("Gardener", "Gardener-control");
+ThingGateway<TB_DEVICES> tb_gateway(client, TB_SERVER, TB_ACCESSTOKEN, TB_GARDENER_GATEWAY_NAME);
+ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
 DebugWebsocket socket(DEBUGSOCKET_PORT);
 String         socket_buffer;
 #endif
@@ -192,18 +192,18 @@ IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL)
 #define N_VARS_MOISTURE 12
 #define N_PROP_MOISTURE 13
 
-MoistureSensor moisture_sensor_00("m_sens_00",  0);
-MoistureSensor moisture_sensor_01("m_sens_01",  1);
-MoistureSensor moisture_sensor_02("m_sens_02",  2, false);
-MoistureSensor moisture_sensor_03("m_sens_03",  3, false);
-MoistureSensor moisture_sensor_04("m_sens_04",  4, false);
-MoistureSensor moisture_sensor_05("m_sens_05",  5, false);
-MoistureSensor moisture_sensor_06("m_sens_06",  6, false);
-MoistureSensor moisture_sensor_07("m_sens_07",  7, false);
-MoistureSensor moisture_sensor_08("m_sens_08",  8, false);
-MoistureSensor moisture_sensor_09("m_sens_09",  9, false);
-MoistureSensor moisture_sensor_10("m_sens_10", 10, false);
-MoistureSensor moisture_sensor_11("m_sens_11", 11, false);
+MoistureSensor moisture_sensor_00(M_SENS_NAME(00),  0);
+MoistureSensor moisture_sensor_01(M_SENS_NAME(01),  1);
+MoistureSensor moisture_sensor_02(M_SENS_NAME(02),  2, false);
+MoistureSensor moisture_sensor_03(M_SENS_NAME(03),  3, false);
+MoistureSensor moisture_sensor_04(M_SENS_NAME(04),  4, false);
+MoistureSensor moisture_sensor_05(M_SENS_NAME(05),  5, false);
+MoistureSensor moisture_sensor_06(M_SENS_NAME(06),  6, false);
+MoistureSensor moisture_sensor_07(M_SENS_NAME(07),  7, false);
+MoistureSensor moisture_sensor_08(M_SENS_NAME(08),  8, false);
+MoistureSensor moisture_sensor_09(M_SENS_NAME(09),  9, false);
+MoistureSensor moisture_sensor_10(M_SENS_NAME(10), 10, false);
+MoistureSensor moisture_sensor_11(M_SENS_NAME(11), 11, false);
 
 MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
