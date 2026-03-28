@@ -5,7 +5,7 @@
 #define GENERATE_STATE_ENUM(STATE) STATE,       // Generates STATE entries for enums
 #define GENERATE_STATE_STRING(STATE) #STATE,    // Generates STATE entries for a c string array.
 
-// TEST/PRODUCTION
+// THINGSBOARD
 #ifdef GARDENER_TEST
 #define TB_GARDENER_CONTROL_NAME "Test-gardener-control"
 #define TB_GARDENER_GATEWAY_NAME "Test-gardener-gateway"
@@ -20,7 +20,6 @@
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
 #include "tb_credentials.h"
 #endif
-
 
 // WEBGUI
 #define WEBGUI_PORT 80
@@ -75,7 +74,7 @@
 #define FEEDER_NOZZLE_EXTRUDE_POS 160
 
 // MOISTURE SENSORS
-#define MS_MAX_SENSORS 12
+#define MS_MAX_SENSORS      12
 #define MS_UPDATE_INTERVAL  10 * 60             // s
 #define MS_READINGS         10ul                // Number of measurements to take to average out noise.
 #define MS_FIXED_RESISTOR   4640l               // Resistor divider fixed resistance (Ohm).
@@ -93,5 +92,54 @@
 #else
 #define M_SENS_NAME(i) "m-sens-" #i
 #endif
+
+// DEPENDENCY RESOLUTION
+
+// Disable WEBGUI if thingsboard is enabled
+#ifdef ENABLE_THINGSBOARD
+    #undef ENABLE_WEBGUI
+    #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
+
+    // Enumerate enabled devices
+    #ifdef ENABLE_WATERINGRULES
+        #define N_DEV_WATERINGRULES 1
+    #else
+        #define N_DEV_WATERINGRULES 0
+    #endif
+    #ifdef ENABLE_PROPERTYRULES
+        #define N_DEV_PROPERTYRULES 1
+    #else
+        #define N_DEV_PROPERTYRULES 0
+    #endif
+    #ifdef ENABLE_MOISTURE_SENSORS
+        #define N_DEV_MOISTURE MS_MAX_SENSORS
+    #else
+        #define N_DEV_MOISTURE 0
+    #endif
+
+#endif
+
+// Disable hard-coded logic
+#ifdef ENABLE_WATERINGRULES
+    #ifndef ENABLE_FEEDER               // Depends on feeder presence.
+        #undef ENABLE_WATERINGRULES
+    #else
+        #undef ENABLE_WATERING_FIXED    // Disable conflicting systems
+        #undef ENABLE_WATERING_MOISTURE
+    #endif
+#endif
+
+// Disable watering logic if the Feeder is unavailable.
+#if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
+#undef ENABLE_WATERING_FIXED
+#endif
+
+// Disable moisture-based watering logic if the Feeder and moisture sensors are not available.
+#if defined(ENABLE_WATERING_MOISTURE) && !(defined(ENABLE_FEEDER) && defined(ENABLE_MOISTURE_SENSORS))
+#undef ENABLE_WATERING_MOISTURE
+#endif
+
+#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
+
 
 #endif

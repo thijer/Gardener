@@ -1,5 +1,7 @@
 #include "Arduino.h"
 
+// IMPORTANT: property keys can not exceed 15 characters, otherwise they can not be saved in ESP32 NVS.
+
 // Enable this definition when the existing memory on the chip needs to be wiped.
 // #define WIPE_MEMORY
 
@@ -16,49 +18,6 @@
 #define ENABLE_PROPERTYRULES
 // #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
 // #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
-
-// Disable WEBGUI if thingsboard is enabled
-#ifdef ENABLE_THINGSBOARD
-    #undef ENABLE_WEBGUI
-    #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
-
-    #ifdef ENABLE_WATERINGRULES
-        #define N_DEV_WATERINGRULES 1
-    #else
-        #define N_DEV_WATERINGRULES 0
-    #endif
-    #ifdef ENABLE_PROPERTYRULES
-        #define N_DEV_PROPERTYRULES 1
-    #else
-        #define N_DEV_PROPERTYRULES 0
-    #endif
-    #ifdef ENABLE_MOISTURE_SENSORS
-        #define N_DEV_MOISTURE 12
-    #else
-        #define N_DEV_MOISTURE 0
-    #endif
-#endif
-
-// Disable hard-coded logic
-#ifdef ENABLE_WATERINGRULES
-    #ifndef ENABLE_FEEDER           // Depends on feeder presence.
-        #undef ENABLE_WATERINGRULES
-    #else
-        #undef ENABLE_WATERING_FIXED
-        #undef ENABLE_WATERING_MOISTURE
-    #endif
-#endif
-
-// Disable watering logic if the Feeder is unavailable.
-#if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
-#undef ENABLE_WATERING_FIXED
-#endif
-
-// Disable moisture-based watering logic if the Feeder and moisture sensors are notavailable.
-#if defined(ENABLE_WATERING_MOISTURE) && !(defined(ENABLE_FEEDER) && defined(ENABLE_MOISTURE_SENSORS))
-#undef ENABLE_WATERING_MOISTURE
-#endif
-
 
 #include "config.h"
 #include "property.hpp"
@@ -77,9 +36,6 @@
 bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
 uint32_t   tb_switch_ts = 0;
 bool       tb_switch_state = false;
-
-
-#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
 
 time_t timesource()
 {
@@ -121,7 +77,6 @@ void cb_ota_start();
 void cb_ota_progress(uint32_t progress, uint32_t total);
 #endif
 
-// IMPORTANT: property keys can not exceed 15 characters.
 // WINDOW CONFIG
 #ifdef ENABLE_WINDOW
 #include "window.hpp"
