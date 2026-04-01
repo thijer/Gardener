@@ -1,7 +1,7 @@
 #ifndef TANKLEVELSENSOR_HPP
 #define TANKLEVELSENSOR_HPP
-#include "../debug.hpp"
 #include "property.hpp"
+#include "../Debug/Debug.hpp"
 #include "../config.h"
 
 template<typename T>

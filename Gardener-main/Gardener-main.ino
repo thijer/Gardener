@@ -24,7 +24,7 @@
 #include "propertystore.hpp"
 #include "PropertyMemory.hpp"
 #include "PropertyTextInterface.hpp"
-#include "debug.hpp"
+#include "Debug/Debug.hpp"
 
 #ifdef ENABLE_THINGSBOARD
 #include "WiFi.h"
@@ -53,7 +53,7 @@ String         socket_buffer;
 #endif
 
 #ifdef ENABLE_WEBGUI
-#include "webinterface/webinterface.hpp"
+#include "WebInterface/WebInterface.hpp"
 WebInterface        webgui(WEBGUI_PORT, PIN_ACT_WEBGUI_ACTIVE);
 String              webgui_buffer;
 volatile bool       webgui_btn_state = 1;           // Set to 1 to let webgui_management update the current state of the switch.
@@ -79,7 +79,7 @@ void cb_ota_progress(uint32_t progress, uint32_t total);
 
 // WINDOW CONFIG
 #ifdef ENABLE_WINDOW
-#include "window.hpp"
+#include "Window/Window.hpp"
 BooleanProperty  window_manual("wd_manual", false);
 BooleanProperty  window_manual_pos("wd_manual_pos", false);
 IntegerProperty  window_open_duration("wd_open_dur", WINDOW_DURATION);
@@ -95,7 +95,7 @@ Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, w
 
 // TEMPHUM SENSOR CONFIG
 #ifdef ENABLE_TEMP
-#include "temphum_sensor.hpp"
+#include "TempHumSensor/TempHumSensor.hpp"
 IntegerProperty   temp_measurement_interval("t_measure_int", TEMP_MEASUREMENT_INTERVAL);
 RealProperty temp_int("temp_internal");
 RealProperty hum_int("hum_internal");
@@ -137,13 +137,13 @@ TankLevelSensor tanklevel(tl_volume, tl_bottomlevel, tl_interval);
  
 // MOISTURE SENSOR CONFIG
 #ifdef ENABLE_MOISTURE_SENSORS
-#include "moisture_sensors/moisture_sensor_interface.hpp"
+#include "MoistureSensor/MoistureSensorInterface.hpp"
 IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
 
 #ifdef ENABLE_THINGSBOARD
-#include "moisture_sensors/moisture_sensor_device.hpp"
+#include "MoistureSensor/MoistureSensorDevice.hpp"
 #else
-#include "moisture_sensors/moisture_sensor.hpp"
+#include "MoistureSensor/MoistureSensor.hpp"
 #endif
 #define N_VARS_MOISTURE 12
 #define N_PROP_MOISTURE 13
@@ -193,7 +193,7 @@ MoistureSensorInterface moisture_sensors(
 
 // FEEDER CONFIG
 #ifdef ENABLE_FEEDER
-#include "feeder.hpp"
+#include "Feeder/Feeder.hpp"
 
 IntegerProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
 IntegerProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
@@ -212,7 +212,7 @@ bool start_feed(uint32_t position, uint32_t duration)
 #endif
 
 #ifdef ENABLE_WATERINGRULES
-#include "WateringRules/WateringRules.hpp"
+#include "RuleEngine/WateringRuleEngine.hpp"
 
 WateringRule section_l0("section_l0", "", 86400,   0, false);
 WateringRule section_l1("section_l1", "", 86400,  25, false);
@@ -235,7 +235,7 @@ WateringRuleEngine engine(
 );
 
 #ifdef ENABLE_THINGSBOARD
-#include "ThingRuleEngine/ThingRuleEngine.hpp"
+#include "RuleEngine/ThingRuleEngine.hpp"
 ThingRuleEngine tb_engine(engine, TB_GARDENER_WATERINGRULEENGINE_NAME, "rule-engine");
 #endif
 // simple hack to prevent the compiler throwing a tantrum when there are as many comma's as input 
@@ -244,11 +244,11 @@ IntegerProperty rule_engine_dummy("dummy");
 #endif
 
 #ifdef ENABLE_PROPERTYRULES
-#include "PropertyRuleEngine/PropertyRuleEngine.hpp"
+#include "RuleEngine/PropertyRuleEngine.hpp"
 PropertyRuleEngine prop_engine(debug);
 
 #ifdef ENABLE_THINGSBOARD
-#include "ThingRuleEngine/ThingRuleEngine.hpp"
+#include "RuleEngine/ThingRuleEngine.hpp"
 ThingRuleEngine tb_prop_engine(prop_engine, TB_GARDENER_PROPERTYRULEENGINE_NAME, "rule-engine");
 #endif
 #ifndef ENABLE_WATERINGRULES
@@ -257,7 +257,7 @@ IntegerProperty rule_engine_dummy("dummy");
 #endif
 
 #ifdef ENABLE_WATERING_FIXED
-#include "wateringlogic/fixedquantities.hpp"
+#include "WateringLogic/FixedQuantity.hpp"
 IntegerProperty gr0_feed_quantity("gr0_fd_quantity", 360);      // 6 min
 IntegerProperty gr0_timeout("gr0_timeout", 24*60*60);           // daily
 #define N_PROP_WATERING_FIXED 2
@@ -269,7 +269,7 @@ FixedQuantity group0("group0", 25, gr0_feed_quantity, gr0_timeout, act_feeder);
 #endif
 
 #ifdef ENABLE_WATERING_MOISTURE
-#include "wateringlogic/moisturelevels.hpp"
+#include "WateringLogic/MoistureLevels.hpp"
 IntegerProperty gr1_feed_quantity("gr1_fd_quantity", 360);      // 6 min
 IntegerProperty gr1_timeout("gr1_timeout", 24*60*60);           // daily
 IntegerProperty gr1_threshold("gr1_threshold", 10000);          // 10 kOhm

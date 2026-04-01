@@ -1,9 +1,9 @@
 #ifndef MOISTURE_SENSOR_INTERFACE_HPP
 #define MOISTURE_SENSOR_INTERFACE_HPP
 #include "property.hpp"
-#include "config.h"
-#include "debug.hpp"
-#include "moisture_sensors/moisture_sensor_base.hpp"
+#include "../Debug/Debug.hpp"
+#include "../config.h"
+#include "MoistureSensor/MoistureSensorBase.hpp"
 
 /// @brief An interface that controls the HC4067 multiplexer to which up to 12 soil
 /// moisture sensors can be connected. 

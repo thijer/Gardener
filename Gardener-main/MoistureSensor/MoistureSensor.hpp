@@ -1,7 +1,7 @@
 #ifndef MOISTURE_SENSOR_HPP
 #define MOISTURE_SENSOR_HPP
 #include "property.hpp"
-#include "moisture_sensors/moisture_sensor_base.hpp"
+#include "MoistureSensor/MoistureSensorBase.hpp"
 
 /// @brief A virtual device that ties moisture measurement storage to the address of the physical sensor.
 class MoistureSensor: public MoistureSensorBase
