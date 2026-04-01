@@ -1,10 +1,10 @@
 #ifndef TEMP_SENSOR_HPP
 #define TEMP_SENSOR_HPP
-#include "config.h"
 #include <DHT_U.h>
 #include <DHT.h>
 #include "property.hpp"
-#include "debug.hpp"
+#include "../Debug/Debug.hpp"
+#include "../config.h"
 
 class TempHumSensor
 {

@@ -2,8 +2,8 @@
 #define WINDOW_HPP
 
 #include "property.hpp"
-#include "debug.hpp"
-#include "config.h"
+#include "../Debug/Debug.hpp"
+#include "../config.h"
 
 #define WINDOW_STATES(P) \
     P(ERROR) \

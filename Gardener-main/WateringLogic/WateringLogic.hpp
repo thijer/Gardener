@@ -1,8 +1,8 @@
 #ifndef WATERING_LOGIC_HPP
 #define WATERING_LOGIC_HPP
-#include "Property.hpp"
-#include "feeder.hpp"
-#include "debug.hpp"
+#include "property.hpp"
+#include "../Feeder/Feeder.hpp"
+#include "../Debug/Debug.hpp"
 
 /* Base class for all derived classes implementing a specific watering strategy. */
 class WateringLogic

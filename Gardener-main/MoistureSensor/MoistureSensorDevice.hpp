@@ -3,7 +3,7 @@
 #include "property.hpp"
 #include "propertystore.hpp"
 #include "ThingDevice.hpp"
-#include "moisture_sensors/moisture_sensor_base.hpp"
+#include "MoistureSensor/MoistureSensorBase.hpp"
 
 /// @brief A virtual device that reports the value of the soil moisture sensor connected 
 /// to the given address of the `MoistureSensorArray` to Thingsboard.

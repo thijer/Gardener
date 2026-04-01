@@ -1,6 +1,7 @@
 #ifndef WEBINTERFACE_HPP
 #define WEBINTERFACE_HPP
 
+
 #include <functional>
 #include <WiFi.h>
 #include <ESPmDNS.h>
@@ -17,7 +18,7 @@
 // #define CONFIG_ASYNC_TCP_STACK_SIZE 4096
 #include "ESPAsyncWebServer.h"
 
-#include "../debug.hpp"
+#include "../Debug/Debug.hpp"
 #include "credentials.h"
 
 #ifdef ENABLE_FEEDER

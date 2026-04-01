@@ -1,9 +1,9 @@
 #ifndef FEEDER_HPP
 #define FEEDER_HPP
 #include "Arduino.h"
-#include "config.h"
 // #include "helpers.hpp"
-#include "debug.hpp"
+#include "../Debug/Debug.hpp"
+#include "../config.h"
 #include <deque>
 
 // Simple structure that merges the two feeding parameters in a single variable.

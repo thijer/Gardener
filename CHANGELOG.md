@@ -1,4 +1,9 @@
 # Changelog
+## [2.11.2] - 1-4-2026
+### Changed
+- All files now use PascalCase and are contained in dedicated subdirs.
+- `VectorBaseStore` is moved to its own file.
+
 ## [2.11.1] - 27-3-2026
 ### Fixed
 - All thingsboard devices use a "Test-" prefix in their names when `GARDENER_TEST` is defined.

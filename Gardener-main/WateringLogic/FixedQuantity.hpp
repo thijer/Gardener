@@ -1,6 +1,6 @@
 #ifndef FIXED_QUANTITIES_HPP
 #define FIXED_QUANTITIES_HPP
-#include "wateringlogic.hpp"
+#include "WateringLogic.hpp"
 
 class FixedQuantity: public WateringLogic
 {

@@ -1,7 +1,7 @@
 #ifndef THINGSRULEENGINE_HPP
 #define THINGSRULEENGINE_HPP
 #include "ThingDevice.hpp"
-#include "../RuleEngine/RuleEngineBase.hpp"
+#include "RuleEngine.hpp"
 #include "property.hpp"
 #include "propertystore.hpp"
 

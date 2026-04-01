@@ -3,7 +3,7 @@
 #include <vector>
 #include <initializer_list>
 #include <utility>
-#include "wateringlogic.hpp"
+#include "WateringLogic.hpp"
 
 // typedef std::pair<IntegerProperty*, double> std::pair<IntegerProperty*, double>;
 
