@@ -1,6 +1,7 @@
 #ifndef FEEDER_HPP
 #define FEEDER_HPP
 #include "Arduino.h"
+#include "property.hpp"
 // #include "helpers.hpp"
 #include "../Debug/Debug.hpp"
 #include "../config.h"
@@ -45,7 +46,8 @@ class Feeder
             pin_port_tx(pin_port_tx),
             pin_port_rx(pin_port_rx),
             nozzle_extrude_pos(nozzle_extrude_pos),
-            nozzle_retract_pos(nozzle_retract_pos)
+            nozzle_retract_pos(nozzle_retract_pos),
+            feeder_state("fd_state", STATE_KEYS)
         {}
         void loop();
         void begin(Debug& debugger = emptydebug);
@@ -71,8 +73,13 @@ class Feeder
             FEEDER_STATES(GENERATE_STATE_ENUM)
         };
         STATE state = STATE::IDLE;
-        static const uint32_t n_keys;
-        static const char* const STATE_KEYS[];
+
+        inline static const char* const STATE_KEYS[] = {
+            FEEDER_STATES(GENERATE_STATE_STRING)
+        };
+        inline static const uint32_t n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS); ;
+
+        CategoricalProperty<n_keys> feeder_state;
         
         uint32_t feed_position = 0;
         uint32_t feed_duration = 0;
@@ -87,13 +94,11 @@ class Feeder
         void serial_input();
         void parse_state(String& val);
         void set_state(STATE newstate);
+
+    public:
+        CategoricalProperty<n_keys>* get_prop_state() { return &feeder_state; };
 };
 
-const char* const Feeder::STATE_KEYS[] = {
-    FEEDER_STATES(GENERATE_STATE_STRING)
-};
-
-const uint32_t Feeder::n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS); 
 
 void Feeder::abort()
 {
@@ -211,6 +216,7 @@ void Feeder::set_state(STATE newstate)
 {
     last_state_change = millis();
     state = newstate;
+    feeder_state.set(static_cast<int32_t>(newstate));
 }
 
 template<typename T, typename... Args>
