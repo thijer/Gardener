@@ -1,4 +1,8 @@
 # Changelog
+## [2.11.3] - 3-4-2026
+### Fixed
+- Rule compilation error caused by rule names containing dashes instead of underscores.
+
 ## [2.11.2] - 1-4-2026
 ### Changed
 - All files now use PascalCase and are contained in dedicated subdirs.

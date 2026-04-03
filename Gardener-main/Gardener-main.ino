@@ -148,18 +148,18 @@ IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL)
 #define N_VARS_MOISTURE 12
 #define N_PROP_MOISTURE 13
 
-MoistureSensor moisture_sensor_00(M_SENS_NAME(00),  0);
-MoistureSensor moisture_sensor_01(M_SENS_NAME(01),  1);
-MoistureSensor moisture_sensor_02(M_SENS_NAME(02),  2, false);
-MoistureSensor moisture_sensor_03(M_SENS_NAME(03),  3, false);
-MoistureSensor moisture_sensor_04(M_SENS_NAME(04),  4, false);
-MoistureSensor moisture_sensor_05(M_SENS_NAME(05),  5, false);
-MoistureSensor moisture_sensor_06(M_SENS_NAME(06),  6, false);
-MoistureSensor moisture_sensor_07(M_SENS_NAME(07),  7, false);
-MoistureSensor moisture_sensor_08(M_SENS_NAME(08),  8, false);
-MoistureSensor moisture_sensor_09(M_SENS_NAME(09),  9, false);
-MoistureSensor moisture_sensor_10(M_SENS_NAME(10), 10, false);
-MoistureSensor moisture_sensor_11(M_SENS_NAME(11), 11, false);
+MoistureSensor moisture_sensor_00(MS_NAME(00),  0, MS_ENABLED & true);
+MoistureSensor moisture_sensor_01(MS_NAME(01),  1, MS_ENABLED & true);
+MoistureSensor moisture_sensor_02(MS_NAME(02),  2, MS_ENABLED & false);
+MoistureSensor moisture_sensor_03(MS_NAME(03),  3, MS_ENABLED & false);
+MoistureSensor moisture_sensor_04(MS_NAME(04),  4, MS_ENABLED & false);
+MoistureSensor moisture_sensor_05(MS_NAME(05),  5, MS_ENABLED & false);
+MoistureSensor moisture_sensor_06(MS_NAME(06),  6, MS_ENABLED & false);
+MoistureSensor moisture_sensor_07(MS_NAME(07),  7, MS_ENABLED & false);
+MoistureSensor moisture_sensor_08(MS_NAME(08),  8, MS_ENABLED & false);
+MoistureSensor moisture_sensor_09(MS_NAME(09),  9, MS_ENABLED & false);
+MoistureSensor moisture_sensor_10(MS_NAME(10), 10, MS_ENABLED & false);
+MoistureSensor moisture_sensor_11(MS_NAME(11), 11, MS_ENABLED & false);
 
 MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,

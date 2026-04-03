@@ -88,10 +88,11 @@
 #define MS_RANGE_ADC        (MS_RANGE_UPPER_ADC - MS_RANGE_LOWER_ADC)
 
 #ifdef GARDENER_TEST
-#define M_SENS_NAME(i) "Test-m-sens-" #i
+#define MS_ENABLED false                // Disable moisture sensors in Thingsboard to prevent feeding random data to production sensors with the same name.  
 #else
-#define M_SENS_NAME(i) "m-sens-" #i
+#define MS_ENABLED true
 #endif
+#define MS_NAME(i) "m_sens_" #i     // Ensure name remains compatible with TinyExpr++ variable naming conventions.
 
 // DEPENDENCY RESOLUTION
 
