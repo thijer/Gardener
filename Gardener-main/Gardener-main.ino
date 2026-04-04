@@ -86,7 +86,7 @@ IntegerProperty  window_open_duration("wd_open_dur", WINDOW_DURATION);
 IntegerProperty  window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN);
 #define N_PROP_WINDOW 4
 // BooleanProperty  window_switch("window_switch");
-#define N_VARS_WINDOW 0
+#define N_VARS_WINDOW 1
 Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, window_open_duration, window_duration_margin);
 #else
 #define N_PROP_WINDOW 0
@@ -198,7 +198,7 @@ MoistureSensorInterface moisture_sensors(
 IntegerProperty feeder_nozzle_retract_pos("fd_nz_retr", FEEDER_NOZZLE_RETRACT_POS);
 IntegerProperty feeder_nozzle_extrude_pos("fd_nz_extr", FEEDER_NOZZLE_EXTRUDE_POS);
 #define N_PROP_FEEDER 2
-#define N_VARS_FEEDER 0
+#define N_VARS_FEEDER 1
 
 Feeder act_feeder(PORT_FEEDER, PIN_FEEDER_TX, PIN_FEEDER_RX, feeder_nozzle_extrude_pos, feeder_nozzle_retract_pos);
 
@@ -346,8 +346,9 @@ PropertyStore<N_VARS> variables({
 #ifdef ENABLE_LEVEL_SENSOR
     &tl_volume,
 #endif
-#ifdef WINDOW
+#ifdef ENABLE_WINDOW
     // &window_switch
+    act_window.get_prop_state(),
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensor_00.get_moisture(),
@@ -362,6 +363,9 @@ PropertyStore<N_VARS> variables({
     moisture_sensor_09.get_moisture(),
     moisture_sensor_10.get_moisture(),
     moisture_sensor_11.get_moisture(),
+#endif
+#ifdef ENABLE_FEEDER
+    act_feeder.get_prop_state(),
 #endif
 });
 

@@ -1,4 +1,8 @@
 # Changelog
+## [2.12.0] - 4-4-2026
+### Added
+- A `CategoricalProperty` for the `Feeder` and `Window` FSM states that will be reported to Thingsboard.
+
 ## [2.11.3] - 3-4-2026
 ### Fixed
 - Rule compilation error caused by rule names containing dashes instead of underscores.
