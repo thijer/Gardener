@@ -77,7 +77,7 @@ class Feeder
         inline static const char* const STATE_KEYS[] = {
             FEEDER_STATES(GENERATE_STATE_STRING)
         };
-        inline static const uint32_t n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS); ;
+        inline static const uint32_t n_keys = sizeof(Feeder::STATE_KEYS) / sizeof(*Feeder::STATE_KEYS);
 
         CategoricalProperty<n_keys> feeder_state;
         

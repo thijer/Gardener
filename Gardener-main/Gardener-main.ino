@@ -86,7 +86,7 @@ IntegerProperty  window_open_duration("wd_open_dur", WINDOW_DURATION);
 IntegerProperty  window_duration_margin("wd_dur_margin", WINDOW_DURATION_MARGIN);
 #define N_PROP_WINDOW 4
 // BooleanProperty  window_switch("window_switch");
-#define N_VARS_WINDOW 0
+#define N_VARS_WINDOW 1
 Window act_window(PIN_ACT_WINDOW_0, PIN_ACT_WINDOW_1, PIN_SENS_WINDOW_ENDSTOP, window_open_duration, window_duration_margin);
 #else
 #define N_PROP_WINDOW 0
@@ -346,8 +346,9 @@ PropertyStore<N_VARS> variables({
 #ifdef ENABLE_LEVEL_SENSOR
     &tl_volume,
 #endif
-#ifdef WINDOW
+#ifdef ENABLE_WINDOW
     // &window_switch
+    act_window.get_prop_state(),
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensor_00.get_moisture(),

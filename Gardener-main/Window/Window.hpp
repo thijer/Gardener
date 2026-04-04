@@ -28,7 +28,8 @@ class Window
             pin_ctrl_2(ctrl_2),
             pin_endstop(endstop),
             window_open_duration(open_duration),
-            window_duration_margin(duration_margin)
+            window_duration_margin(duration_margin),
+            window_state("wd_state", STATE_KEYS)
         {};
 
         bool begin(Debug& debugger = emptydebug);
@@ -36,10 +37,14 @@ class Window
         void set_position(bool pos) { set_position(window_open_duration.get(), pos); }
         void set_position(uint32_t duration, bool direction);
         bool get_position() { return open_window; }
-    
+        
+        inline static const char* const STATE_KEYS[] = {
+            WINDOW_STATES(GENERATE_STATE_STRING)
+        }; 
+        inline static const uint32_t n_keys = sizeof(Window::STATE_KEYS) / sizeof(*Window::STATE_KEYS);
+        CategoricalProperty<n_keys>* get_prop_state() { return &window_state; };
+
     private:
-        static const char* const STATE_KEYS[]; 
-            
         bool open_window = false;       // Desired state of the window, open = true, closed = false.
         STATE state = STATE::CLOSING;
     
@@ -51,15 +56,11 @@ class Window
         bool direction = true;
         IntegerProperty& window_open_duration;
         IntegerProperty& window_duration_margin;
+        CategoricalProperty<n_keys> window_state;
         // BooleanProperty* window_endstop;
         Debug* debug;
 
         void set_state(STATE new_state);
-
-};
-
-const char* const Window::STATE_KEYS[] = {
-    WINDOW_STATES(GENERATE_STATE_STRING)
 };
 
 bool Window::begin(Debug& debugger)
@@ -122,6 +123,7 @@ void Window::set_state(STATE new_state)
     }
     last_state_change = millis();
     state = new_state;
+    window_state.set(static_cast<int32_t>(new_state));
     debug->print("[Window] state: ", STATE_KEYS[new_state]);
 }
 
