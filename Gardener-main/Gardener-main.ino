@@ -26,6 +26,8 @@
 #include "PropertyTextInterface.hpp"
 #include "Debug/Debug.hpp"
 
+Debug debug({&Serial});
+
 #ifdef ENABLE_THINGSBOARD
 #include "WiFi.h"
 #include "WiFiClient.h"
@@ -59,14 +61,6 @@ String              webgui_buffer;
 volatile bool       webgui_btn_state = 1;           // Set to 1 to let webgui_management update the current state of the switch.
 volatile uint32_t   webgui_btn_ts = 0;
 bool                webgui_des_state = false;
-#endif
-
-#if defined(ENABLE_WEBGUI)
-Debug debug({&webgui, &Serial});
-#elif defined(ENABLE_THINGSBOARD)
-Debug debug({&socket, &Serial});
-#else
-Debug debug({&Serial});
 #endif
 
 #ifdef ENABLE_OTA
@@ -382,6 +376,7 @@ void setup()
     serial_buffer.reserve(51);
     
     #ifdef ENABLE_THINGSBOARD
+    debug.add_streamer(&socket);
     pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
     manager.begin(debug);
 
@@ -419,6 +414,7 @@ void setup()
     #endif
 
     #ifdef ENABLE_WEBGUI
+    debug.add_streamer(&webgui);
     pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
     attachInterrupt(PIN_SENS_WEBGUI_ENABLE, webgui_button_isr, CHANGE);
 

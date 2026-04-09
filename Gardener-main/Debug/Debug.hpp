@@ -11,6 +11,13 @@ class Debug : public Print
             streamers(s)
         {}
 
+        /// @brief Add a `Stream` interface to print messages to.
+        /// @param s The interface
+        void add_streamer(Stream* s)
+        {
+            streamers.push_back(s);
+        }
+
         /// @brief Print a variable number of values/strings to all connected `Stream`ers.
         /// @tparam ...Args Types of the values.
         /// @param ...args The values.
