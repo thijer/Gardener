@@ -11,14 +11,11 @@
 #define TB_GARDENER_GATEWAY_NAME "Test-gardener-gateway"
 #define TB_GARDENER_WATERINGRULEENGINE_NAME "Test-watering-rule-engine"
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Test-property-rule-engine"
-
-#include "tb_test_credentials.h"
 #else
 #define TB_GARDENER_CONTROL_NAME "Gardener-control"
 #define TB_GARDENER_GATEWAY_NAME "Gardener-gateway"
 #define TB_GARDENER_WATERINGRULEENGINE_NAME "Watering-rule-engine"
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
-#include "tb_credentials.h"
 #endif
 
 // WEBGUI
@@ -96,9 +93,9 @@
 
 // DEPENDENCY RESOLUTION
 
-// Disable WEBGUI if thingsboard is enabled
 #ifdef ENABLE_THINGSBOARD
-    #undef ENABLE_WEBGUI
+    #undef ENABLE_WEBGUI                // Disable WEBGUI if thingsboard is enabled
+    #define ENABLE_WIFI                 // Enable Wifi
     #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
 
     // Enumerate enabled devices

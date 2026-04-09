@@ -20,16 +20,21 @@
 // #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
 
 #include "config.h"
+#include "secrets.h"
 #include "property.hpp"
 #include "propertystore.hpp"
 #include "PropertyMemory.hpp"
 #include "PropertyTextInterface.hpp"
 #include "Debug/Debug.hpp"
 
-#ifdef ENABLE_THINGSBOARD
+#ifdef ENABLE_WIFI
 #include "WiFi.h"
-#include "WiFiClient.h"
 #include "WiFiManager/WiFiManager.hpp"
+WiFiManager manager(WIFI_STA_SSID, WIFI_STA_WPA2PSK);
+#endif
+
+#ifdef ENABLE_THINGSBOARD
+#include "WiFiClient.h"
 #include "DebugWebsocket/DebugWebsocket.hpp"
 #include "ThingGateway.hpp"
 
@@ -44,7 +49,6 @@ time_t timesource()
     return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
 }
 
-WiFiManager manager(GARDENER_SSID, GARDENER_WPA2PSK);
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, TB_SERVER, TB_ACCESSTOKEN, TB_GARDENER_GATEWAY_NAME);
 ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
