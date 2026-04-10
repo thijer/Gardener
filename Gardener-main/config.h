@@ -18,6 +18,9 @@
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
 #endif
 
+// WIFI
+#define WIFI_AP_DISCONNECT_DELAY 3000ul
+
 // WEBGUI
 #define WEBGUI_PORT 80
 
@@ -95,7 +98,8 @@
 
 #ifdef ENABLE_THINGSBOARD
     #undef ENABLE_WEBGUI                // Disable WEBGUI if thingsboard is enabled
-    #define ENABLE_WIFI                 // Enable Wifi
+    #undef ENABLE_WIFI_AP               // Disable WiFi accesspoint if defined.
+    #define ENABLE_WIFI_STA             // Enable WiFi station mode.
     #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
 
     // Enumerate enabled devices
@@ -139,5 +143,22 @@
 
 #define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
 
+// If wifi is enabled, ...
+#ifdef ENABLE_WIFI
+    // enable wifi station mode if mode is not specified
+    #if !defined(ENABLE_WIFI_STA) && !defined(ENABLE_WIFI_AP)
+    #define ENABLE_WIFI_STA
+    #endif
+#endif
+
+#if defined(ENABLE_WIFI_STA)
+    #define WIFI_SSID WIFI_STA_SSID
+    #define WIFI_WPA2PSK WIFI_STA_WPA2PSK
+    #define ENABLE_WIFI
+#elif defined(ENABLE_WIFI_AP)
+    #define WIFI_SSID WIFI_AP_SSID
+    #define WIFI_WPA2PSK WIFI_AP_WPA2PSK
+    #define ENABLE_WIFI
+#endif
 
 #endif

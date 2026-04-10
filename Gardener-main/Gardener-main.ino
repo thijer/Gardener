@@ -30,7 +30,7 @@
 #ifdef ENABLE_WIFI
 #include "WiFi.h"
 #include "WiFiManager/WiFiManager.hpp"
-WiFiManager manager(WIFI_STA_SSID, WIFI_STA_WPA2PSK);
+WiFiManager manager(WIFI_SSID, WIFI_WPA2PSK);
 #endif
 
 #ifdef ENABLE_THINGSBOARD

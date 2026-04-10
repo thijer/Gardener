@@ -2,6 +2,7 @@
 #define WIFIMANAGER_HPP
 #include "WiFi.h"
 #include "../Debug/Debug.hpp"
+#include "../config.h"
 
 class WiFiManager
 {
@@ -34,7 +35,7 @@ class WiFiManager
     uint32_t last_state_change = 0;
     Debug* debug;
 
-    
+
     WIFI_STATE state = DISCONNECTED;
 };
 
@@ -46,7 +47,11 @@ WiFiManager::WiFiManager(const char* ssid, const char* passphrase, bool initial_
 
 void WiFiManager::begin(Debug &debugger)
 {
+    #ifdef ENABLE_WIFI_STA
     WiFi.mode(WIFI_STA);
+    #else
+    WiFi.mode(WIFI_AP);
+    #endif
     debug = &debugger;
 }
 
@@ -93,14 +98,23 @@ void WiFiManager::loop()
     }
     else if(state == DISCONNECTING)
     {
+        #ifdef ENABLE_WIFI_STA
         if(status == WL_DISCONNECTED || status == WL_STOPPED)
         {
             set_state(DISCONNECTED);
         }
+        #else
+        // Give dependent systems 3 seconds to wrap up before actually disconnecting.
+        if(millis() - last_state_change >= WIFI_AP_DISCONNECT_DELAY)
+        {
+            set_state(DISCONNECTED);
+        }
+        #endif
     }
 
 }
 
+#ifdef ENABLE_WIFI_STA
 void WiFiManager::set_state(WIFI_STATE newstate)
 {
     state = newstate;
@@ -133,4 +147,31 @@ void WiFiManager::set_state(WIFI_STATE newstate)
         debug->print("[WiFiManager] Disconnected.");
     }
 }
+#else
+void WiFiManager::set_state(WIFI_STATE newstate)
+{
+    state = newstate;
+    last_state_change = millis();
+
+    if(newstate == CONNECTING || newstate == RECONNECTING)
+    {
+        debug->print("[WiFiManager] Starting AP with SSID: ", ssid);
+        WiFi.softAP(ssid, passphrase);
+    }
+    else if(newstate == CONNECTED)
+    {
+        debug->print("[WiFiManager] IP: ", WiFi.localIP());
+    }
+    else if(newstate == DISCONNECTING)
+    {
+        debug->print("[WiFiManager] Disconnecting AP.");
+    }
+    else if(newstate == DISCONNECTED)
+    {
+        debug->print("[WiFiManager] Disconnected.");
+        WiFi.softAPdisconnect(true);
+    }
+}
+#endif
+
 #endif
