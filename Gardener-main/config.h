@@ -25,7 +25,7 @@
 #define WEBGUI_PORT 80
 
 // DEBUGSOCKET
-#define DEBUGSOCKET_PORT 80
+#define DEBUGSOCKET_PORT 81
 
 // TEMPERATURE MANAGEMENT
 #define TEMP_MAX 28.0
@@ -95,6 +95,9 @@
 #define MS_NAME(i) "m_sens_" #i     // Ensure name remains compatible with TinyExpr++ variable naming conventions.
 
 // DEPENDENCY RESOLUTION
+#ifdef ENABLE_DEBUGSOCKET
+    #define ENABLE_WIFI
+#endif
 
 #ifdef ENABLE_THINGSBOARD
     #undef ENABLE_WEBGUI                // Disable WEBGUI if thingsboard is enabled

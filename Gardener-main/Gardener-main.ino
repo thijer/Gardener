@@ -35,9 +35,14 @@ Debug debug({&Serial});
 WiFiManager manager(WIFI_SSID, WIFI_WPA2PSK);
 #endif
 
+#ifdef ENABLE_DEBUGSOCKET
+#include "DebugWebsocket/DebugWebsocket.hpp"
+DebugWebsocket socket(DEBUGSOCKET_PORT);
+String         socket_buffer;
+#endif
+
 #ifdef ENABLE_THINGSBOARD
 #include "WiFiClient.h"
-#include "DebugWebsocket/DebugWebsocket.hpp"
 #include "ThingGateway.hpp"
 
 bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
@@ -54,8 +59,6 @@ time_t timesource()
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, TB_SERVER, TB_ACCESSTOKEN, TB_GARDENER_GATEWAY_NAME);
 ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
-DebugWebsocket socket(DEBUGSOCKET_PORT);
-String         socket_buffer;
 #endif
 
 #ifdef ENABLE_WEBGUI
@@ -379,10 +382,17 @@ void setup()
     debug.print("[Gardener] Starting.");
     serial_buffer.reserve(51);
     
-    #ifdef ENABLE_THINGSBOARD
-    debug.add_streamer(&socket);
-    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
+    #ifdef ENABLE_WIFI
     manager.begin(debug);
+    #endif
+
+    #ifdef ENABLE_DEBUGSOCKET
+    debug.add_streamer(&socket);
+    socket.begin();
+    #endif
+
+    #ifdef ENABLE_THINGSBOARD
+    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
 
     debug.print("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
@@ -414,7 +424,6 @@ void setup()
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
     // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
-    socket.begin();
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -586,16 +595,22 @@ void loop()
 
     serial_input();
 
+    #ifdef ENABLE_DEBUGSOCKET
+    socket.loop();
+    debugsocket_input();
+    #endif
+
+    #ifdef ENABLE_WIFI
+    manager.loop();
+    #endif
+
     #ifdef ENABLE_THINGSBOARD
     tb_management();
-    manager.loop();
     if(manager.connected())
     {
         tb_device.loop();
         tb_gateway.loop();
     }
-    socket.loop();
-    websocket_input();
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -796,8 +811,10 @@ void tb_management()
         else if(tb_switch_state) tb_gateway.disable();
     }
 }
+#endif
 
-void websocket_input()
+#ifdef ENABLE_DEBUGSOCKET
+void debugsocket_input()
 {
     while(socket.available() > 0)
     {
