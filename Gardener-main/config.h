@@ -19,7 +19,7 @@
 #endif
 
 // WIFI
-#define WIFI_AP_DISCONNECT_DELAY 3000ul
+#define WIFI_DISCONNECT_DELAY 3000ul
 
 // WEBGUI
 #define WEBGUI_PORT 80
@@ -56,7 +56,7 @@
 #define PIN_FEEDER_TX 17
 #define PIN_FEEDER_RX 16
 
-#define PIN_SENS_WEBGUI_ENABLE 36
+#define PIN_SENS_WIFI_ENABLE 36
 #define PIN_ACT_WEBGUI_ACTIVE 2
 
 #define PIN_SENS_LEVEL_ECHO 35
@@ -100,7 +100,6 @@
 #endif
 
 #ifdef ENABLE_THINGSBOARD
-    #undef ENABLE_WEBGUI                // Disable WEBGUI if thingsboard is enabled
     #undef ENABLE_WIFI_AP               // Disable WiFi accesspoint if defined.
     #define ENABLE_WIFI_STA             // Enable WiFi station mode.
     #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
@@ -122,6 +121,10 @@
         #define N_DEV_MOISTURE 0
     #endif
 
+#endif
+
+#ifdef ENABLE_WEBGUI
+    #define ENABLE_WIFI
 #endif
 
 // Disable hard-coded logic

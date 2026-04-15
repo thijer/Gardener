@@ -33,6 +33,9 @@ Debug debug({&Serial});
 #include "WiFi.h"
 #include "WiFiManager/WiFiManager.hpp"
 WiFiManager manager(WIFI_SSID, WIFI_WPA2PSK);
+bool       wifi_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
+uint32_t   wifi_switch_ts = 0;
+bool       wifi_switch_state = false;
 #endif
 
 #ifdef ENABLE_DEBUGSOCKET
@@ -44,10 +47,6 @@ String         socket_buffer;
 #ifdef ENABLE_THINGSBOARD
 #include "WiFiClient.h"
 #include "ThingGateway.hpp"
-
-bool       tb_switch_flipped = 1;    // Set to 1 to to read the current switch state during startup.
-uint32_t   tb_switch_ts = 0;
-bool       tb_switch_state = false;
 
 time_t timesource()
 {
@@ -65,9 +64,6 @@ ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
 #include "WebInterface/WebInterface.hpp"
 WebInterface        webgui(WEBGUI_PORT, PIN_ACT_WEBGUI_ACTIVE);
 String              webgui_buffer;
-volatile bool       webgui_btn_state = 1;           // Set to 1 to let webgui_management update the current state of the switch.
-volatile uint32_t   webgui_btn_ts = 0;
-bool                webgui_des_state = false;
 #endif
 
 #ifdef ENABLE_OTA
@@ -383,6 +379,7 @@ void setup()
     serial_buffer.reserve(51);
     
     #ifdef ENABLE_WIFI
+    pinMode(PIN_SENS_WIFI_ENABLE, INPUT);
     manager.begin(debug);
     #endif
 
@@ -392,8 +389,6 @@ void setup()
     #endif
 
     #ifdef ENABLE_THINGSBOARD
-    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
-
     debug.print("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
     tb_device.add_telemetry(variables);
@@ -428,8 +423,6 @@ void setup()
 
     #ifdef ENABLE_WEBGUI
     debug.add_streamer(&webgui);
-    pinMode(PIN_SENS_WEBGUI_ENABLE, INPUT); // 36 does not have an internal pullup.
-    attachInterrupt(PIN_SENS_WEBGUI_ENABLE, webgui_button_isr, CHANGE);
 
     webgui_buffer.reserve(51);
     bool success = webgui.begin(debug);
@@ -601,16 +594,12 @@ void loop()
     #endif
 
     #ifdef ENABLE_WIFI
+    wifi_management();
     manager.loop();
     #endif
 
     #ifdef ENABLE_THINGSBOARD
     tb_management();
-    if(manager.connected())
-    {
-        tb_device.loop();
-        tb_gateway.loop();
-    }
     #endif
 
     #ifdef ENABLE_WEBGUI
@@ -742,7 +731,7 @@ void parse_command(String& message)
     }
     #endif
 
-    #ifdef ENABLE_THINGSBOARD
+    #ifdef ENABLE_WIFI
     if(message == "wifi")
     {
         debug.print("RSSI:   ", WiFi.RSSI());
@@ -793,22 +782,42 @@ void serial_input()
     }
 }
 
-#ifdef ENABLE_THINGSBOARD
-void tb_management()
+#ifdef ENABLE_WIFI
+void wifi_management()
 {
-    if(digitalRead(PIN_SENS_WEBGUI_ENABLE) != tb_switch_state && !tb_switch_flipped)
+    if(digitalRead(PIN_SENS_WIFI_ENABLE) != wifi_switch_state && !wifi_switch_flipped)
     {
-        tb_switch_flipped = true;
-        tb_switch_ts = millis();
+        wifi_switch_flipped = true;
+        wifi_switch_ts = millis();
     }
-    else if(tb_switch_flipped && (millis() - tb_switch_ts) > 30ul)
+    else if(wifi_switch_flipped && (millis() - wifi_switch_ts) > 30ul)
     {
-        tb_switch_flipped = 0;
-        tb_switch_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
-        debug.print("[Gardener] switch flipped: ", tb_switch_state);
+        wifi_switch_flipped = false;
+        wifi_switch_state = digitalRead(PIN_SENS_WIFI_ENABLE);
+        debug.print("[Gardener] switch flipped: ", wifi_switch_state);
         
-        if(!tb_switch_state) tb_gateway.enable();
-        else if(tb_switch_state) tb_gateway.disable();
+        if(!wifi_switch_state) manager.enable();
+        else if(wifi_switch_state) manager.disable();
+    }
+}
+#endif
+
+#ifdef ENABLE_THINGSBOARD
+inline void tb_management()
+{
+    // Enable when wifi is enabled.
+    if(manager.connected() && !tb_gateway.connected())
+    {
+        tb_gateway.enable();
+    }
+    else if(!manager.connected() && tb_gateway.connected())
+    {
+        tb_gateway.disable();
+    }
+    if(manager.connected())
+    {
+        tb_device.loop();
+        tb_gateway.loop();
     }
 }
 #endif
@@ -855,33 +864,18 @@ void websocket_input()
     }
 }
 
-void webgui_button_isr()
+inline void webgui_management()
 {
-    webgui_btn_ts = millis();
-    webgui_btn_state = true;
-    detachInterrupt(PIN_SENS_WEBGUI_ENABLE);
-}
-
-void webgui_management()
-{
-    if(webgui_btn_state && (millis() - webgui_btn_ts) > 30)
+    // Enable when wifi is enabled.
+    if(manager.connected() && !webgui.running())
     {
-        webgui_btn_state = 0;
-        attachInterrupt(PIN_SENS_WEBGUI_ENABLE, webgui_button_isr, CHANGE);
-        webgui_des_state = digitalRead(PIN_SENS_WEBGUI_ENABLE);
-        debug.print("[WebGUI] button pressed: ", webgui_des_state);
-        if(!webgui_des_state && !webgui.running())
-        {
-            webgui.start();
-        }
-        else if(webgui_des_state && webgui.running())
-        {
-            webgui.stop();
-        }
+        webgui.start();
     }
-    
+    else if(!manager.connected() && webgui.running())
+    {
+        webgui.stop();
+    }
 }
-
 #endif
 
 #ifdef ENABLE_OTA

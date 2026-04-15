@@ -25,6 +25,7 @@ class WiFiManager
         CONNECTING,
         CONNECTED,
         RECONNECTING,
+        PRE_DISCONNECT,
         DISCONNECTING
     };
     
@@ -51,10 +52,13 @@ void WiFiManager::begin(Debug &debugger)
     WiFi.mode(WIFI_STA);
     #else
     WiFi.mode(WIFI_AP);
+    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+    WiFi.softAPdisconnect(true);
     #endif
     debug = &debugger;
 }
 
+#ifdef ENABLE_WIFI_STA
 void WiFiManager::loop()
 {
     wl_status_t status = WiFi.status();
@@ -93,28 +97,26 @@ void WiFiManager::loop()
         }
         else if(!desired_state && status == WL_CONNECTED)
         {
+            set_state(PRE_DISCONNECT);
+        }
+    }
+    else if(state == PRE_DISCONNECT)
+    {
+        if(millis() - last_state_change >= WIFI_DISCONNECT_DELAY)
+        {
             set_state(DISCONNECTING);
         }
     }
     else if(state == DISCONNECTING)
     {
-        #ifdef ENABLE_WIFI_STA
         if(status == WL_DISCONNECTED || status == WL_STOPPED)
         {
             set_state(DISCONNECTED);
         }
-        #else
-        // Give dependent systems 3 seconds to wrap up before actually disconnecting.
-        if(millis() - last_state_change >= WIFI_AP_DISCONNECT_DELAY)
-        {
-            set_state(DISCONNECTED);
-        }
-        #endif
     }
 
 }
 
-#ifdef ENABLE_WIFI_STA
 void WiFiManager::set_state(WIFI_STATE newstate)
 {
     state = newstate;
@@ -137,6 +139,10 @@ void WiFiManager::set_state(WIFI_STATE newstate)
         debug->print("[WiFiManager] ERROR: Connection failed. Retrying.");
         WiFi.reconnect();
     }
+    else if(newstate == PRE_DISCONNECT)
+    {
+        debug->print("[WiFiManager] Disconnection notice");
+    }
     else if(newstate == DISCONNECTING)
     {
         debug->print("[WiFiManager] Disconnecting.");
@@ -148,6 +154,41 @@ void WiFiManager::set_state(WIFI_STATE newstate)
     }
 }
 #else
+
+void WiFiManager::loop()
+{
+    if(state == DISCONNECTED)
+    {
+        if(desired_state)
+        {
+            set_state(CONNECTING);
+        }
+    }
+    else if(state == CONNECTING || state == RECONNECTING)
+    {
+        
+    }
+    else if(state == CONNECTED)
+    {
+        if(desired_state && !WiFi.AP.started())
+        {
+            set_state(RECONNECTING);
+        }
+        else if(!desired_state && WiFi.AP.started())
+        {
+            set_state(DISCONNECTING);
+        }
+    }
+    else if(state == DISCONNECTING)
+    {
+        // Give dependent systems 3 seconds to wrap up before actually disconnecting.
+        if(millis() - last_state_change >= WIFI_DISCONNECT_DELAY)
+        {
+            set_state(DISCONNECTED);
+        }
+    }
+}
+
 void WiFiManager::set_state(WIFI_STATE newstate)
 {
     state = newstate;
@@ -156,11 +197,18 @@ void WiFiManager::set_state(WIFI_STATE newstate)
     if(newstate == CONNECTING || newstate == RECONNECTING)
     {
         debug->print("[WiFiManager] Starting AP with SSID: ", ssid);
-        WiFi.softAP(ssid, passphrase);
+        if(WiFi.softAP(ssid, passphrase))
+        {
+            set_state(CONNECTED);
+        }
+        else
+        {
+            set_state(DISCONNECTED);
+        }
     }
     else if(newstate == CONNECTED)
     {
-        debug->print("[WiFiManager] IP: ", WiFi.localIP());
+        debug->print("[WiFiManager] IP: ", WiFi.softAPIP());
     }
     else if(newstate == DISCONNECTING)
     {
