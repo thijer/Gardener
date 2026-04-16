@@ -622,12 +622,16 @@ void loop()
 
     #ifdef ENABLE_WATERINGRULES
     engine.loop();
+    #ifdef ENABLE_THINGSBOARD
     tb_engine.loop();
+    #endif
     #endif
 
     #ifdef ENABLE_PROPERTYRULES
     prop_engine.loop();
+    #ifdef ENABLE_THINGSBOARD
     tb_prop_engine.loop();
+    #endif
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
