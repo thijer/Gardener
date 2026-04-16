@@ -166,7 +166,7 @@ void WiFiManager::loop()
     }
     else if(state == CONNECTING || state == RECONNECTING)
     {
-        
+        if(WiFi.AP.started()) set_state(CONNECTED);
     }
     else if(state == CONNECTED)
     {
@@ -176,13 +176,21 @@ void WiFiManager::loop()
         }
         else if(!desired_state && WiFi.AP.started())
         {
+            set_state(PRE_DISCONNECT);
+        }
+    }
+    else if(state == PRE_DISCONNECT)
+    {
+        // Give dependent systems 3 seconds to wrap up before actually disconnecting.
+        if(millis() - last_state_change >= WIFI_DISCONNECT_DELAY)
+        {
             set_state(DISCONNECTING);
         }
     }
     else if(state == DISCONNECTING)
     {
-        // Give dependent systems 3 seconds to wrap up before actually disconnecting.
-        if(millis() - last_state_change >= WIFI_DISCONNECT_DELAY)
+        // Check AP state.
+        if(!WiFi.AP.started())
         {
             set_state(DISCONNECTED);
         }
@@ -197,27 +205,24 @@ void WiFiManager::set_state(WIFI_STATE newstate)
     if(newstate == CONNECTING || newstate == RECONNECTING)
     {
         debug->print("[WiFiManager] Starting AP with SSID: ", ssid);
-        if(WiFi.softAP(ssid, passphrase))
-        {
-            set_state(CONNECTED);
-        }
-        else
-        {
-            set_state(DISCONNECTED);
-        }
+        WiFi.softAP(ssid, passphrase);
     }
     else if(newstate == CONNECTED)
     {
         debug->print("[WiFiManager] IP: ", WiFi.softAPIP());
     }
+    else if(newstate == PRE_DISCONNECT)
+    {
+        debug->print("[WiFiManager] Disconnection notice");
+    }
     else if(newstate == DISCONNECTING)
     {
-        debug->print("[WiFiManager] Disconnecting AP.");
+        debug->print("[WiFiManager] Disconnecting");
+        WiFi.softAPdisconnect(true);
     }
     else if(newstate == DISCONNECTED)
     {
-        debug->print("[WiFiManager] Disconnected.");
-        WiFi.softAPdisconnect(true);
+        debug->print("[WiFiManager] Disconnected");
     }
 }
 #endif
