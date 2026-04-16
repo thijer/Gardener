@@ -5,3 +5,4 @@ Gardener-main/WebInterface/credentials.h
 Gardener-main/tb_credentials.h
 Gardener-main/ota_credentials.h
 Gardener-main/tb_test_credentials.h
+Gardener-main/secrets.h

@@ -1,4 +1,18 @@
 # Changelog
+## [2.13.0] - 16-4-2026
+### Changed
+- WebGUI and Thingsboard can now be used simultaneously.
+- `WiFiManager` now manages AP functionality, instead of `WebInterface`.
+- 
+- Button now controls `WiFiManager` state, not WebGUI or Thingsboard.
+- `DebugSocket` is now independent from Thingsboard.
+- `DebugSocket` now uses port 81 by default.
+- `Stream` instances can now be added to `Debug` after construction.
+- `DebugStreamer` is removed, its functionality is now implemented in the `Debug::print_to_stream` functions.
+
+### Fixed
+- compilation error when Thingsboard is not enabled but any of the rule engines are.
+
 ## [2.12.0] - 4-4-2026
 ### Added
 - A `CategoricalProperty` for the `Feeder` and `Window` FSM states that will be reported to Thingsboard.

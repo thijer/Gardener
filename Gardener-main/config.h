@@ -11,21 +11,21 @@
 #define TB_GARDENER_GATEWAY_NAME "Test-gardener-gateway"
 #define TB_GARDENER_WATERINGRULEENGINE_NAME "Test-watering-rule-engine"
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Test-property-rule-engine"
-
-#include "tb_test_credentials.h"
 #else
 #define TB_GARDENER_CONTROL_NAME "Gardener-control"
 #define TB_GARDENER_GATEWAY_NAME "Gardener-gateway"
 #define TB_GARDENER_WATERINGRULEENGINE_NAME "Watering-rule-engine"
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
-#include "tb_credentials.h"
 #endif
+
+// WIFI
+#define WIFI_DISCONNECT_DELAY 3000ul
 
 // WEBGUI
 #define WEBGUI_PORT 80
 
 // DEBUGSOCKET
-#define DEBUGSOCKET_PORT 80
+#define DEBUGSOCKET_PORT 81
 
 // TEMPERATURE MANAGEMENT
 #define TEMP_MAX 28.0
@@ -56,7 +56,7 @@
 #define PIN_FEEDER_TX 17
 #define PIN_FEEDER_RX 16
 
-#define PIN_SENS_WEBGUI_ENABLE 36
+#define PIN_SENS_WIFI_ENABLE 36
 #define PIN_ACT_WEBGUI_ACTIVE 2
 
 #define PIN_SENS_LEVEL_ECHO 35
@@ -95,10 +95,13 @@
 #define MS_NAME(i) "m_sens_" #i     // Ensure name remains compatible with TinyExpr++ variable naming conventions.
 
 // DEPENDENCY RESOLUTION
+#ifdef ENABLE_DEBUGSOCKET
+    #define ENABLE_WIFI
+#endif
 
-// Disable WEBGUI if thingsboard is enabled
 #ifdef ENABLE_THINGSBOARD
-    #undef ENABLE_WEBGUI
+    #undef ENABLE_WIFI_AP               // Disable WiFi accesspoint if defined.
+    #define ENABLE_WIFI_STA             // Enable WiFi station mode.
     #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
 
     // Enumerate enabled devices
@@ -118,6 +121,14 @@
         #define N_DEV_MOISTURE 0
     #endif
 
+#endif
+
+#ifdef ENABLE_WEBGUI
+    #define ENABLE_WIFI
+#endif
+
+#ifdef ENABLE_OTA
+    #define ENABLE_WIFI
 #endif
 
 // Disable hard-coded logic
@@ -142,5 +153,22 @@
 
 #define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
 
+// If wifi is enabled, ...
+#ifdef ENABLE_WIFI
+    // enable wifi station mode if mode is not specified
+    #if !defined(ENABLE_WIFI_STA) && !defined(ENABLE_WIFI_AP)
+    #define ENABLE_WIFI_STA
+    #endif
+#endif
+
+#if defined(ENABLE_WIFI_STA)
+    #define WIFI_SSID WIFI_STA_SSID
+    #define WIFI_WPA2PSK WIFI_STA_WPA2PSK
+    #define ENABLE_WIFI
+#elif defined(ENABLE_WIFI_AP)
+    #define WIFI_SSID WIFI_AP_SSID
+    #define WIFI_WPA2PSK WIFI_AP_WPA2PSK
+    #define ENABLE_WIFI
+#endif
 
 #endif

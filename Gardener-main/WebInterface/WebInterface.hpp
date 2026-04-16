@@ -126,27 +126,13 @@ bool WebInterface::begin(Debug& debugger)
         return false;
     }
 
-    // Set up accesspoint
-    WiFi.mode(WIFI_AP);
-    WiFi.setHostname("gardener");
-    WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
-    WiFi.softAPdisconnect(true);
-    // WiFi.softAPConfig(INADDR_NONE, INADDR_NONE, INADDR_NONE);
-    // if(!WiFi.softAP(SSID, WPA2PSK))
+    // Set up DNS
+    // if(!MDNS.begin("gardener"))
     // {
-    //     debug->print("[WebGUI] ERROR: Setting up AP failed");
+    //     debug->print("[WebGUI] ERROR: mDNS failed.");
     //     return false;
     // }
-    // IPAddress ip = WiFi.softAPIP();
-    // debug->print("[WebGUI] IP: ", ip);
-
-    // Set up DNS
-    if(!MDNS.begin("gardener"))
-    {
-        debug->print("[WebGUI] ERROR: mDNS failed.");
-        return false;
-    }
-    MDNS.addService("http", "tcp", port);
+    // MDNS.addService("http", "tcp", port);
     
     // Set HTTP endpoints.
     #ifdef ENABLE_OTA
@@ -183,13 +169,6 @@ bool WebInterface::begin(Debug& debugger)
 bool WebInterface::start()
 {
     debug->print("[WebGUI] starting.");
-    if(!WiFi.softAP(SSID, WPA2PSK))
-    {
-        debug->print("[WebGUI] ERROR: Setting up AP failed");
-        is_running = false;
-        return is_running;
-    }
-    // is_running = WiFi.softAP(SSID, WPA2PSK);
     server.begin();
     last_activity = millis();
     if(ledpin) digitalWrite(ledpin, 1);
@@ -200,12 +179,11 @@ bool WebInterface::start()
 bool WebInterface::stop()
 {
     log_w("[WebGUI] running: %d, connections: %d, idle time: %d", is_running, ws.count(), millis() - last_activity);
-    debug->print("[WebGUI] shutting down AP and server.");
+    debug->print("[WebGUI] shutting down server.");
     ws.closeAll();
     server.end();
-    is_running = !WiFi.softAPdisconnect(true);
-    if(is_running) debug->print("[WebGUI] ERROR: failed to disable AP.");
-    else if(ledpin) digitalWrite(ledpin, 0);
+    is_running = false;
+    if(ledpin) digitalWrite(ledpin, 0);
     return is_running;
 }
 
