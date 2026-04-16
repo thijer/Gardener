@@ -127,6 +127,10 @@
     #define ENABLE_WIFI
 #endif
 
+#ifdef ENABLE_OTA
+    #define ENABLE_WIFI
+#endif
+
 // Disable hard-coded logic
 #ifdef ENABLE_WATERINGRULES
     #ifndef ENABLE_FEEDER               // Depends on feeder presence.
