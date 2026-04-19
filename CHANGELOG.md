@@ -1,4 +1,11 @@
 # Changelog
+## [2.13.1] - 19-4-2026
+### Changed
+- `Debug` now acts as the `Stream` interface for all attached `Stream` objects for both input and output.
+
+## Removed
+- dedicated input processing functions for WebGUI and `DebugSocket`.
+
 ## [2.13.0] - 16-4-2026
 ### Changed
 - WebGUI and Thingsboard can now be used simultaneously.
