@@ -6,6 +6,7 @@
 // #define WIPE_MEMORY
 
 // #define GARDENER_TEST
+#define ENABLE_DEBUGSOCKET
 #define ENABLE_THINGSBOARD
 #define ENABLE_WEBGUI
 #define ENABLE_OTA
@@ -28,6 +29,7 @@
 #include "Debug/Debug.hpp"
 
 Debug debug({&Serial});
+String debug_buffer;
 
 #ifdef ENABLE_WIFI
 #include "WiFi.h"
@@ -41,7 +43,6 @@ bool       wifi_switch_state = false;
 #ifdef ENABLE_DEBUGSOCKET
 #include "DebugWebsocket/DebugWebsocket.hpp"
 DebugWebsocket socket(DEBUGSOCKET_PORT);
-String         socket_buffer;
 #endif
 
 #ifdef ENABLE_THINGSBOARD
@@ -63,7 +64,6 @@ ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
 #ifdef ENABLE_WEBGUI
 #include "WebInterface/WebInterface.hpp"
 WebInterface        webgui(WEBGUI_PORT, PIN_ACT_WEBGUI_ACTIVE);
-String              webgui_buffer;
 #endif
 
 #ifdef ENABLE_OTA
@@ -369,14 +369,13 @@ PropertyStore<N_VARS> variables({
 PropertyMemory memory(properties);
 PropertyTextInterface prop_interface(properties);
 PropertyTextInterface vars_interface(variables);
-String serial_buffer;
 
 void setup()
 {
     Serial.begin(115200);
     delay(5000);
     debug.print("[Gardener] Starting.");
-    serial_buffer.reserve(51);
+    debug_buffer.reserve(51);
     
     #ifdef ENABLE_WIFI
     pinMode(PIN_SENS_WIFI_ENABLE, INPUT);
@@ -424,7 +423,6 @@ void setup()
     #ifdef ENABLE_WEBGUI
     debug.add_streamer(&webgui);
 
-    webgui_buffer.reserve(51);
     bool success = webgui.begin(debug);
     debug.print("[WebGUI] ", success ? "configured." : "ERROR: failed to set up webserver.");
     #endif
@@ -586,11 +584,10 @@ void loop()
     moisture_sensor_11.loop();
     #endif
 
-    serial_input();
+    debug_input();
 
     #ifdef ENABLE_DEBUGSOCKET
     socket.loop();
-    debugsocket_input();
     #endif
 
     #ifdef ENABLE_WIFI
@@ -603,7 +600,6 @@ void loop()
     #endif
 
     #ifdef ENABLE_WEBGUI
-    websocket_input();
     webgui_management();
     #endif
 
@@ -768,20 +764,20 @@ void parse_command(String& message)
     #endif
 }
 
-void serial_input()
+void debug_input()
 {
-    while(Serial.available() > 0)
+    while(debug.available() > 0)
     {
-        char c = Serial.read();
+        char c = debug.read();
         if(c == '\r' || c == '\n') // carriage return
         {
-            debug.print("[Serial] processing line.");
-            parse_command(serial_buffer);
-            serial_buffer.clear();
+            debug.print("[Debug] processing line.");
+            parse_command(debug_buffer);
+            debug_buffer.clear();
         }
         else
         {
-            serial_buffer += c;
+            debug_buffer += c;
         }
     }
 }
@@ -826,48 +822,7 @@ inline void tb_management()
 }
 #endif
 
-#ifdef ENABLE_DEBUGSOCKET
-void debugsocket_input()
-{
-    while(socket.available() > 0)
-    {
-        char c = socket.read();
-        if(c == '\r' || c == '\n') // carriage return
-        {
-            debug.print("[DebugSocket] processing line.");
-            debug.print(socket_buffer);
-            parse_command(socket_buffer);
-            socket_buffer.clear();
-        }
-        else
-        {
-            socket_buffer += c;
-        }
-    }
-}
-
-#endif
-
 #ifdef ENABLE_WEBGUI
-void websocket_input()
-{
-    while(webgui.available() > 0)
-    {
-        char c = webgui.read();
-        if(c == '\r' || c == '\n') // carriage return
-        {
-            debug.print("[WebGUI] processing line.");
-            debug.print(webgui_buffer);
-            parse_command(webgui_buffer);
-            webgui_buffer.clear();
-        }
-        else
-        {
-            webgui_buffer += c;
-        }
-    }
-}
-
 inline void webgui_management()
 {
     // Enable when wifi is enabled.

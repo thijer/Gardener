@@ -4,7 +4,7 @@
 #include <vector>
 #include "Stream.h"
 
-class Debug : public Print
+class Debug : public Stream
 {
     public:
         Debug(std::initializer_list<Stream*> s):
@@ -47,6 +47,8 @@ class Debug : public Print
             s->print('\n');
         }
 
+        // PRINT INTERFACES
+
         /// @brief Write bytes to all connected `Stream`ers.
         /// @param buffer Pointer to a byte array.
         /// @param size Number of bytes to be written.
@@ -66,8 +68,44 @@ class Debug : public Print
             return write(&b, 1);
         }
 
+        // STREAM INTERFACES
+
+        /// @brief Check for available bytes at any of the registered `Stream`s.
+        /// @return return the number of available bytes
+        int available()
+        {
+            for(Stream* stream : streamers)
+            {
+                if(stream->available() > 0)
+                {
+                    active_stream = stream;
+                    return stream->available();
+                }
+            }
+            return 0;
+        }
+
+        /// @brief Read the next byte without progressing through the stream.
+        /// @return The byte, or -1 of no bytes are available.
+        int peek()
+        {
+            if(active_stream == nullptr) return -1;
+            return active_stream->peek();
+        }
+        
+
+        /// @brief Read the next byte.
+        /// @return The byte, or -1 of no bytes are available.
+        int read()
+        {
+            if(active_stream == nullptr) return -1;
+            return active_stream->read();
+        }
+
+
     private:
         std::vector<Stream*> streamers;
+        Stream* active_stream = nullptr;
 };
 
 Debug emptydebug({});
