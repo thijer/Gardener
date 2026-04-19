@@ -1,4 +1,8 @@
 # Changelog
+## [2.14.0] - 19-4-2026
+### Changed
+- `timesource` now has millisecond precision.
+
 ## [2.13.1] - 19-4-2026
 ### Changed
 - `Debug` now acts as the `Stream` interface for all attached `Stream` objects for both input and output.
