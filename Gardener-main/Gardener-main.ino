@@ -5,18 +5,19 @@
 // Enable this definition when the existing memory on the chip needs to be wiped.
 // #define WIPE_MEMORY
 
-// #define GARDENER_TEST
-#define ENABLE_DEBUGSOCKET
+#define THING_DEBUG Serial
+#define GARDENER_TEST
+// #define ENABLE_DEBUGSOCKET
 #define ENABLE_THINGSBOARD
-#define ENABLE_WEBGUI
-#define ENABLE_OTA
-#define ENABLE_WINDOW
-#define ENABLE_FEEDER
-#define ENABLE_TEMP
-#define ENABLE_MOISTURE_SENSORS
+// #define ENABLE_WEBGUI
+// #define ENABLE_OTA
+// #define ENABLE_WINDOW
+// #define ENABLE_FEEDER
+// #define ENABLE_TEMP
+// #define ENABLE_MOISTURE_SENSORS
 #define ENABLE_LEVEL_SENSOR
-#define ENABLE_WATERINGRULES
-#define ENABLE_PROPERTYRULES
+// #define ENABLE_WATERINGRULES
+// #define ENABLE_PROPERTYRULES
 // #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
 // #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
 
@@ -51,9 +52,9 @@ DebugWebsocket socket(DEBUGSOCKET_PORT);
 
 time_t timesource()
 {
-    time_t time_now;
-    time(&time_now);
-    return time_now * 1000ll; // Convert seconds to milliseconds with this sophisticated conversion.
+    struct timeval time_now;
+    gettimeofday(&time_now, NULL);
+    return time_now.tv_sec * 1000ll + (time_t)time_now.tv_usec / 1000ll;
 }
 
 WiFiClient client;
