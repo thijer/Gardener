@@ -2,25 +2,7 @@
 
 // IMPORTANT: property keys can not exceed 15 characters, otherwise they can not be saved in ESP32 NVS.
 
-// Enable this definition when the existing memory on the chip needs to be wiped.
-// #define WIPE_MEMORY
-
-#define THING_DEBUG Serial
-#define GARDENER_TEST
-// #define ENABLE_DEBUGSOCKET
-#define ENABLE_THINGSBOARD
-// #define ENABLE_WEBGUI
-// #define ENABLE_OTA
-// #define ENABLE_WINDOW
-// #define ENABLE_FEEDER
-// #define ENABLE_TEMP
-// #define ENABLE_MOISTURE_SENSORS
-#define ENABLE_LEVEL_SENSOR
-// #define ENABLE_WATERINGRULES
-// #define ENABLE_PROPERTYRULES
-// #define ENABLE_WATERING_FIXED       // enable fixed quantity watering logic.
-// #define ENABLE_WATERING_MOISTURE    // enable moisture controlled watering logic.
-
+#include "compile_options.h"
 #include "config.h"
 #include "secrets.h"
 #include "property.hpp"

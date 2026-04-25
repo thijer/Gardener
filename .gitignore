@@ -6,3 +6,4 @@ Gardener-main/tb_credentials.h
 Gardener-main/ota_credentials.h
 Gardener-main/tb_test_credentials.h
 Gardener-main/secrets.h
+Gardener-main/compile_options.h
