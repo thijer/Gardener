@@ -1,4 +1,8 @@
 # Changelog
+## [2.14.1] - 25-4-2026
+### Changed
+- Moved compile flags to separate untracked header.
+
 ## [2.14.0] - 19-4-2026
 ### Changed
 - `timesource` now has millisecond precision.
