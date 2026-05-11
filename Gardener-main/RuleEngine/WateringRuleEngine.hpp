@@ -102,6 +102,7 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     //     "expression": "gerrit + henk == chaos",
     //     "eval_interval": 600,
     //     "enabled": true
+    //     "address": 25
     // }
     
     const char* rule_name = pair.key().c_str();
@@ -117,7 +118,8 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     if(!(
         params["expression"].is<const char*>() &&
         params["eval_interval"].is<uint32_t>() &&
-        params["enabled"].is<bool>()
+        params["enabled"].is<bool>() &&
+        params["address"].is<uint32_t>()
     )){
         // JsonObject does not contain correct keys.
         debug->print("[WateringRuleEngine] ERROR: JsonObject does not contain correct keys.");
@@ -130,9 +132,10 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
         if(rule->rulename == rule_name)
         {
             debug->print("[WateringRuleEngine] Found existing rule with name ", rule_name);
-            rule->expression    = params["expression"].as<std::string>(),
-            rule->eval_interval = params["eval_interval"].as<uint32_t>(),
-            rule->enabled       = params["enabled"].as<bool>(),
+            rule->expression     = params["expression"].as<std::string>();
+            rule->eval_interval  = params["eval_interval"].as<uint32_t>();
+            rule->enabled        = params["enabled"].as<bool>();
+            rule->feeder_address = params["address"].as<uint32_t>();
             rule->set_parser(base_parser);
             rule->compile();
 

@@ -1,4 +1,8 @@
 # Changelog
+## [2.15.0] - 11-05-2026
+### Added
+- Feeder address can now be set at `WateringRule`s.
+
 ## [2.14.1] - 25-4-2026
 ### Changed
 - Moved compile flags to separate untracked header.
