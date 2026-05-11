@@ -87,6 +87,10 @@ void WiFiManager::loop()
         {
             set_state(DISCONNECTING);
         }
+        else if(millis() - last_state_change > 5000ul)
+        {
+            set_state(RECONNECTING);
+        }
         // else if(status == WL_CONNECT_FAILED && millis() - last_state_change > 5000ul)
         // {
         //     set_state(RECONNECTING);
