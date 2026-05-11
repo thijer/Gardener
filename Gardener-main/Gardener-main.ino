@@ -719,6 +719,7 @@ void parse_command(String& message)
     {
         debug.print("RSSI:   ", WiFi.RSSI());
         debug.print("Status: ", WiFi.status());
+        debug.print("State:  ", manager.get_state());
         /* 
         WL_NO_SHIELD = 255,
         WL_STOPPED = 254,

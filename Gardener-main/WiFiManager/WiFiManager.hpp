@@ -4,6 +4,15 @@
 #include "../Debug/Debug.hpp"
 #include "../config.h"
 
+#define WIFI_STATES(P) \
+    P(ERROR) \
+    P(DISCONNECTED) \
+    P(CONNECTING) \
+    P(CONNECTED) \
+    P(RECONNECTING) \
+    P(PRE_DISCONNECT) \
+    P(DISCONNECTING) \
+
 class WiFiManager
 {
     public:
@@ -15,20 +24,18 @@ class WiFiManager
     bool connected() { return state == CONNECTED; }
     void enable()    { desired_state = true; }
     void disable()   { desired_state = false; }
+    const char* get_state() { return STATE_KEYS[state]; }
     
     protected:
     
     private:
     enum WIFI_STATE {
-        ERROR,
-        DISCONNECTED,
-        CONNECTING,
-        CONNECTED,
-        RECONNECTING,
-        PRE_DISCONNECT,
-        DISCONNECTING
+        WIFI_STATES(GENERATE_STATE_ENUM)
     };
-    
+    inline static const char* const STATE_KEYS[] = {
+        WIFI_STATES(GENERATE_STATE_STRING)
+    };
+
     void set_state(WIFI_STATE newstate);
     const char* ssid;
     const char* passphrase;
