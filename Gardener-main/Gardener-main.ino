@@ -357,7 +357,7 @@ void setup()
 {
     Serial.begin(115200);
     delay(5000);
-    debug.print("[Gardener] Starting.");
+    debug.printv("[Gardener] Starting.");
     debug_buffer.reserve(51);
     
     #ifdef ENABLE_WIFI
@@ -371,7 +371,7 @@ void setup()
     #endif
 
     #ifdef ENABLE_THINGSBOARD
-    debug.print("[Gardener] configuring Thingsboard.");
+    debug.printv("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
     tb_device.add_telemetry(variables);
 
@@ -400,14 +400,14 @@ void setup()
     });
     tb_gateway.add_timesource(timesource);
     tb_gateway.begin();
-    // debug.print("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
+    // debug.printv("[Gardener] Thingsboard ", tb_gateway.connected() ? "connected." : "failure.");
     #endif
 
     #ifdef ENABLE_WEBGUI
     debug.add_streamer(&webgui);
 
     bool success = webgui.begin(debug);
-    debug.print("[WebGUI] ", success ? "configured." : "ERROR: failed to set up webserver.");
+    debug.printv("[WebGUI] ", success ? "configured." : "ERROR: failed to set up webserver.");
     #endif
 
     #ifdef ENABLE_OTA
@@ -536,7 +536,7 @@ void setup()
     group1.begin(debug);
     #endif
 
-    debug.print("[Gardener] Ready.");
+    debug.printv("[Gardener] Ready.");
 
 }
 
@@ -645,7 +645,7 @@ void parse_command(String& message)
         {
             int addr = value.toInt();
             uint val = get_measurement(addr);
-            debug.print("[Moisture] sensor resistance:", val);
+            debug.printv("[Moisture] sensor resistance:", val);
         }
         #endif */
 
@@ -663,7 +663,7 @@ void parse_command(String& message)
                 if(pos >= 0 && dur >= 0)
                 {
                     bool res = act_feeder.start_feed(pos, dur);
-                    debug.print("[Feeder] ", res ? "starting feed" : "ERROR: feed already active.");
+                    debug.printv("[Feeder] ", res ? "starting feed" : "ERROR: feed already active.");
                 }
 
             }
@@ -676,12 +676,12 @@ void parse_command(String& message)
         DeserializationError err = deserializeJson(doc, message);
         if(err)
         {
-            debug.print("[Serial] ERROR parsing JSON.");
-            debug.print(err.c_str());
+            debug.printv("[Serial] ERROR parsing JSON");
+            debug.printv(err.c_str());
         }
         else
         {
-            debug.print("[Serial] processing rule.");
+            debug.printv("[Serial] processing rule.");
             engine.process_attributes(doc.as<JsonObject>());
         }
         #endif
@@ -717,8 +717,8 @@ void parse_command(String& message)
     #ifdef ENABLE_WIFI
     if(message == "wifi")
     {
-        debug.print("RSSI:   ", WiFi.RSSI());
-        debug.print("Status: ", WiFi.status());
+        debug.printv("RSSI:   ", WiFi.RSSI());
+        debug.printv("Status: ", WiFi.status());
         /* 
         WL_NO_SHIELD = 255,
         WL_STOPPED = 254,
@@ -754,7 +754,7 @@ void debug_input()
         char c = debug.read();
         if(c == '\r' || c == '\n') // carriage return
         {
-            debug.print("[Debug] processing line.");
+            debug.printv("[Debug] processing line.");
             parse_command(debug_buffer);
             debug_buffer.clear();
         }
@@ -777,7 +777,7 @@ void wifi_management()
     {
         wifi_switch_flipped = false;
         wifi_switch_state = digitalRead(PIN_SENS_WIFI_ENABLE);
-        debug.print("[Gardener] switch flipped: ", wifi_switch_state);
+        debug.printv("[Gardener] switch flipped: ", wifi_switch_state);
         
         if(!wifi_switch_state) manager.enable();
         else if(wifi_switch_state) manager.disable();
@@ -825,34 +825,34 @@ void cb_ota_error(ota_error_t error)
 {
     if (error == OTA_AUTH_ERROR)
     {
-        debug.print("[OTA] ERROR: Auth Failed");
+        debug.printv("[OTA] ERROR: Auth Failed");
     }
     else if (error == OTA_BEGIN_ERROR)
     {
-        debug.print("[OTA] ERROR: Begin Failed");
+        debug.printv("[OTA] ERROR: Begin Failed");
     }
     else if (error == OTA_CONNECT_ERROR)
     {
-        debug.print("[OTA] ERROR: Connect Failed");
+        debug.printv("[OTA] ERROR: Connect Failed");
     }
     else if (error == OTA_RECEIVE_ERROR)
     {
-        debug.print("[OTA] ERROR: Receive Failed");
+        debug.printv("[OTA] ERROR: Receive Failed");
     } 
     else if (error == OTA_END_ERROR)
     {
-        debug.print("[OTA] ERROR: End Failed");
+        debug.printv("[OTA] ERROR: End Failed");
     }
 }
 
 void cb_ota_start()
 {
-    debug.print("[OTA] Starting update.");
+    debug.printv("[OTA] Starting update.");
 }
 
 void cb_ota_progress(uint32_t progress, uint32_t total)
 {
-    debug.print("[OTA] Progress: ", (progress * 100) / total);
+    debug.printv("[OTA] Progress: ", (progress * 100) / total);
 }
 #endif
 
@@ -868,7 +868,7 @@ void decision_window()
         if(window_manual_pos != act_window.get_position())
         {
             bool pos = window_manual_pos.get();
-            debug.print("[Window]: ", pos ? "Opening" : "Closing");
+            debug.printv("[Window]: ", pos ? "Opening" : "Closing");
             act_window.set_position(pos);
         }
     }
@@ -878,12 +878,12 @@ void decision_window()
         // if temperature in greenhouse is higher than the upper limit.
         if(window_open_temp < temp_int.get() && !act_window.get_position())
         {
-            debug.print("[Window]: Opening");
+            debug.printv("[Window]: Opening");
             act_window.set_position(true);      // open window
         }
         else if(window_close_temp > temp_int.get() && act_window.get_position())
         {
-            debug.print("[Window]: Closing");
+            debug.printv("[Window]: Closing");
             act_window.set_position(false);
         }
     }
@@ -891,7 +891,7 @@ void decision_window()
     if(window_manual_pos != act_window.get_position())
     {
         bool pos = window_manual_pos.get();
-        debug.print("[Window]: ", pos ? "Opening" : "Closing");
+        debug.printv("[Window]: ", pos ? "Opening" : "Closing");
         act_window.set_position(pos);
     }
     #endif

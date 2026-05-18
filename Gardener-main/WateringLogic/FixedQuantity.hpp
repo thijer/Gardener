@@ -37,7 +37,7 @@ void FixedQuantity::begin(Debug& debugger)
 void FixedQuantity::execute()
 {
     uint32_t quantity = uint32_t(feed_quantity.get());
-    debug->print("[Watering] ", id, ": watering fixed quantity: ", quantity);
+    debug->printv("[Watering] ", id, ": watering fixed quantity: ", quantity);
     act_feeder.start_feed(position, quantity);
     
 }

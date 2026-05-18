@@ -85,7 +85,7 @@ void PropertyRuleEngine::loop()
             if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
             {
                 rule->last_evaluation = millis();
-                debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
+                debug->printv("[PropertyRuleEngine] evaluating ", rule->get_name());
                 rule->update();   
             }
         }
@@ -99,7 +99,7 @@ void PropertyRuleEngine::loop()
             if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
             {
                 rule->last_evaluation = millis();
-                debug->print("[PropertyRuleEngine] evaluating ", rule->get_name());
+                debug->printv("[PropertyRuleEngine] evaluating ", rule->get_name());
                 rule->update();
             }
         }
@@ -120,7 +120,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
     if(!pair.value().is<JsonObject>())
     {
         // Value is not a JsonObject.
-        debug->print("[PropertyRuleEngine] ERROR: Value is not a JsonObject.");
+        debug->printv("[PropertyRuleEngine] ERROR: Value is not a JsonObject.");
         return false;
     }
     
@@ -131,7 +131,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
         params["enabled"].is<bool>()
     )){
         // JsonObject does not contain correct keys.
-        debug->print("[PropertyRuleEngine] ERROR: JsonObject does not contain correct keys.");
+        debug->printv("[PropertyRuleEngine] ERROR: JsonObject does not contain correct keys.");
         return false;
     }  
     
@@ -154,13 +154,13 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
         if(!newrule->compiled)
         {
             // Expression compilation error.
-            debug->print("[PropertyRuleEngine] ERROR: Expression compilation failed");
-            debug->print(newrule->parser.get_last_error_position());
-            debug->print(newrule->parser.get_last_error_message().c_str());
+            debug->printv("[PropertyRuleEngine] ERROR: Expression compilation failed");
+            debug->printv(newrule->parser.get_last_error_position());
+            debug->printv(newrule->parser.get_last_error_message().c_str());
             delete newrule;
             return false;
         }
-        debug->print("[PropertyRuleEngine] Adding new rule");
+        debug->printv("[PropertyRuleEngine] Adding new rule");
         internal_rules.push_back(newrule);
         set_variables(newrule);
         compile_rules();
@@ -168,7 +168,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
     }
     else
     {
-        debug->print("[PropertyRuleEngine] Modifying existing rule");
+        debug->printv("[PropertyRuleEngine] Modifying existing rule");
         // Modify parameters in place.
         existing_rule->expression = params["expression"].as<std::string>();
         existing_rule->eval_interval = params["eval_interval"].as<uint32_t>();
@@ -182,7 +182,7 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
 
 void PropertyRuleEngine::print()
 {
-    debug->print(
+    debug->printv(
         "[PropertyRuleEngine] with ", 
         internal_rules.size(), 
         " internal rules and ", 
@@ -193,19 +193,19 @@ void PropertyRuleEngine::print()
     for(BasePropertyRule* rule : internal_rules)
     {
         rule->print_to(*debug);
-        debug->print();
+        debug->println();
     }
     for(BasePropertyRule* rule : external_rules)
     {
         rule->print_to(*debug);
-        debug->print();
+        debug->println();
     }
 }
 
 template <typename T, typename... Args>
 void PropertyRuleEngine::set_ext_rules(PropertyRule<T>* rule, Args... rules)
 {
-    debug->print("[PropertyRuleEngine]: Adding ", rule->get_name(), " to rules.");
+    debug->printv("[PropertyRuleEngine]: Adding ", rule->get_name(), " to rules.");
     external_rules.push_back(rule);
     external_properties.push_back(rule);
     // Pass the rule to the parser variables so the result of the rule's expression is available to other rules.

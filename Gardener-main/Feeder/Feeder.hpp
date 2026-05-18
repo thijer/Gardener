@@ -112,7 +112,7 @@ void Feeder::begin(Debug& debugger)
     buffer = "";
     port.begin(9600, SERIAL_8N1, pin_port_rx, pin_port_tx);
     delay(10);
-    debug->print("[Feeder] started.");
+    debug->printv("[Feeder] started.");
 
     uint32_t pos = uint32_t(nozzle_extrude_pos.get());
     print_to_feeder("[Feeder] nozzle_extrude_pos:", pos);
@@ -165,7 +165,7 @@ void Feeder::serial_input()
         char c = port.read();
         if(c == '\r' || c == '\n')
         {
-            debug->print(buffer);
+            debug->printv(buffer);
             if(false) ;
             else
             {
@@ -209,7 +209,7 @@ void Feeder::parse_state(String& val)
             return;
         }
     }
-    debug->print("[Feeder] ERROR: state ", val, " not found.");
+    debug->printv("[Feeder] ERROR: state ", val, " not found.");
 }
 
 void Feeder::set_state(STATE newstate)

@@ -74,7 +74,7 @@ bool Window::begin(Debug& debugger)
     digitalWrite(pin_ctrl_1, 0);
     digitalWrite(pin_ctrl_2, 0);
 
-    debug->print("[Window]: Initialised.");
+    debug->printv("[Window]: Initialised.");
     set_state(STATE::CLOSING);
     return true;
 }
@@ -124,7 +124,7 @@ void Window::set_state(STATE new_state)
     last_state_change = millis();
     state = new_state;
     window_state.set(static_cast<int32_t>(new_state));
-    debug->print("[Window] state: ", STATE_KEYS[new_state]);
+    debug->printv("[Window] state: ", STATE_KEYS[new_state]);
 }
 
 void Window::loop()
