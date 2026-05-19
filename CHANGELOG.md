@@ -1,4 +1,8 @@
 # Changelog
+## [2.15.1] - 19-5-2026
+### Fixed
+- `Debug::print` is renamed to `Debug::printv`, so the `Print::print` functions can now be accessed from `Debug` as well.
+
 ## [2.15.0] - 11-05-2026
 ### Added
 - Feeder address can now be set at `WateringRule`s.

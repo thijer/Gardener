@@ -163,12 +163,12 @@ void TankLevelSensor::loop()
         error = digitalRead(PIN_SENS_LEVEL_ECHO);
         if(!error)
         {
-            debug->print("[LevelSensor]: Starting measurement.");
+            debug->printv("[LevelSensor]: Starting measurement.");
             read();
         }
         else
         {
-            debug->print("[LevelSensor] ERROR: sensor not connected.");
+            debug->printv("[LevelSensor] ERROR: sensor not connected.");
         }
     }
 }
@@ -184,15 +184,15 @@ void TankLevelSensor::read()
     uint32_t duration = pulseIn(PIN_SENS_LEVEL_ECHO, HIGH); // us
     float x = float(duration) * TL_SOUND_VELOCITY / 20000.0; // cm
 
-    debug->print("[LevelSensor] duration (us): ", duration);
-    debug->print("[LevelSensor] distance (cm): ", x);
+    debug->printv("[LevelSensor] duration (us): ", duration);
+    debug->printv("[LevelSensor] distance (cm): ", x);
 
     x = max(bottomlevel.get() - x, 0.0f);
-    debug->print("[LevelSensor]    level (cm): ", x);
+    debug->printv("[LevelSensor]    level (cm): ", x);
 
     float v = barrel.calc_volume(x);
 
-    debug->print("[LevelSensor]    volume (L): ", v);
+    debug->printv("[LevelSensor]    volume (L): ", v);
     volume.set(v);
 
 }

@@ -22,7 +22,7 @@ class Debug : public Stream
         /// @tparam ...Args Types of the values.
         /// @param ...args The values.
         template<typename... Args>
-        void print(Args... args)
+        void printv(Args... args)
         {
             for(Stream* s : streamers) print_to_stream(s, args...);
         }

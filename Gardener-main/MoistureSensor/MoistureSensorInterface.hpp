@@ -101,7 +101,7 @@ void MoistureSensorInterface::loop()
         if(iterator == 0)
         {
             measurement_ts = millis();
-            debug->print("[Moisture] Starting measuring.");
+            debug->printv("[Moisture] Starting measuring.");
         }
         bool searching_sensor = true;
         // Loop until the next enabled sensor
@@ -113,7 +113,7 @@ void MoistureSensorInterface::loop()
                 searching_sensor = false;
                 uint32_t resistance = get_resistance(sensor->get_address());
                 sensor->set_moisture(resistance);
-                debug->print("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
+                debug->printv("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
             }
             // Increase iterator.
             iterator = (iterator + 1) % sensors.size();
@@ -171,7 +171,7 @@ uint32_t MoistureSensorInterface::get_resistance(uint8_t address)
     uint32_t average = total / MS_READINGS;
     uint32_t resistance = (MS_RANGE_ADC * MS_FIXED_RESISTOR) / (average - MS_RANGE_LOWER_ADC) - MS_FIXED_RESISTOR;
 
-    // debug->print("[Moisture] raw: ", average, " resistance (ohm): ", resistance);
+    // debug->printv("[Moisture] raw: ", average, " resistance (ohm): ", resistance);
 
     return resistance;
 }

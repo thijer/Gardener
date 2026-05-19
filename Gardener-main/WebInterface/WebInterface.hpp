@@ -106,7 +106,7 @@ bool WebInterface::begin(Debug& debugger)
     using namespace std::placeholders;
 
     debug = &debugger;
-    // debug->print("[WebGUI] test.");
+    // debug->printv("[WebGUI] test.");
     
     // Timeout property needs to be set before calling begin().
     // if(ap_timeout == nullptr) return false;
@@ -122,14 +122,14 @@ bool WebInterface::begin(Debug& debugger)
     
     if(!SPIFFS.begin(true))
     {
-        debug->print("[WebGUI] ERROR: mounting SPIFFS failed.");
+        debug->printv("[WebGUI] ERROR: mounting SPIFFS failed.");
         return false;
     }
 
     // Set up DNS
     // if(!MDNS.begin("gardener"))
     // {
-    //     debug->print("[WebGUI] ERROR: mDNS failed.");
+    //     debug->printv("[WebGUI] ERROR: mDNS failed.");
     //     return false;
     // }
     // MDNS.addService("http", "tcp", port);
@@ -168,7 +168,7 @@ bool WebInterface::begin(Debug& debugger)
 
 bool WebInterface::start()
 {
-    debug->print("[WebGUI] starting.");
+    debug->printv("[WebGUI] starting.");
     server.begin();
     last_activity = millis();
     if(ledpin) digitalWrite(ledpin, 1);
@@ -179,7 +179,7 @@ bool WebInterface::start()
 bool WebInterface::stop()
 {
     log_w("[WebGUI] running: %d, connections: %d, idle time: %d", is_running, ws.count(), millis() - last_activity);
-    debug->print("[WebGUI] shutting down server.");
+    debug->printv("[WebGUI] shutting down server.");
     ws.closeAll();
     server.end();
     is_running = false;
@@ -291,7 +291,7 @@ void WebInterface::reset_out_buffer()
 void WebInterface::cb_start_feed(AsyncWebServerRequest* request)
 {
     last_activity = millis();
-    debug->print("[WebGUI] start_feed");
+    debug->printv("[WebGUI] start_feed");
     int n_params = request->params();
     String pos = "", dur = "";
     for(int i = 0; i < n_params; i++)
@@ -302,7 +302,7 @@ void WebInterface::cb_start_feed(AsyncWebServerRequest* request)
         else if(param->name() == "duration") dur = param->value();
     }
     String command = "[Feeder] feed:" + pos + ',' + dur + '\n';
-    debug->print("[WebGUI] command: ", command);
+    debug->printv("[WebGUI] command: ", command);
     write_buffer((const uint8_t*)command.c_str(), command.length());
     // PRINT.print("[WebGUI] ", res ? "starting feed" : "ERROR: feed already active.");
     request->send(200, "text/plain", "OK");
@@ -353,11 +353,11 @@ void WebInterface::cb_websocket_event(AsyncWebSocket* server, AsyncWebSocketClie
     else if(type == WS_EVT_CONNECT)
     {
         reset_out_buffer();
-        debug->print("[WebGUI] websocket connected.");
+        debug->printv("[WebGUI] websocket connected.");
     }
     else if(type == WS_EVT_DISCONNECT)
     {
-        debug->print("[WebGUI] websocket disconnected.");
+        debug->printv("[WebGUI] websocket disconnected.");
     }
 }
 

@@ -66,9 +66,9 @@ void WateringRuleEngine::loop()
             if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
             {
                 rule->last_evaluation = millis();
-                debug->print("[WateringRuleEngine] evaluating ", rule->get_name());
+                debug->printv("[WateringRuleEngine] evaluating ", rule->get_name());
                 te_type res = rule->evaluate();
-                debug->print("[WateringRuleEngine] result: ", res);
+                debug->printv("[WateringRuleEngine] result: ", res);
 
                 // The rule shoudl return 0.0 if the section should not be watered, else 
                 // it returns the quantity it should be watered with.
@@ -110,7 +110,7 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
     if(!pair.value().is<JsonObject>())
     {
         // Value is not a JsonObject.
-        debug->print("[WateringRuleEngine] ERROR: Value is not a JsonObject.");
+        debug->printv("[WateringRuleEngine] ERROR: Value is not a JsonObject.");
         return false;
     }
     
@@ -122,7 +122,7 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
         params["address"].is<uint32_t>()
     )){
         // JsonObject does not contain correct keys.
-        debug->print("[WateringRuleEngine] ERROR: JsonObject does not contain correct keys.");
+        debug->printv("[WateringRuleEngine] ERROR: JsonObject does not contain correct keys.");
         return false;
     }  
     
@@ -131,7 +131,7 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
         // Found rule
         if(rule->rulename == rule_name)
         {
-            debug->print("[WateringRuleEngine] Found existing rule with name ", rule_name);
+            debug->printv("[WateringRuleEngine] Found existing rule with name ", rule_name);
             rule->expression     = params["expression"].as<std::string>();
             rule->eval_interval  = params["eval_interval"].as<uint32_t>();
             rule->enabled        = params["enabled"].as<bool>();
@@ -142,29 +142,29 @@ bool WateringRuleEngine::process_rule(JsonPair pair)
             if(!rule->compiled)
             {
                 // Expression compilation error.
-                debug->print("[WateringRuleEngine] ERROR: Expression compilation failed");
-                debug->print(rule->parser.get_last_error_position());
-                debug->print(rule->parser.get_last_error_message().c_str());
+                debug->printv("[WateringRuleEngine] ERROR: Expression compilation failed");
+                debug->printv(rule->parser.get_last_error_position());
+                debug->printv(rule->parser.get_last_error_message().c_str());
                 return false;
             }
             else
             {
-                debug->print("[WateringRuleEngine] Rule updated");
+                debug->printv("[WateringRuleEngine] Rule updated");
                 return true;
             }
         }
     }
-    debug->print("[WateringRuleEngine] Rule not found");
+    debug->printv("[WateringRuleEngine] Rule not found");
 }
 
 void WateringRuleEngine::print()
 {
-    debug->print("[WateringRuleEngine] with ", rules.size(), " rules.");
+    debug->printv("[WateringRuleEngine] with ", rules.size(), " rules.");
 
     for(WateringRule* rule : rules)
     {
         rule->print_to(*debug);
-        debug->print("feeder addr: ", rule->feeder_address);
+        debug->printv("feeder addr: ", rule->feeder_address);
     }
 }
 
