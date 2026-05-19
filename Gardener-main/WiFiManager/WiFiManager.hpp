@@ -135,33 +135,33 @@ void WiFiManager::set_state(WIFI_STATE newstate)
 
     if(newstate == CONNECTING)
     {
-        debug->print("[WiFiManager] Connecting to WiFi.");
+        debug->printv("[WiFiManager] Connecting to WiFi.");
         WiFi.begin(ssid, passphrase);
     }
     else if(newstate == CONNECTED)
     {
-        debug->print("[WiFiManager] IP: ", WiFi.localIP());
-        debug->print("[WiFiManager] Getting time from NTP.");
+        debug->printv("[WiFiManager] IP: ", WiFi.localIP());
+        debug->printv("[WiFiManager] Getting time from NTP.");
         configTime(3600, 0, "europe.pool.ntp.org");
-        debug->print("[WiFiManager] Connected.");
+        debug->printv("[WiFiManager] Connected.");
     }
     else if(newstate == RECONNECTING)
     {
-        debug->print("[WiFiManager] ERROR: Connection failed. Retrying.");
+        debug->printv("[WiFiManager] ERROR: Connection failed. Retrying.");
         WiFi.reconnect();
     }
     else if(newstate == PRE_DISCONNECT)
     {
-        debug->print("[WiFiManager] Disconnection notice");
+        debug->printv("[WiFiManager] Disconnection notice");
     }
     else if(newstate == DISCONNECTING)
     {
-        debug->print("[WiFiManager] Disconnecting.");
+        debug->printv("[WiFiManager] Disconnecting.");
         WiFi.disconnect(true);
     }
     else if(newstate == DISCONNECTED)
     {
-        debug->print("[WiFiManager] Disconnected.");
+        debug->printv("[WiFiManager] Disconnected.");
     }
 }
 #else
@@ -215,25 +215,25 @@ void WiFiManager::set_state(WIFI_STATE newstate)
 
     if(newstate == CONNECTING || newstate == RECONNECTING)
     {
-        debug->print("[WiFiManager] Starting AP with SSID: ", ssid);
+        debug->printv("[WiFiManager] Starting AP with SSID: ", ssid);
         WiFi.softAP(ssid, passphrase);
     }
     else if(newstate == CONNECTED)
     {
-        debug->print("[WiFiManager] IP: ", WiFi.softAPIP());
+        debug->printv("[WiFiManager] IP: ", WiFi.softAPIP());
     }
     else if(newstate == PRE_DISCONNECT)
     {
-        debug->print("[WiFiManager] Disconnection notice");
+        debug->printv("[WiFiManager] Disconnection notice");
     }
     else if(newstate == DISCONNECTING)
     {
-        debug->print("[WiFiManager] Disconnecting");
+        debug->printv("[WiFiManager] Disconnecting");
         WiFi.softAPdisconnect(true);
     }
     else if(newstate == DISCONNECTED)
     {
-        debug->print("[WiFiManager] Disconnected");
+        debug->printv("[WiFiManager] Disconnected");
     }
 }
 #endif

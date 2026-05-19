@@ -124,7 +124,7 @@ RuleEngine::~RuleEngine()
 template <typename T, typename... Args>
 void RuleEngine::set_variables(Property<T>* prop, Args... props)
 {
-    debug->print("[RuleEngine]: Adding ", prop->get_name(), " to variables.");
+    debug->printv("[RuleEngine]: Adding ", prop->get_name(), " to variables.");
     // Construct a function pointer object for this `Property`.
     te_Property* ptr = new te_Property(prop);
     functionpointers.push_back(ptr);
@@ -135,7 +135,7 @@ void RuleEngine::set_variables(Property<T>* prop, Args... props)
     }
     catch (std::exception err)
     {
-        debug->print("[RuleEngine] EXCEPTION: ", err.what());
+        debug->printv("[RuleEngine] EXCEPTION: ", err.what());
         return;
     }
     set_variables(props...);

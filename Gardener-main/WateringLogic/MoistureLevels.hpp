@@ -99,10 +99,10 @@ void MoistureLevels::execute()
         // Obtain soil moisture.
         uint32_t measurement = sens.first->get();
         weighted_sum += uint32_t(double(measurement) * sens.second / normalizer);
-        debug->print("[MoistureLevels] ", id, " measurement: ", measurement, ", weight: ", sens.second);
+        debug->printv("[MoistureLevels] ", id, " measurement: ", measurement, ", weight: ", sens.second);
     }
     uint32_t threshold = uint32_t(moisture_threshold.get());
-    debug->print("[MoistureLevels] ", id, " weighted total: ", weighted_sum, ", threshold: ", threshold);
+    debug->printv("[MoistureLevels] ", id, " weighted total: ", weighted_sum, ", threshold: ", threshold);
     // Compare weighted soil moisture values to threshold.
     if(weighted_sum > uint32_t(moisture_threshold.get()))
     {
