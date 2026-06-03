@@ -1,4 +1,11 @@
 # Changelog
+## [2.15.2] - 3-6-2026
+### Fixed
+- `WiFiManager` not reconnecting.
+
+### Added
+- `WiFiManager` can now report its FSM state.
+
 ## [2.15.1] - 19-5-2026
 ### Fixed
 - `Debug::print` is renamed to `Debug::printv`, so the `Print::print` functions can now be accessed from `Debug` as well.
