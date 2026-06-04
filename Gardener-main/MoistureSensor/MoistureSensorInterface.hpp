@@ -20,6 +20,7 @@ class MoistureSensorInterface
         /// @param pin_sens1 Control/measurement pin 1
         /// @param sensors List of `MoistureSensor`s to measure 
         /// @param update_interval How often to update the measurements. All sensors are updated at once.
+        /// @param soil_temperature The property to store soil temperature measurements in.
         MoistureSensorInterface(
             uint8_t pin_enable,
             uint8_t pin_addr0,
@@ -29,7 +30,8 @@ class MoistureSensorInterface
             uint8_t pin_sens0,
             uint8_t pin_sens1,
             std::initializer_list<MoistureSensorBase*> sensors,
-            IntegerProperty& update_interval
+            IntegerProperty& update_interval,
+            RealProperty& soil_temperature
         );
         /// @brief Initialize the interface.
         /// @param debugger An optional `Debug` instance.
@@ -41,6 +43,10 @@ class MoistureSensorInterface
         /// @return The resistance in Ohms.
         uint32_t get_resistance(uint8_t address);
 
+        /// @brief Calculates the soil temperature and a correction factor that corrects the soil resistance measurement for temperature.
+        /// @return The correction factor, in ohms.
+        int32_t temperature_correction();
+
         const uint8_t pin_enable;
         const uint8_t pin_addr0;
         const uint8_t pin_addr1;
@@ -48,6 +54,13 @@ class MoistureSensorInterface
         const uint8_t pin_addr3;
         const uint8_t pin_sens0;
         const uint8_t pin_sens1;
+        
+        // The soil temperature probe is attached to the last sensor slot.
+        const uint8_t temp_probe_address = MS_MAX_SENSORS;
+        // Precalculated numerator term of the expression to calculate temperature from NTC resistance.
+        const float numerator = MS_TEMP_NTC_BETA * MS_TEMP_REF_TEMPERATURE;
+        RealProperty& soil_temperature;
+        int32_t temp_correction = 0;
         
         std::vector<MoistureSensorBase*> sensors;
         IntegerProperty& update_interval;
@@ -67,7 +80,8 @@ MoistureSensorInterface::MoistureSensorInterface(
     uint8_t pin_sens0,
     uint8_t pin_sens1,
     std::initializer_list<MoistureSensorBase*> sensors,
-    IntegerProperty& update_interval
+    IntegerProperty& update_interval,
+    RealProperty& soil_temperature
 ):
     pin_enable(pin_enable),
     pin_addr0(pin_addr0),
@@ -77,7 +91,8 @@ MoistureSensorInterface::MoistureSensorInterface(
     pin_sens0(pin_sens0),    
     pin_sens1(pin_sens1),    
     sensors(sensors),
-    update_interval(update_interval)
+    update_interval(update_interval),
+    soil_temperature(soil_temperature)
 {}
 
 void MoistureSensorInterface::begin(Debug& debugger)
@@ -102,6 +117,7 @@ void MoistureSensorInterface::loop()
         {
             measurement_ts = millis();
             debug->printv("[Moisture] Starting measuring.");
+            temp_correction = temperature_correction();
         }
         bool searching_sensor = true;
         // Loop until the next enabled sensor
@@ -111,15 +127,16 @@ void MoistureSensorInterface::loop()
             if(sensor->is_enabled())
             {
                 searching_sensor = false;
-                uint32_t resistance = get_resistance(sensor->get_address());
+                uint32_t resistance = get_resistance(sensor->get_address()) + temp_correction;
                 sensor->set_moisture(resistance);
                 debug->printv("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
             }
             // Increase iterator.
-            iterator = (iterator + 1) % sensors.size();
+            iterator++;
             // Set last_check only when all sensors have been read.
-            if(iterator == 0)
+            if(iterator >= sensors.size() || iterator >= MS_MAX_SENSORS)
             {
+                iterator = 0;
                 last_check = measurement_ts;
                 searching_sensor = false;
             }
@@ -176,5 +193,18 @@ uint32_t MoistureSensorInterface::get_resistance(uint8_t address)
     return resistance;
 }
 
+int32_t MoistureSensorInterface::temperature_correction()
+{
+    uint32_t resistance = get_resistance(temp_probe_address);
+    float expr = float(resistance) / MS_TEMP_NTC_RESISTANCE_25;
+    expr = log(expr);
+    float denominator = MS_TEMP_NTC_BETA + MS_TEMP_REF_TEMPERATURE * expr;
+    float temperature = numerator / denominator - MS_TEMP_KELVIN_C_OFFSET;
+    soil_temperature.set(temperature);
+    debug->printv("[Moisture] soil temp resistance: ", resistance);
+    debug->printv("[Moisture] soil temp: ", temperature);
+
+    return 0; // TODO correction factor;
+}
 
 #endif
