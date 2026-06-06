@@ -119,6 +119,7 @@ TankLevelSensor tanklevel(tl_volume, tl_bottomlevel, tl_interval);
 #ifdef ENABLE_MOISTURE_SENSORS
 #include "MoistureSensor/MoistureSensorInterface.hpp"
 IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL);
+RealProperty soil_temperature("temp_soil");
 
 #ifdef ENABLE_THINGSBOARD
 #include "MoistureSensor/MoistureSensorDevice.hpp"
@@ -126,7 +127,7 @@ IntegerProperty moisture_measurement_interval("ms_meas_int", MS_UPDATE_INTERVAL)
 #include "MoistureSensor/MoistureSensor.hpp"
 #endif
 #define N_VARS_MOISTURE 12
-#define N_PROP_MOISTURE 13
+#define N_PROP_MOISTURE 12
 
 MoistureSensor moisture_sensor_00(MS_NAME(00),  0, MS_ENABLED & true);
 MoistureSensor moisture_sensor_01(MS_NAME(01),  1, MS_ENABLED & true);
@@ -139,7 +140,6 @@ MoistureSensor moisture_sensor_07(MS_NAME(07),  7, MS_ENABLED & false);
 MoistureSensor moisture_sensor_08(MS_NAME(08),  8, MS_ENABLED & false);
 MoistureSensor moisture_sensor_09(MS_NAME(09),  9, MS_ENABLED & false);
 MoistureSensor moisture_sensor_10(MS_NAME(10), 10, MS_ENABLED & false);
-MoistureSensor moisture_sensor_11(MS_NAME(11), 11, MS_ENABLED & false);
 
 MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
@@ -160,10 +160,10 @@ MoistureSensorInterface moisture_sensors(
         &moisture_sensor_07,
         &moisture_sensor_08,
         &moisture_sensor_09,
-        &moisture_sensor_10,
-        &moisture_sensor_11
+        &moisture_sensor_10
     },
-    moisture_measurement_interval
+    moisture_measurement_interval,
+    soil_temperature
 );
 
 #else
@@ -298,7 +298,6 @@ PropertyStore<N_PROP> properties({
     moisture_sensor_08.get_enabler(),
     moisture_sensor_09.get_enabler(),
     moisture_sensor_10.get_enabler(),
-    moisture_sensor_11.get_enabler(),
 #endif
 #ifdef ENABLE_FEEDER
     &feeder_nozzle_extrude_pos,
@@ -342,7 +341,7 @@ PropertyStore<N_VARS> variables({
     moisture_sensor_08.get_moisture(),
     moisture_sensor_09.get_moisture(),
     moisture_sensor_10.get_moisture(),
-    moisture_sensor_11.get_moisture(),
+    &soil_temperature,
 #endif
 #ifdef ENABLE_FEEDER
     act_feeder.get_prop_state(),
@@ -389,7 +388,6 @@ void setup()
         &moisture_sensor_08,
         &moisture_sensor_09,
         &moisture_sensor_10,
-        &moisture_sensor_11,
         #endif
         #if defined(ENABLE_WATERINGRULES)
         &tb_engine,
@@ -435,7 +433,6 @@ void setup()
     moisture_sensor_08.begin();
     moisture_sensor_09.begin();
     moisture_sensor_10.begin();
-    moisture_sensor_11.begin();
     #endif
     #endif
 
@@ -482,7 +479,7 @@ void setup()
         moisture_sensor_08.get_moisture(),
         moisture_sensor_09.get_moisture(),
         moisture_sensor_10.get_moisture(),
-        moisture_sensor_11.get_moisture(),
+        &soil_temperature,
     #endif
         &rule_engine_dummy
     );
@@ -515,7 +512,6 @@ void setup()
         moisture_sensor_08.get_moisture(),
         moisture_sensor_09.get_moisture(),
         moisture_sensor_10.get_moisture(),
-        moisture_sensor_11.get_moisture(),
     #endif
         &rule_engine_dummy
     );
@@ -564,7 +560,6 @@ void loop()
     moisture_sensor_08.loop();
     moisture_sensor_09.loop();
     moisture_sensor_10.loop();
-    moisture_sensor_11.loop();
     #endif
 
     debug_input();

@@ -1,4 +1,8 @@
 # Changelog
+## [2.16.0] - 6-6-2026
+## Added
+- An NTC soil temperature probe that is attached to the port formerly associated with `m_sens_11`.
+
 ## [2.15.3] - 6-6-2026
 ### Fixed
 - increased `PubSubClient`'s buffer size to ensure large attribute requests can be processed.

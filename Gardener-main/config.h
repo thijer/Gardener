@@ -76,7 +76,7 @@
 #define FEEDER_NOZZLE_EXTRUDE_POS 160
 
 // MOISTURE SENSORS
-#define MS_MAX_SENSORS      12
+#define MS_MAX_SENSORS      11                  // slot 12 is reserved for the soil temperature probe.
 #define MS_UPDATE_INTERVAL  10 * 60             // s
 #define MS_READINGS         10ul                // Number of measurements to take to average out noise.
 #define MS_FIXED_RESISTOR   4640l               // Resistor divider fixed resistance (Ohm).
@@ -88,6 +88,12 @@
 #define MS_RANGE_UPPER_ADC  (((MS_VCC_VOLT - MS_RANGE_LOWER_VOLT) * (1 << MS_ADC_RESOLUTION)) / MS_RANGE_VOLT) // Supply voltage (ADC units)
 #define MS_RANGE_LOWER_ADC  (((0 - MS_RANGE_LOWER_VOLT) * (1 << MS_ADC_RESOLUTION)) / MS_RANGE_VOLT)             // Ground voltage in ADC units.
 #define MS_RANGE_ADC        (MS_RANGE_UPPER_ADC - MS_RANGE_LOWER_ADC)
+
+// MOISTURE SENSOR TEMPERATURE CORRECTION
+#define MS_TEMP_NTC_BETA 3675
+#define MS_TEMP_NTC_RESISTANCE_25 13500
+#define MS_TEMP_KELVIN_C_OFFSET 273.15
+#define MS_TEMP_REF_TEMPERATURE (25.0 + MS_TEMP_KELVIN_C_OFFSET)
 
 #ifdef GARDENER_TEST
 #define MS_ENABLED false                // Disable moisture sensors in Thingsboard to prevent feeding random data to production sensors with the same name.  
