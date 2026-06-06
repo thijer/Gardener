@@ -18,6 +18,8 @@
 #define TB_GARDENER_PROPERTYRULEENGINE_NAME "Property-rule-engine"
 #endif
 
+#define MQTT_MAX_PACKET_SIZE 1024
+
 // WIFI
 #define WIFI_DISCONNECT_DELAY 3000ul
 

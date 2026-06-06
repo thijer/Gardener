@@ -32,6 +32,7 @@ ThingRuleEngine::ThingRuleEngine(RuleEngine &engine, const char *name, const cha
 {
     ThingDevice::add_client_attributes(store);
     ThingDevice::add_shared_attributes(engine.get_rules());
+    ThingDevice::download_attributes = ThingDevice::shared_attributes->size > 0;
 }
 
 void ThingRuleEngine::loop()
