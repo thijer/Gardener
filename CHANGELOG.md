@@ -1,4 +1,9 @@
 # Changelog
+## [2.15.3] - 6-6-2026
+### Fixed
+- increased `PubSubClient`'s buffer size to ensure large attribute requests can be processed.
+- Prevented `ThingRuleEngine` from trying to request attributes when there are zero attributes in store.
+
 ## [2.15.2] - 3-6-2026
 ### Fixed
 - `WiFiManager` not reconnecting.
