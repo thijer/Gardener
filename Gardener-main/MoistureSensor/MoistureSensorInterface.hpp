@@ -43,9 +43,8 @@ class MoistureSensorInterface
         /// @return The resistance in Ohms.
         uint32_t get_resistance(uint8_t address);
 
-        /// @brief Calculates the soil temperature and a correction factor that corrects the soil resistance measurement for temperature.
-        /// @return The correction factor, in ohms.
-        int32_t temperature_correction();
+        /// @brief Calculates the soil temperature.
+        void calc_temperature();
 
         const uint8_t pin_enable;
         const uint8_t pin_addr0;
@@ -60,7 +59,6 @@ class MoistureSensorInterface
         // Precalculated numerator term of the expression to calculate temperature from NTC resistance.
         const float numerator = MS_TEMP_NTC_BETA * MS_TEMP_REF_TEMPERATURE;
         RealProperty& soil_temperature;
-        int32_t temp_correction = 0;
         
         std::vector<MoistureSensorBase*> sensors;
         IntegerProperty& update_interval;
@@ -117,7 +115,7 @@ void MoistureSensorInterface::loop()
         {
             measurement_ts = millis();
             debug->printv("[Moisture] Starting measuring.");
-            temp_correction = temperature_correction();
+            calc_temperature();
         }
         bool searching_sensor = true;
         // Loop until the next enabled sensor
@@ -127,7 +125,7 @@ void MoistureSensorInterface::loop()
             if(sensor->is_enabled())
             {
                 searching_sensor = false;
-                uint32_t resistance = get_resistance(sensor->get_address()) + temp_correction;
+                uint32_t resistance = get_resistance(sensor->get_address());
                 sensor->set_moisture(resistance);
                 debug->printv("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
             }
@@ -193,7 +191,7 @@ uint32_t MoistureSensorInterface::get_resistance(uint8_t address)
     return resistance;
 }
 
-int32_t MoistureSensorInterface::temperature_correction()
+void MoistureSensorInterface::calc_temperature()
 {
     uint32_t resistance = get_resistance(temp_probe_address);
     float expr = float(resistance) / MS_TEMP_NTC_RESISTANCE_25;
@@ -204,7 +202,7 @@ int32_t MoistureSensorInterface::temperature_correction()
     debug->printv("[Moisture] soil temp resistance: ", resistance);
     debug->printv("[Moisture] soil temp: ", temperature);
 
-    return 0; // TODO correction factor;
+    return; // TODO correction factor;
 }
 
 #endif
