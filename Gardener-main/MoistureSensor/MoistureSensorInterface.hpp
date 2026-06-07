@@ -5,7 +5,7 @@
 #include "../config.h"
 #include "MoistureSensor/MoistureSensorBase.hpp"
 
-/// @brief An interface that controls the HC4067 multiplexer to which up to 12 soil
+/// @brief An interface that controls the HC4067 multiplexer to which up to 11 soil
 /// moisture sensors can be connected. 
 class MoistureSensorInterface
 {
@@ -37,6 +37,8 @@ class MoistureSensorInterface
         /// @param debugger An optional `Debug` instance.
         void begin(Debug& debugger = emptydebug);
         void loop();
+        void process_command(String& cmd);
+        void print();
     private:
         /// @brief Get the resistance (Ohm) of the soil moisture sensor connected to the given address.
         /// @param address The address of the moisture sensor.
@@ -59,6 +61,7 @@ class MoistureSensorInterface
         // Precalculated numerator term of the expression to calculate temperature from NTC resistance.
         const float numerator = MS_TEMP_NTC_BETA * MS_TEMP_REF_TEMPERATURE;
         RealProperty& soil_temperature;
+        float temperature;
         
         std::vector<MoistureSensorBase*> sensors;
         IntegerProperty& update_interval;
@@ -126,7 +129,7 @@ void MoistureSensorInterface::loop()
             {
                 searching_sensor = false;
                 uint32_t resistance = get_resistance(sensor->get_address());
-                sensor->set_moisture(resistance);
+                sensor->set_moisture(resistance, temperature);
                 debug->printv("[Moisture] Sensor: ", sensor->get_name(), ",", int(sensor->get_address()), ": ", resistance);
             }
             // Increase iterator.
@@ -197,7 +200,7 @@ void MoistureSensorInterface::calc_temperature()
     float expr = float(resistance) / MS_TEMP_NTC_RESISTANCE_25;
     expr = log(expr);
     float denominator = MS_TEMP_NTC_BETA + MS_TEMP_REF_TEMPERATURE * expr;
-    float temperature = numerator / denominator - MS_TEMP_KELVIN_C_OFFSET;
+    temperature = numerator / denominator - MS_TEMP_KELVIN_C_OFFSET;
     soil_temperature.set(temperature);
     debug->printv("[Moisture] soil temp resistance: ", resistance);
     debug->printv("[Moisture] soil temp: ", temperature);
@@ -205,4 +208,38 @@ void MoistureSensorInterface::calc_temperature()
     return; // TODO correction factor;
 }
 
+void MoistureSensorInterface::process_command(String& cmd)
+{
+    int scope_sep = cmd.indexOf('.');
+    int var_sep = cmd.indexOf('=');
+    if(scope_sep >= 0 && var_sep > scope_sep)
+    {
+        debug->printv(scope_sep, ", ", var_sep);
+        // Apply property for a specific moisture sensor.
+        String sens_name = cmd.substring(0, scope_sep);
+        String prop_name = cmd.substring(scope_sep + 1, var_sep);
+        String prop_val  = cmd.substring(var_sep + 1);
+
+        debug->printv(sens_name, ", ", prop_name, ", ", prop_val);
+        for(MoistureSensorBase* sens : sensors)
+        {
+            if(sens_name == sens->name)
+            {
+                sens->interface.apply_setting(prop_name, prop_val);
+            }
+        }
+    }
+}
+
+void MoistureSensorInterface::print()
+{
+    debug->printv("[Moisture] with ", sensors.size(), " sensors.");
+    for(MoistureSensorBase* sens : sensors)
+    {
+        debug->printv(sens->name);
+        debug->printv("    address: ", sens->prop_address.get());
+        debug->printv("    enabled: ", sens->prop_enabled.get());
+        debug->printv("      alpha: ", sens->prop_alpha.get());
+    }
+}
 #endif

@@ -92,13 +92,15 @@
 #define MS_TEMP_NTC_RESISTANCE_25 13500
 #define MS_TEMP_KELVIN_C_OFFSET 273.15
 #define MS_TEMP_REF_TEMPERATURE (25.0 + MS_TEMP_KELVIN_C_OFFSET)
+#define MS_TEMP_REF 15.0
 
 #ifdef GARDENER_TEST
 #define MS_ENABLED false                // Disable moisture sensors in Thingsboard to prevent feeding random data to production sensors with the same name.  
+#define MS_NAME(i) "test_m_sens_" #i     // Ensure name remains compatible with TinyExpr++ variable naming conventions.
 #else
 #define MS_ENABLED true
-#endif
 #define MS_NAME(i) "m_sens_" #i     // Ensure name remains compatible with TinyExpr++ variable naming conventions.
+#endif
 
 // DEPENDENCY RESOLUTION
 #ifdef ENABLE_DEBUGSOCKET

@@ -13,32 +13,33 @@ class MoistureSensor: public ThingDevice, public MoistureSensorBase
         /// @brief Set up a moisture sensor 
         /// @param name The name under which it appears in Thingsboard.
         /// @param address The address (connector) to which the physical moisture sensor is connected.
+        /// @param alpha A calibrated factor used to calculate the temperature correction for this sensor.
         /// @param enabled If the sensor should be enabled by default.
-        MoistureSensor(const char* name, uint8_t address, bool enabled = true):
+        MoistureSensor(const char* name, uint8_t address, double alpha, bool enabled = true):
             ThingDevice(name, "Gardener-moisture-sensor", enabled),  // Initialize a `ThingDevice` with the given name.
-            MoistureSensorBase(name, address),
+            MoistureSensorBase(name, address, alpha, enabled),
             moisture_tb("moisture"),                           // moisture measurements will appear in Thingsboard as "moisture" under telemetry.
-            moisture_local(name),
-            store({&moisture_tb})                             // Add the property to a `TelemetryStore` that in turn will be used by the `ThingDevice`.
+            telemetry({&moisture_tb})                              // Add the property to a `TelemetryStore` that in turn will be used by the `ThingDevice`.
         {}
 
         void begin()
         {
             // Add the telemetry property to the `ThingDevice`.
-            ThingDevice::add_telemetry(store);
+            ThingDevice::add_telemetry(telemetry);
+            ThingDevice::add_shared_attributes(attributes);
+            MoistureSensorBase::begin();
         }
-        // MoistureSensorBase overrides.
-        bool is_enabled() { return ThingDevice::enabled.get(); }
-        IntegerProperty* get_moisture() { return &moisture_local; }
-        void set_moisture(int32_t moist) { moisture_tb.set(moist); moisture_local.set(moist); }
 
-        // Get access to the ThingDevice enabler.
-        BooleanProperty* get_enabler()   { return &enabled; }
-
+        void loop()
+        {
+            ThingDevice::loop();
+            MoistureSensorBase::loop();
+        }
+        void set_moisture(int32_t moist) { moisture_tb.set(moist); moisture.set(moist); }
+        
     private:
         IntegerProperty moisture_tb;        // Used by thingboard with the name "moisture"
-        IntegerProperty moisture_local;     // Used locally with the name <name>.
-        PropertyStore<1> store;
+        PropertyStore<1> telemetry;
 };
 
 
