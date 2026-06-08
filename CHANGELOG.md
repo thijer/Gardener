@@ -1,4 +1,15 @@
 # Changelog
+## [2.17.0] - 8-6-2026
+## Added
+- Moisture sensors can now apply temperature correction.
+
+## Changed
+- The moisture sensor properties are now managed by `MoistureSensorBase` instead of the general `properties` store.
+- Moisture measurements are now stored in a separate store that is not shared with thingsboard.
+
+## Fixed
+- Moisture sensors now have their name with a "test-" prefix for test builds.
+
 ## [2.16.0] - 6-6-2026
 ## Added
 - An NTC soil temperature probe that is attached to the port formerly associated with `m_sens_11`.

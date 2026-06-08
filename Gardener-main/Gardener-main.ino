@@ -126,20 +126,20 @@ RealProperty soil_temperature("temp_soil");
 #else
 #include "MoistureSensor/MoistureSensor.hpp"
 #endif
-#define N_VARS_MOISTURE 12
-#define N_PROP_MOISTURE 12
+#define N_VARS_MOISTURE 1
+#define N_PROP_MOISTURE 1
 
-MoistureSensor moisture_sensor_00(MS_NAME(00),  0, MS_ENABLED & true);
-MoistureSensor moisture_sensor_01(MS_NAME(01),  1, MS_ENABLED & true);
-MoistureSensor moisture_sensor_02(MS_NAME(02),  2, MS_ENABLED & false);
-MoistureSensor moisture_sensor_03(MS_NAME(03),  3, MS_ENABLED & false);
-MoistureSensor moisture_sensor_04(MS_NAME(04),  4, MS_ENABLED & false);
-MoistureSensor moisture_sensor_05(MS_NAME(05),  5, MS_ENABLED & false);
-MoistureSensor moisture_sensor_06(MS_NAME(06),  6, MS_ENABLED & false);
-MoistureSensor moisture_sensor_07(MS_NAME(07),  7, MS_ENABLED & false);
-MoistureSensor moisture_sensor_08(MS_NAME(08),  8, MS_ENABLED & false);
-MoistureSensor moisture_sensor_09(MS_NAME(09),  9, MS_ENABLED & false);
-MoistureSensor moisture_sensor_10(MS_NAME(10), 10, MS_ENABLED & false);
+MoistureSensor moisture_sensor_00(MS_NAME(00),  0, 0.0, MS_ENABLED & true);
+MoistureSensor moisture_sensor_01(MS_NAME(01),  1, 0.0, MS_ENABLED & true);
+MoistureSensor moisture_sensor_02(MS_NAME(02),  2, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_03(MS_NAME(03),  3, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_04(MS_NAME(04),  4, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_05(MS_NAME(05),  5, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_06(MS_NAME(06),  6, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_07(MS_NAME(07),  7, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_08(MS_NAME(08),  8, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_09(MS_NAME(09),  9, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_10(MS_NAME(10), 10, 0.0, MS_ENABLED & false);
 
 MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
@@ -165,6 +165,23 @@ MoistureSensorInterface moisture_sensors(
     moisture_measurement_interval,
     soil_temperature
 );
+
+// Use a separate store for moisture measurements that does not get synced with Thingsboard.
+PropertyStore<MS_MAX_SENSORS> moisture_measurements({
+    moisture_sensor_00.get_moisture(),
+    moisture_sensor_01.get_moisture(),
+    moisture_sensor_02.get_moisture(),
+    moisture_sensor_03.get_moisture(),
+    moisture_sensor_04.get_moisture(),
+    moisture_sensor_05.get_moisture(),
+    moisture_sensor_06.get_moisture(),
+    moisture_sensor_07.get_moisture(),
+    moisture_sensor_08.get_moisture(),
+    moisture_sensor_09.get_moisture(),
+    moisture_sensor_10.get_moisture()
+});
+
+PropertyTextInterface moist_interface(moisture_measurements);
 
 #else
 #define N_PROP_MOISTURE 0
@@ -287,17 +304,6 @@ PropertyStore<N_PROP> properties({
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
     &moisture_measurement_interval,
-    moisture_sensor_00.get_enabler(),
-    moisture_sensor_01.get_enabler(),
-    moisture_sensor_02.get_enabler(),
-    moisture_sensor_03.get_enabler(),
-    moisture_sensor_04.get_enabler(),
-    moisture_sensor_05.get_enabler(),
-    moisture_sensor_06.get_enabler(),
-    moisture_sensor_07.get_enabler(),
-    moisture_sensor_08.get_enabler(),
-    moisture_sensor_09.get_enabler(),
-    moisture_sensor_10.get_enabler(),
 #endif
 #ifdef ENABLE_FEEDER
     &feeder_nozzle_extrude_pos,
@@ -330,17 +336,6 @@ PropertyStore<N_VARS> variables({
     act_window.get_prop_state(),
 #endif
 #ifdef ENABLE_MOISTURE_SENSORS
-    moisture_sensor_00.get_moisture(),
-    moisture_sensor_01.get_moisture(),
-    moisture_sensor_02.get_moisture(),
-    moisture_sensor_03.get_moisture(),
-    moisture_sensor_04.get_moisture(),
-    moisture_sensor_05.get_moisture(),
-    moisture_sensor_06.get_moisture(),
-    moisture_sensor_07.get_moisture(),
-    moisture_sensor_08.get_moisture(),
-    moisture_sensor_09.get_moisture(),
-    moisture_sensor_10.get_moisture(),
     &soil_temperature,
 #endif
 #ifdef ENABLE_FEEDER
@@ -421,7 +416,6 @@ void setup()
     
     #ifdef ENABLE_MOISTURE_SENSORS
     moisture_sensors.begin(debug);
-    #ifdef ENABLE_THINGSBOARD
     moisture_sensor_00.begin();
     moisture_sensor_01.begin();
     moisture_sensor_02.begin();
@@ -433,7 +427,6 @@ void setup()
     moisture_sensor_08.begin();
     moisture_sensor_09.begin();
     moisture_sensor_10.begin();
-    #endif
     #endif
 
     #ifdef ENABLE_WINDOW
@@ -622,6 +615,23 @@ void loop()
 
 void parse_command(String& message)
 {
+    int subsystem_s = message.indexOf('[');
+    int subsystem_e = message.indexOf(']');
+    if(subsystem_s == 0 && subsystem_e > 1)
+    {
+        debug.printv("Processing subsystem command.");
+        String subsystem = message.substring(subsystem_s + 1, subsystem_e);
+
+        #ifdef ENABLE_MOISTURE_SENSORS
+        if(subsystem == "Moisture")
+        {
+            String subsystem_cmd = message.substring(subsystem_e + 2);
+            moisture_sensors.process_command(subsystem_cmd);
+            return;
+        }
+        #endif
+    }
+    
     int i = message.indexOf('=');
     int j = message.indexOf(':');
     if(i != -1 && j == -1)
@@ -695,8 +705,17 @@ void parse_command(String& message)
     else if(message == "print")
     {
         prop_interface.print_to(debug);
+        #ifdef ENABLE_MOISTURE_SENSORS
+        moisture_sensors.print();
+        #endif
     }
-    else if(message == "print_tel") vars_interface.print_to(debug);
+    else if(message == "print_tel")
+    {
+        vars_interface.print_to(debug);
+        #ifdef ENABLE_MOISTURE_SENSORS
+        moist_interface.print_to(debug);
+        #endif
+    }
 
     #ifdef ENABLE_WEBGUI
     else if(message == "[WebGUI] start")
