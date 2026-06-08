@@ -129,17 +129,17 @@ RealProperty soil_temperature("temp_soil");
 #define N_VARS_MOISTURE 1
 #define N_PROP_MOISTURE 1
 
-MoistureSensor moisture_sensor_00(MS_NAME(00),  0, MS_ENABLED & true);
-MoistureSensor moisture_sensor_01(MS_NAME(01),  1, MS_ENABLED & true);
-MoistureSensor moisture_sensor_02(MS_NAME(02),  2, MS_ENABLED & false);
-MoistureSensor moisture_sensor_03(MS_NAME(03),  3, MS_ENABLED & false);
-MoistureSensor moisture_sensor_04(MS_NAME(04),  4, MS_ENABLED & false);
-MoistureSensor moisture_sensor_05(MS_NAME(05),  5, MS_ENABLED & false);
-MoistureSensor moisture_sensor_06(MS_NAME(06),  6, MS_ENABLED & false);
-MoistureSensor moisture_sensor_07(MS_NAME(07),  7, MS_ENABLED & false);
-MoistureSensor moisture_sensor_08(MS_NAME(08),  8, MS_ENABLED & false);
-MoistureSensor moisture_sensor_09(MS_NAME(09),  9, MS_ENABLED & false);
-MoistureSensor moisture_sensor_10(MS_NAME(10), 10, MS_ENABLED & false);
+MoistureSensor moisture_sensor_00(MS_NAME(00),  0, 0.0, MS_ENABLED & true);
+MoistureSensor moisture_sensor_01(MS_NAME(01),  1, 0.0, MS_ENABLED & true);
+MoistureSensor moisture_sensor_02(MS_NAME(02),  2, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_03(MS_NAME(03),  3, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_04(MS_NAME(04),  4, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_05(MS_NAME(05),  5, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_06(MS_NAME(06),  6, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_07(MS_NAME(07),  7, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_08(MS_NAME(08),  8, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_09(MS_NAME(09),  9, 0.0, MS_ENABLED & false);
+MoistureSensor moisture_sensor_10(MS_NAME(10), 10, 0.0, MS_ENABLED & false);
 
 MoistureSensorInterface moisture_sensors(
     PIN_SENS_MOISTURE_ENABLE,
