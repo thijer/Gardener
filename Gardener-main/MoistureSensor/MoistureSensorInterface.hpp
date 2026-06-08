@@ -214,13 +214,11 @@ void MoistureSensorInterface::process_command(String& cmd)
     int var_sep = cmd.indexOf('=');
     if(scope_sep >= 0 && var_sep > scope_sep)
     {
-        debug->printv(scope_sep, ", ", var_sep);
         // Apply property for a specific moisture sensor.
         String sens_name = cmd.substring(0, scope_sep);
         String prop_name = cmd.substring(scope_sep + 1, var_sep);
         String prop_val  = cmd.substring(var_sep + 1);
 
-        debug->printv(sens_name, ", ", prop_name, ", ", prop_val);
         for(MoistureSensorBase* sens : sensors)
         {
             if(sens_name == sens->name)
