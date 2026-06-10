@@ -2,9 +2,10 @@
 #define PROPERTYRULEENGINE_HPP
 #include <functional>
 #include "ArduinoJson.h"
-#include "PropertyRule.hpp"
 #include "property.hpp"
 #include "propertystore.hpp"
+#include "Rule.hpp"
+#include "PropertyRule.hpp"
 #include "RuleEngine.hpp"
 #include "../VectorBaseStore/VectorBaseStore.hpp"
 #include "../Debug/Debug.hpp"
@@ -49,12 +50,10 @@ class PropertyRuleEngine: public RuleEngine
         /// @brief Find rule by name
         /// @param name The name
         /// @return The rule if found, otherwise a `nullptr`.
-        BasePropertyRule* find_rule(const char* name);
+        Rule* find_rule(const char* name);
         
-        /// @brief A set of rules that are created internally. This vector 'owns` the rules stored inside.
-        std::vector<BasePropertyRule*> internal_rules;
-        /// @brief A set of rules that are defined outside this class, This vector only stores pointers to these rules.
-        std::vector<BasePropertyRule*> external_rules;
+        /// @brief A set of rules that are defined outside this class. This vector only stores pointers to these rules.
+        std::vector<Rule*> external_rules;
         // Store the `Property`component of external rules so we can request them from thingsboard.
         std::vector<BaseProperty*> external_properties;
         
@@ -67,30 +66,14 @@ PropertyRuleEngine::PropertyRuleEngine(Debug& debugger):
 {}
 
 PropertyRuleEngine::~PropertyRuleEngine()
-{
-    for(BasePropertyRule* rule : internal_rules)
-    {
-        delete rule;
-    }
-}
+{}
 
 void PropertyRuleEngine::loop()
 {
+    RuleEngine::loop();
+    
     // Loop through all the rules 
-    for(BasePropertyRule* rule : internal_rules)
-    {
-        if(rule->enabled)
-        {
-            // Its time to evaluate one
-            if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
-            {
-                rule->last_evaluation = millis();
-                debug->printv("[PropertyRuleEngine] evaluating ", rule->get_name());
-                rule->update();   
-            }
-        }
-    }
-    for(BasePropertyRule* rule : external_rules)
+    for(Rule* rule : external_rules)
     {
         
         if(rule->enabled)
@@ -123,59 +106,24 @@ bool PropertyRuleEngine::process_rule(JsonPair pair)
         debug->printv("[PropertyRuleEngine] ERROR: Value is not a JsonObject.");
         return false;
     }
-    
+    Rule* existing_rule = find_rule(rule_name);
     JsonObject params = pair.value();
-    if(!(
-        params["expression"].is<const char*>() &&
-        params["eval_interval"].is<uint32_t>() &&
-        params["enabled"].is<bool>()
-    )){
-        // JsonObject does not contain correct keys.
-        debug->printv("[PropertyRuleEngine] ERROR: JsonObject does not contain correct keys.");
-        return false;
-    }  
-    
-    uint32_t last_evaluation = 0;
-
-    BasePropertyRule* existing_rule = find_rule(rule_name);
     
     if(existing_rule == nullptr)
     {
-        // No rule whatsoever. Create new one.
-        PropertyRule<te_type>* newrule = new PropertyRule<te_type>(
-            rule_name,
-            params["expression"].as<const char*>(),
-            params["eval_interval"].as<uint32_t>(),
-            params["enabled"].as<bool>(),
-            base_parser,
-            0
-        );
-        
-        if(!newrule->compiled)
-        {
-            // Expression compilation error.
-            debug->printv("[PropertyRuleEngine] ERROR: Expression compilation failed");
-            debug->printv(newrule->parser.get_last_error_position());
-            debug->printv(newrule->parser.get_last_error_message().c_str());
-            delete newrule;
-            return false;
-        }
-        debug->printv("[PropertyRuleEngine] Adding new rule");
-        internal_rules.push_back(newrule);
-        set_variables(newrule);
-        compile_rules();
-        return true;
+        return false;
     }
     else
     {
         debug->printv("[PropertyRuleEngine] Modifying existing rule");
-        // Modify parameters in place.
-        existing_rule->expression = params["expression"].as<std::string>();
-        existing_rule->eval_interval = params["eval_interval"].as<uint32_t>();
-        existing_rule->enabled = params["enabled"].as<bool>();
-        existing_rule->compiled = false;
+        bool success = existing_rule->modify(params);
+        if(!success)
+        {
+            debug->printv("[PropertyRuleEngine] ERROR: JsonObject does not contain correct keys.");
+            return success;
+        }
         compile_rules();
-        return true;
+        return success;
     }
 
 }
@@ -184,18 +132,18 @@ void PropertyRuleEngine::print()
 {
     debug->printv(
         "[PropertyRuleEngine] with ", 
-        internal_rules.size(), 
-        " internal rules and ", 
+        independent_rules.size(), 
+        " independent rules and ", 
         external_rules.size(), 
         " external rules."
     );
-
-    for(BasePropertyRule* rule : internal_rules)
+    for(Rule* rule : independent_rules)
     {
         rule->print_to(*debug);
         debug->println();
     }
-    for(BasePropertyRule* rule : external_rules)
+
+    for(Rule* rule : external_rules)
     {
         rule->print_to(*debug);
         debug->println();
@@ -217,7 +165,7 @@ void PropertyRuleEngine::set_ext_rules(PropertyRule<T>* rule, Args... rules)
 void PropertyRuleEngine::set_ext_rules()
 {
     // All external rules have been added. Provide all these rules with the updated parser and compile them.
-    for(BasePropertyRule* rule : external_rules)
+    for(Rule* rule : external_rules)
     {
         rule->set_parser(base_parser);
         rule->compile();
@@ -234,15 +182,8 @@ BaseStore& PropertyRuleEngine::get_rules()
 
 void PropertyRuleEngine::compile_rules()
 {
-    for(BasePropertyRule* rule : external_rules)
-    {
-        if(!rule->compiled)
-        {
-            rule->set_parser(base_parser);
-            rule->compile();
-        }
-    }
-    for(BasePropertyRule* rule : internal_rules)
+    RuleEngine::compile_rules();
+    for(Rule* rule : external_rules)
     {
         if(!rule->compiled)
         {
@@ -252,9 +193,9 @@ void PropertyRuleEngine::compile_rules()
     }
 }
 
-BasePropertyRule* PropertyRuleEngine::find_rule(const char *name)
+Rule* PropertyRuleEngine::find_rule(const char *name)
 {
-    for(BasePropertyRule* rule : external_rules)
+    for(Rule* rule : independent_rules)
     {
         // Rule already exists.
         if(strcmp(rule->get_name(), name) == 0)
@@ -262,14 +203,15 @@ BasePropertyRule* PropertyRuleEngine::find_rule(const char *name)
             return rule;
         }
     }
-    for(BasePropertyRule* rule : internal_rules)
+    for(Rule* rule : external_rules)
     {
         // Rule already exists.
         if(strcmp(rule->get_name(), name) == 0)
         {
             return rule;
         }
-    }return nullptr;
+    }
+    return nullptr;
 }
 
 #endif

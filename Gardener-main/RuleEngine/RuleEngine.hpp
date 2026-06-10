@@ -2,12 +2,15 @@
 #define RULEENGINE_HPP
 #include <string>
 #include <functional>
+#include <initializer_list>
+#include <vector>
 #include <Print.h>
 #include "../src/TinyExpr/tinyexpr.h"
 #include "ArduinoJson.h"
 #include "property.hpp"
 #include "propertystore.hpp"
 #include "../Debug/Debug.hpp"
+#include "Rule.hpp"
 
 /// @brief Helper function to extract a te_type type value from a templated `Property` instance.
 /// @tparam T The type of the `Property`, usually `bool`, `int32_t`, or `float`.
@@ -65,7 +68,11 @@ class RuleEngine
         
         /// @brief End of the recursive `set_variables` function.
         void set_variables();
-        
+
+        /// @brief Set a list of independent rules. These rules are not available to other rules in the rule engine.
+        /// @param rules_list 
+        void set_independent_rules(std::initializer_list<Rule*> rules_list) { independent_rules = rules_list; }
+
         /// @brief Start the engine
         void begin();
 
@@ -77,10 +84,10 @@ class RuleEngine
         void process_attributes(JsonObject obj);
 
         /// @brief Runs the engine. Should be implemented in derived classes.
-        virtual void loop() = 0;
+        virtual void loop();
         
         /// @brief Print information about the rule engine to the `debug`er passed to the constructor.
-        virtual void print() = 0;
+        virtual void print();
 
         virtual BaseStore& get_rules() = 0;
         
@@ -92,10 +99,10 @@ class RuleEngine
         /// @brief Add or update a rule with the parameters contained in `pair`.
         /// @param pair The parameters needed by the rule.
         /// @return true, if the rule was constructed successfully.
-        virtual bool process_rule(JsonPair pair) = 0;
+        virtual bool process_rule(JsonPair pair);
         
         /// @brief All the variables have been set, so the rules can now be compiled.
-        virtual void compile_rules() = 0;
+        virtual void compile_rules();
 
         /// @brief A base expression parser that is provided with the variables, and is copied to all 
         /// rules to be compiled with an expression.
@@ -106,6 +113,9 @@ class RuleEngine
         
         /// @brief A pointer to a `Debug` object that prints debug messages to the relevant outputs.
         Debug* debug;
+
+        /// @brief The set of rules to evaluate.
+        std::vector<Rule*> independent_rules;
 };
 
 RuleEngine::RuleEngine(Debug* debugger):
@@ -159,5 +169,89 @@ void RuleEngine::process_attributes(JsonObject obj)
     }
 }
 
+void RuleEngine::loop()
+{
+    for(Rule* rule : independent_rules)
+    {
+        if(rule->enabled)
+        {
+            // Its time to evaluate one
+            if(millis() - rule->last_evaluation >= (rule->eval_interval * 1000ul))
+            {
+                rule->last_evaluation = millis();
+                debug->printv("[RuleEngine] evaluating ", rule->get_name());
+                rule->update();
+            }
+        }
+    }
+}
+
+bool RuleEngine::process_rule(JsonPair pair)
+{
+    // JsonPair pair needs to have the following structure:
+    // "rule_id": {
+    //     "expression": "gerrit + henk == chaos",
+    //     "eval_interval": 600,
+    //     "enabled": true
+    //     "address": 25
+    // }
+    
+    const char* rule_name = pair.key().c_str();
+
+    if(!pair.value().is<JsonObject>())
+    {
+        // Value is not a JsonObject.
+        debug->printv("[RuleEngine] ERROR: Value is not a JsonObject.");
+        return false;
+    }
+    
+    JsonObject params = pair.value();
+    for(Rule* rule : independent_rules)
+    {
+        // Found rule
+        if(rule->rulename == rule_name)
+        {
+            debug->printv("[RuleEngine] Found existing rule with name ", rule_name);
+            rule->modify(params);
+            rule->set_parser(base_parser);
+            rule->compile();
+
+            if(!rule->compiled)
+            {
+                // Expression compilation error.
+                debug->printv("[RuleEngine] ERROR: Expression compilation failed");
+                debug->printv(rule->parser.get_last_error_position());
+                debug->printv(rule->parser.get_last_error_message().c_str());
+                return false;
+            }
+            else
+            {
+                debug->printv("[RuleEngine] Rule updated");
+                return true;
+            }
+        }
+    }
+    debug->printv("[RuleEngine] Rule not found");
+    return false;
+}
+
+void RuleEngine::compile_rules()
+{
+    for(Rule* rule : independent_rules)
+    {
+        rule->set_parser(base_parser);
+        rule->compile();
+    }
+}
+
+void RuleEngine::print()
+{
+    debug->printv("[RuleEngine] with ", independent_rules.size(), " rules.");
+
+    for(Rule* rule : independent_rules)
+    {
+        rule->print_to(*debug);
+    }
+}
 
 #endif

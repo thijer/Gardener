@@ -1,12 +1,14 @@
 #ifndef WATERINGRULE_HPP
 #define WATERINGRULE_HPP
+#include "ArduinoJson.h"
 #include "../src/TinyExpr/tinyexpr.h"
-#include "PropertyRule.hpp"
+#include "Rule.hpp"
+#include "../Feeder/Feeder.hpp"
 
 /// @brief Construct a rule that governs the watering of a specific area of the greenhouse.
-class WateringRule: public PropertyRule<int32_t>
+class WateringRule: public Rule
 {
-    friend class WateringRuleEngine;
+    friend class RuleEngine;
 
     public:
         /// @brief Construct the rule.
@@ -23,15 +25,38 @@ class WateringRule: public PropertyRule<int32_t>
             uint32_t eval_interval,
             uint32_t feeder_address,
             bool enabled,
+            Feeder& feeder,
             te_parser baseparser = te_parser(),
             uint32_t last_eval = 0
         ):
-            PropertyRule<int32_t>(name, expression, eval_interval, enabled, baseparser, last_eval),
-            feeder_address(feeder_address)
+            Rule(name, expression, eval_interval, enabled, baseparser, last_eval),
+            feeder_address(feeder_address),
+            act_feeder(feeder)
         {}
+
+        bool modify(JsonObject params)
+        {
+            if(!(
+                params["expression"].is<const char*>() &&
+                params["eval_interval"].is<uint32_t>() &&
+                params["enabled"].is<bool>() &&
+                params["address"].is<uint32_t>()
+            )){
+                // JsonObject does not contain correct keys.
+                return false;
+            }
+            expression = params["expression"].as<std::string>();
+            eval_interval = params["eval_interval"].as<uint32_t>();
+            enabled = params["enabled"].as<bool>();
+            feeder_address = params["address"].as<uint32_t>();
+            compiled = false;
+            return true;
+        }
+        
     private:
         /// @brief The address of the feeder to which the plants will be watered with the quantity calculated by the expression.
         uint32_t feeder_address;
+        Feeder& act_feeder;
 };
 
 #endif

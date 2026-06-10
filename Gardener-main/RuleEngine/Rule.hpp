@@ -2,6 +2,7 @@
 #define RULE_HPP
 #include <string>
 #include <Print.h>
+#include "ArduinoJson.h"
 #include "../src/TinyExpr/tinyexpr.h"
 
 /// @brief A self-contained expression that will be evaluated at a certain interval. 
@@ -31,6 +32,13 @@ class Rule
         /// @brief Get the name of this rule.
         /// @return The name.
         const char* get_name() { return rulename.c_str(); }
+
+        /// @brief Modify parameters of this rule.
+        /// @param params A JSON object containing the keys and values of the to be updated parameters.
+        virtual bool modify(JsonObject params);
+
+        /// @brief Evaluate the expression and process the results. This function should be implemented in derived classes.
+        virtual void update() {};
        
         /// @brief evaluate the expression and return the result.
         /// @return The result of the expression, or NaN if an error occured.
@@ -64,6 +72,7 @@ class Rule
         uint32_t last_evaluation;
 
     friend class RuleEngine;
+    friend class PropertyRuleEngine;
 };
 
 Rule::Rule(
@@ -91,6 +100,23 @@ void Rule::print_to(Print& sink)
     sink.print("compiled:    "); sink.println(compiled);
     sink.print("interval:    "); sink.println(eval_interval);
     sink.print("enabled:     "); sink.println(enabled);
+}
+
+bool Rule::modify(JsonObject params)
+{
+    if(!(
+        params["expression"].is<const char*>() &&
+        params["eval_interval"].is<uint32_t>() &&
+        params["enabled"].is<bool>()
+    )){
+        // JsonObject does not contain correct keys.
+        return false;
+    }
+    expression = params["expression"].as<std::string>();
+    eval_interval = params["eval_interval"].as<uint32_t>();
+    enabled = params["enabled"].as<bool>();
+    compiled = false;
+    return true;
 }
 
 te_type Rule::evaluate()
