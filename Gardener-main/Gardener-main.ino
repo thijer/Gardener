@@ -630,23 +630,6 @@ void parse_command(String& message)
             }
         }
         #endif
-        
-        #ifdef ENABLE_WATERINGRULES
-        // {"test_rule":{"expression":"IF(((0.5 * m_sens_00) + (1.2 * m_sens_01)) / (0.5 + 1.2) > 1000, 360, 0)", "eval_interval": 10, "feeder_address": 25, "enabled": true}}
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, message);
-        if(err)
-        {
-            debug.printv("[Serial] ERROR parsing JSON");
-            debug.printv(err.c_str());
-        }
-        else
-        {
-            debug.printv("[Serial] processing rule.");
-            rule_engine.process_attributes(doc.as<JsonObject>());
-        }
-        #endif
-        
     }
     #ifdef ENABLE_FEEDER
     else if(message == "[Feeder] abort")

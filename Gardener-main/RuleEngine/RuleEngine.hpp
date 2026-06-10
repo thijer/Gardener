@@ -292,6 +292,23 @@ void RuleEngine::process_command(String &cmd)
                 debug->printv("[RuleEngine] evaluating ", rule->get_name());
                 rule->update();
             }
+            return;
+        }
+        // Modify a rule
+        else if(name == "set_rule")
+        {
+            JsonDocument doc;
+            DeserializationError err = deserializeJson(doc, val);
+            if(err)
+            {
+                debug->printv("[RuleEngine] ERROR parsing JSON");
+                debug->printv(err.c_str());
+            }
+            else
+            {
+                debug->printv("[RuleEngine] processing rule.");
+                process_attributes(doc.as<JsonObject>());
+            }
         }
     }
 }
