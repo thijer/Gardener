@@ -16,7 +16,7 @@ class MoistureSensor: public ThingDevice, public MoistureSensorBase
         /// @param alpha A calibrated factor used to calculate the temperature correction for this sensor.
         /// @param enabled If the sensor should be enabled by default.
         MoistureSensor(const char* name, uint8_t address, double alpha, bool enabled = true):
-            ThingDevice(name, "Gardener-moisture-sensor", enabled),  // Initialize a `ThingDevice` with the given name.
+            ThingDevice(name, "Gardener-moisture-sensor"),  // Initialize a `ThingDevice` with the given name.
             MoistureSensorBase(name, address, alpha, enabled),
             moisture_tb("moisture"),                           // moisture measurements will appear in Thingsboard as "moisture" under telemetry.
             telemetry({&moisture_tb})                              // Add the property to a `TelemetryStore` that in turn will be used by the `ThingDevice`.

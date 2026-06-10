@@ -1,4 +1,8 @@
 # Changelog
+## [2.17.1] - 9-6-2026
+### Fixed
+- Prevented some `MoistureSensor`s from not connecting to thingsboard by default.
+
 ## [2.17.0] - 8-6-2026
 ## Added
 - Moisture sensors can now apply temperature correction.
