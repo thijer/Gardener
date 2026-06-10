@@ -569,12 +569,20 @@ void parse_command(String& message)
     {
         debug.printv("Processing subsystem command.");
         String subsystem = message.substring(subsystem_s + 1, subsystem_e);
+        String subsystem_cmd = message.substring(subsystem_e + 2);
 
         #ifdef ENABLE_MOISTURE_SENSORS
         if(subsystem == "Moisture")
         {
-            String subsystem_cmd = message.substring(subsystem_e + 2);
             moisture_sensors.process_command(subsystem_cmd);
+            return;
+        }
+        #endif
+
+        #ifdef ENABLE_PROPERTYRULES
+        if(subsystem == "RuleEngine")
+        {
+            rule_engine.process_command(subsystem_cmd);
             return;
         }
         #endif

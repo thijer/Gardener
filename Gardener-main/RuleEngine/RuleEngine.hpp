@@ -90,6 +90,10 @@ class RuleEngine
         virtual void print();
 
         virtual BaseStore& get_rules() = 0;
+
+        /// @brief Process a command.
+        /// @param cmd 
+        virtual void process_command(String& cmd);
         
     protected:
         /// @brief 
@@ -103,6 +107,11 @@ class RuleEngine
         
         /// @brief All the variables have been set, so the rules can now be compiled.
         virtual void compile_rules();
+
+        /// @brief Find rule by name
+        /// @param name The name
+        /// @return The rule if found, otherwise a `nullptr`.
+        virtual Rule* find_rule(const char* name);
 
         /// @brief A base expression parser that is provided with the variables, and is copied to all 
         /// rules to be compiled with an expression.
@@ -244,6 +253,19 @@ void RuleEngine::compile_rules()
     }
 }
 
+Rule *RuleEngine::find_rule(const char *name)
+{
+    for(Rule* rule : independent_rules)
+    {
+        // Rule already exists.
+        if(strcmp(rule->get_name(), name) == 0)
+        {
+            return rule;
+        }
+    }
+    return nullptr;
+}
+
 void RuleEngine::print()
 {
     debug->printv("[RuleEngine] with ", independent_rules.size(), " rules.");
@@ -251,6 +273,26 @@ void RuleEngine::print()
     for(Rule* rule : independent_rules)
     {
         rule->print_to(*debug);
+    }
+}
+
+void RuleEngine::process_command(String &cmd)
+{
+    int var_sep = cmd.indexOf(':');
+    if(var_sep > 0)
+    {
+        String name = cmd.substring(0, var_sep);
+        String val  = cmd.substring(var_sep + 1);
+        if(name == "eval")
+        {
+            // Force evaluation of rule identified by val
+            Rule* rule = find_rule(val.c_str());
+            if(rule != nullptr)
+            {
+                debug->printv("[RuleEngine] evaluating ", rule->get_name());
+                rule->update();
+            }
+        }
     }
 }
 
