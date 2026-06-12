@@ -11,6 +11,7 @@
 #include "propertystore.hpp"
 #include "../Debug/Debug.hpp"
 #include "Rule.hpp"
+#include "VectorBaseStore/VectorBaseStore.hpp"
 
 /// @brief Helper function to extract a te_type type value from a templated `Property` instance.
 /// @tparam T The type of the `Property`, usually `bool`, `int32_t`, or `float`.
@@ -56,6 +57,10 @@ te_type get_property_value(const te_expr* context)
 class RuleEngine 
 {
     public:
+        /// @brief 
+        /// @param debugger The debug interface to print messages to.
+        RuleEngine(std::initializer_list<Rule*> rules_list, Debug& debugger);
+
         ~RuleEngine();
 
         /// @brief Add a set of `Property`s to the expression parser.
@@ -68,10 +73,6 @@ class RuleEngine
         
         /// @brief End of the recursive `set_variables` function.
         void set_variables();
-
-        /// @brief Set a list of independent rules. These rules are not available to other rules in the rule engine.
-        /// @param rules_list 
-        void set_independent_rules(std::initializer_list<Rule*> rules_list) { independent_rules = rules_list; }
 
         /// @brief Start the engine
         void begin();
@@ -89,17 +90,13 @@ class RuleEngine
         /// @brief Print information about the rule engine to the `debug`er passed to the constructor.
         virtual void print();
 
-        virtual BaseStore& get_rules() = 0;
+        virtual BaseStore& get_rules();
 
         /// @brief Process a command.
         /// @param cmd 
         virtual void process_command(String& cmd);
         
     protected:
-        /// @brief 
-        /// @param debugger The debug interface to print messages to.
-        RuleEngine(Debug* debugger);
-
         /// @brief Add or update a rule with the parameters contained in `pair`.
         /// @param pair The parameters needed by the rule.
         /// @return true, if the rule was constructed successfully.
@@ -124,11 +121,15 @@ class RuleEngine
         Debug* debug;
 
         /// @brief The set of rules to evaluate.
-        std::vector<Rule*> independent_rules;
+        std::vector<Rule*> rules;
+
+        VectorBaseStore rules_basestore;
 };
 
-RuleEngine::RuleEngine(Debug* debugger):
-    debug(debugger)
+RuleEngine::RuleEngine(std::initializer_list<Rule*> rules_list, Debug& debugger):
+    rules(rules_list),
+    rules_basestore(rules),
+    debug(&debugger)
 {}
 
 RuleEngine::~RuleEngine()
@@ -180,7 +181,7 @@ void RuleEngine::process_attributes(JsonObject obj)
 
 void RuleEngine::loop()
 {
-    for(Rule* rule : independent_rules)
+    for(Rule* rule : rules)
     {
         if(rule->enabled)
         {
@@ -215,13 +216,13 @@ bool RuleEngine::process_rule(JsonPair pair)
     }
     
     JsonObject params = pair.value();
-    for(Rule* rule : independent_rules)
+    for(Rule* rule : rules)
     {
         // Found rule
-        if(rule->rulename == rule_name)
+        if(strcmp(rule->name, rule_name) == 0)
         {
             debug->printv("[RuleEngine] Found existing rule with name ", rule_name);
-            rule->modify(params);
+            rule->set_from_json(params);
             rule->set_parser(base_parser);
             rule->compile();
 
@@ -246,7 +247,7 @@ bool RuleEngine::process_rule(JsonPair pair)
 
 void RuleEngine::compile_rules()
 {
-    for(Rule* rule : independent_rules)
+    for(Rule* rule : rules)
     {
         rule->set_parser(base_parser);
         rule->compile();
@@ -255,10 +256,10 @@ void RuleEngine::compile_rules()
 
 Rule *RuleEngine::find_rule(const char *name)
 {
-    for(Rule* rule : independent_rules)
+    for(Rule* rule : rules)
     {
         // Rule already exists.
-        if(strcmp(rule->get_name(), name) == 0)
+        if(strcmp(rule->name, name) == 0)
         {
             return rule;
         }
@@ -268,12 +269,17 @@ Rule *RuleEngine::find_rule(const char *name)
 
 void RuleEngine::print()
 {
-    debug->printv("[RuleEngine] with ", independent_rules.size(), " rules.");
+    debug->printv("[RuleEngine] with ", rules.size(), " rules.");
 
-    for(Rule* rule : independent_rules)
+    for(Rule* rule : rules)
     {
         rule->print_to(*debug);
     }
+}
+
+BaseStore& RuleEngine::get_rules()
+{
+    return rules_basestore;
 }
 
 void RuleEngine::process_command(String &cmd)

@@ -34,8 +34,11 @@ class WateringRule: public Rule
             act_feeder(feeder)
         {}
 
-        bool modify(JsonObject params)
+        void set_from_json(JsonVariant var)
         {
+            if(!var.is<JsonObject>()) return;
+            JsonObject params = var.as<JsonObject>();
+
             if(!(
                 params["expression"].is<const char*>() &&
                 params["eval_interval"].is<uint32_t>() &&
@@ -43,14 +46,14 @@ class WateringRule: public Rule
                 params["address"].is<uint32_t>()
             )){
                 // JsonObject does not contain correct keys.
-                return false;
+                return;
             }
             expression = params["expression"].as<std::string>();
             eval_interval = params["eval_interval"].as<uint32_t>();
             enabled = params["enabled"].as<bool>();
             feeder_address = params["address"].as<uint32_t>();
             compiled = false;
-            return true;
+            return;
         }
         
     private:

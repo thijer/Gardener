@@ -222,7 +222,17 @@ WateringRule section_r2("section_r2", "", 86400, 125, false, act_feeder);
 
 #ifdef ENABLE_PROPERTYRULES
 #include "RuleEngine/PropertyRuleEngine.hpp"
-PropertyRuleEngine rule_engine(debug);
+PropertyRuleEngine rule_engine(
+    {
+        &section_l0,
+        &section_l1,
+        &section_l2,
+        &section_r0,
+        &section_r1,
+        &section_r2
+    },
+    debug
+);
 IntegerProperty rule_engine_dummy("dummy");
 
 #ifdef ENABLE_THINGSBOARD
@@ -452,17 +462,6 @@ void setup()
         &rule_engine_dummy
     );
     
-    #ifdef ENABLE_WATERINGRULES
-    rule_engine.set_independent_rules({
-        &section_l0,
-        &section_l1,
-        &section_l2,
-        &section_r0,
-        &section_r1,
-        &section_r2
-    });
-    #endif
-
     rule_engine.begin();
     #endif
 
