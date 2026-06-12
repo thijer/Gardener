@@ -2,10 +2,11 @@
 #define RULE_HPP
 #include <string>
 #include <Print.h>
+#include "ArduinoJson.h"
 #include "../src/TinyExpr/tinyexpr.h"
 
 /// @brief A self-contained expression that will be evaluated at a certain interval. 
-class Rule
+class Rule: public BaseProperty
 {
     public:
         /// @brief Construct a rule 
@@ -28,22 +29,27 @@ class Rule
         /// @param sink The output to send the information to (usually Serial).
         void print_to(Print& sink);
         
-        /// @brief Get the name of this rule.
-        /// @return The name.
-        const char* get_name() { return rulename.c_str(); }
+        /// @brief Evaluate the expression and process the results. This function should be implemented in derived classes.
+        virtual void update() {};
        
         /// @brief evaluate the expression and return the result.
         /// @return The result of the expression, or NaN if an error occured.
         te_type evaluate();
 
         bool compile();
+
+        virtual void set_from_bytes(uint8_t* ptr) {};
+        virtual void save_to_bytes(uint8_t* ptr) {};
+        
+        // Used by external sources such as through serial.
+        virtual void set_from_string(String& input);
+        virtual void set_from_json(JsonVariant var);
+        virtual void save_to_json(JsonObject doc) {};
+        
     protected:
         /// @brief Update the parser with a version that likely contains references to more variables.
         /// @param base_parser A `te_parser` instance from the `RuleEngine` that is already furnaced with the available variables.
         void set_parser(te_parser base_parser){ parser = base_parser; }
-
-        /// @brief Name of this rule 
-        std::string rulename;
 
         /// @brief Expression formatted according to the reference (https://github.com/Blake-Madden/tinyexpr-plusplus)
         std::string expression;
@@ -64,6 +70,7 @@ class Rule
         uint32_t last_evaluation;
 
     friend class RuleEngine;
+    friend class PropertyRuleEngine;
 };
 
 Rule::Rule(
@@ -74,7 +81,7 @@ Rule::Rule(
     te_parser baseparser,
     uint32_t last_eval
 ):
-    rulename(name),
+    BaseProperty(name),
     expression(expression),
     eval_interval(eval_interval),
     enabled(enabled),
@@ -86,11 +93,36 @@ Rule::Rule(
 
 void Rule::print_to(Print& sink)
 {
-    sink.print("name:        "); sink.println(rulename.c_str());
+    sink.print("name:        "); sink.println(name);
     sink.print("expression:  "); sink.println(expression.c_str());
     sink.print("compiled:    "); sink.println(compiled);
     sink.print("interval:    "); sink.println(eval_interval);
     sink.print("enabled:     "); sink.println(enabled);
+}
+
+void Rule::set_from_string(String& input)
+{
+    JsonDocument doc;
+    DeserializationError err = deserializeJson(doc, input);
+    if(err) return;
+    set_from_json(doc.as<JsonObject>());
+}
+
+void Rule::set_from_json(JsonVariant var)
+{
+    if(!var.is<JsonObject>()) return;
+    JsonObject params = var.as<JsonObject>();
+    if(!(
+        params["expression"].is<const char*>() &&
+        params["eval_interval"].is<uint32_t>() &&
+        params["enabled"].is<bool>()
+    )) return;  // JsonObject does not contain correct keys.
+
+    expression = params["expression"].as<std::string>();
+    eval_interval = params["eval_interval"].as<uint32_t>();
+    enabled = params["enabled"].as<bool>();
+    compiled = false;
+    return;
 }
 
 te_type Rule::evaluate()

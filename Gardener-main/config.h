@@ -105,6 +105,14 @@
 #endif
 
 // DEPENDENCY RESOLUTION
+
+#ifdef ENABLE_WATERINGRULES
+    #define ENABLE_FEEDER               // Depends on feeder presence.
+    #define ENABLE_PROPERTYRULES
+    #undef ENABLE_WATERING_FIXED        // Disable conflicting systems
+    #undef ENABLE_WATERING_MOISTURE
+#endif
+
 #ifdef ENABLE_DEBUGSOCKET
     #define ENABLE_WIFI
 #endif
@@ -115,11 +123,6 @@
     #include "ArduinoJson.h"            // Include ArduinoJson before properties to ensure properties compile with ArduinoJson support.
 
     // Enumerate enabled devices
-    #ifdef ENABLE_WATERINGRULES
-        #define N_DEV_WATERINGRULES 1
-    #else
-        #define N_DEV_WATERINGRULES 0
-    #endif
     #ifdef ENABLE_PROPERTYRULES
         #define N_DEV_PROPERTYRULES 1
     #else
@@ -141,16 +144,6 @@
     #define ENABLE_WIFI
 #endif
 
-// Disable hard-coded logic
-#ifdef ENABLE_WATERINGRULES
-    #ifndef ENABLE_FEEDER               // Depends on feeder presence.
-        #undef ENABLE_WATERINGRULES
-    #else
-        #undef ENABLE_WATERING_FIXED    // Disable conflicting systems
-        #undef ENABLE_WATERING_MOISTURE
-    #endif
-#endif
-
 // Disable watering logic if the Feeder is unavailable.
 #if defined(ENABLE_WATERING_FIXED) && !defined(ENABLE_FEEDER)
 #undef ENABLE_WATERING_FIXED
@@ -161,7 +154,7 @@
 #undef ENABLE_WATERING_MOISTURE
 #endif
 
-#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_WATERINGRULES + N_DEV_PROPERTYRULES)
+#define TB_DEVICES 1 + (N_DEV_MOISTURE + N_DEV_PROPERTYRULES)
 
 // If wifi is enabled, ...
 #ifdef ENABLE_WIFI

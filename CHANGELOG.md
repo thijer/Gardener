@@ -1,4 +1,21 @@
 # Changelog
+## [2.18.0] - 12-6-2026
+### Added
+- A command processing function for `RuleEngine`, from which rules can be modified or a rule evaluation can be forced.
+
+### Changed
+- `Rule` now inherits from `BaseProperty`, making interacting with Thingsboard easier.
+- `Rule` now implements the rule modification functions instead of `RuleEngine`s.
+- `RuleEngine` now contains the main rule engine functionality.
+- `PropertyRuleEngine` now only contains `PropertyRule` processing functions.
+- `WateringRule`s now interact with a `Feeder` instead of the `WateringRuleEngine`.
+- `WateringRule`s can now be handled by regular `RuleEngine`s.
+- `PropertyRule` now contains a property instead of being derived of one, preventing diamond inheritance.
+
+### Removed
+- `WateringRuleEngine`, which became redundant.
+- `BasePropertyRule`, of which the functionality (`update()`) is made part of `Rule`.
+
 ## [2.17.1] - 9-6-2026
 ### Fixed
 - Prevented some `MoistureSensor`s from not connecting to thingsboard by default.

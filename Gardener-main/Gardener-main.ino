@@ -209,17 +209,20 @@ bool start_feed(uint32_t position, uint32_t duration)
 #endif
 
 #ifdef ENABLE_WATERINGRULES
-#include "RuleEngine/WateringRuleEngine.hpp"
+#include "RuleEngine/WateringRule.hpp"
 
-WateringRule section_l0("section_l0", "", 86400,   0, false);
-WateringRule section_l1("section_l1", "", 86400,  25, false);
-WateringRule section_l2("section_l2", "", 86400,  50, false);
-WateringRule section_r0("section_r0", "", 86400,  75, false);
-WateringRule section_r1("section_r1", "", 86400, 100, false);
-WateringRule section_r2("section_r2", "", 86400, 125, false);
+WateringRule section_l0("section_l0", "", 86400,   0, false, act_feeder);
+WateringRule section_l1("section_l1", "", 86400,  25, false, act_feeder);
+WateringRule section_l2("section_l2", "", 86400,  50, false, act_feeder);
+WateringRule section_r0("section_r0", "", 86400,  75, false, act_feeder);
+WateringRule section_r1("section_r1", "", 86400, 100, false, act_feeder);
+WateringRule section_r2("section_r2", "", 86400, 125, false, act_feeder);
 
-WateringRuleEngine engine(
-    act_feeder,
+#endif
+
+#ifdef ENABLE_PROPERTYRULES
+#include "RuleEngine/PropertyRuleEngine.hpp"
+PropertyRuleEngine rule_engine(
     {
         &section_l0,
         &section_l1,
@@ -230,26 +233,11 @@ WateringRuleEngine engine(
     },
     debug
 );
+IntegerProperty rule_engine_dummy("dummy");
 
 #ifdef ENABLE_THINGSBOARD
 #include "RuleEngine/ThingRuleEngine.hpp"
-ThingRuleEngine tb_engine(engine, TB_GARDENER_WATERINGRULEENGINE_NAME, "rule-engine");
-#endif
-// simple hack to prevent the compiler throwing a tantrum when there are as many comma's as input 
-// arguments to `RuleEngine::set_variables`
-IntegerProperty rule_engine_dummy("dummy");
-#endif
-
-#ifdef ENABLE_PROPERTYRULES
-#include "RuleEngine/PropertyRuleEngine.hpp"
-PropertyRuleEngine prop_engine(debug);
-
-#ifdef ENABLE_THINGSBOARD
-#include "RuleEngine/ThingRuleEngine.hpp"
-ThingRuleEngine tb_prop_engine(prop_engine, TB_GARDENER_PROPERTYRULEENGINE_NAME, "rule-engine");
-#endif
-#ifndef ENABLE_WATERINGRULES
-IntegerProperty rule_engine_dummy("dummy");
+ThingRuleEngine tb_engine(rule_engine, TB_GARDENER_PROPERTYRULEENGINE_NAME, "rule-engine");
 #endif
 #endif
 
@@ -384,11 +372,8 @@ void setup()
         &moisture_sensor_09,
         &moisture_sensor_10,
         #endif
-        #if defined(ENABLE_WATERINGRULES)
-        &tb_engine,
-        #endif
         #if defined(ENABLE_PROPERTYRULES)
-        &tb_prop_engine,
+        &tb_engine,
         #endif
     });
     tb_gateway.add_timesource(timesource);
@@ -446,8 +431,8 @@ void setup()
     act_feeder.begin(debug);
     #endif
 
-    #ifdef ENABLE_WATERINGRULES
-    engine.set_variables(
+    #ifdef ENABLE_PROPERTYRULES
+    rule_engine.set_variables(
     #ifdef ENABLE_TEMP
         &temp_int, 
         &hum_int,
@@ -476,39 +461,8 @@ void setup()
     #endif
         &rule_engine_dummy
     );
-    engine.begin();
-    #endif
-
-    #ifdef ENABLE_PROPERTYRULES
-    prop_engine.set_variables(
-    #ifdef ENABLE_TEMP
-        &temp_int, 
-        &hum_int,
-        &temp_ext, 
-        &hum_ext,
-    #endif
-    #ifdef ENABLE_LEVEL_SENSOR
-        &tl_volume,
-    #endif
-    #ifdef WINDOW
-        // &window_switch
-    #endif
-    #ifdef ENABLE_MOISTURE_SENSORS
-        moisture_sensor_00.get_moisture(),
-        moisture_sensor_01.get_moisture(),
-        moisture_sensor_02.get_moisture(),
-        moisture_sensor_03.get_moisture(),
-        moisture_sensor_04.get_moisture(),
-        moisture_sensor_05.get_moisture(),
-        moisture_sensor_06.get_moisture(),
-        moisture_sensor_07.get_moisture(),
-        moisture_sensor_08.get_moisture(),
-        moisture_sensor_09.get_moisture(),
-        moisture_sensor_10.get_moisture(),
-    #endif
-        &rule_engine_dummy
-    );
-    prop_engine.begin();
+    
+    rule_engine.begin();
     #endif
 
     #ifdef ENABLE_WATERING_FIXED
@@ -587,17 +541,10 @@ void loop()
     act_feeder.loop();
     #endif
 
-    #ifdef ENABLE_WATERINGRULES
-    engine.loop();
+    #ifdef ENABLE_PROPERTYRULES
+    rule_engine.loop();
     #ifdef ENABLE_THINGSBOARD
     tb_engine.loop();
-    #endif
-    #endif
-
-    #ifdef ENABLE_PROPERTYRULES
-    prop_engine.loop();
-    #ifdef ENABLE_THINGSBOARD
-    tb_prop_engine.loop();
     #endif
     #endif
 
@@ -621,12 +568,20 @@ void parse_command(String& message)
     {
         debug.printv("Processing subsystem command.");
         String subsystem = message.substring(subsystem_s + 1, subsystem_e);
+        String subsystem_cmd = message.substring(subsystem_e + 2);
 
         #ifdef ENABLE_MOISTURE_SENSORS
         if(subsystem == "Moisture")
         {
-            String subsystem_cmd = message.substring(subsystem_e + 2);
             moisture_sensors.process_command(subsystem_cmd);
+            return;
+        }
+        #endif
+
+        #ifdef ENABLE_PROPERTYRULES
+        if(subsystem == "RuleEngine")
+        {
+            rule_engine.process_command(subsystem_cmd);
             return;
         }
         #endif
@@ -674,23 +629,6 @@ void parse_command(String& message)
             }
         }
         #endif
-        
-        #ifdef ENABLE_WATERINGRULES
-        // {"test_rule":{"expression":"IF(((0.5 * m_sens_00) + (1.2 * m_sens_01)) / (0.5 + 1.2) > 1000, 360, 0)", "eval_interval": 10, "feeder_address": 25, "enabled": true}}
-        JsonDocument doc;
-        DeserializationError err = deserializeJson(doc, message);
-        if(err)
-        {
-            debug.printv("[Serial] ERROR parsing JSON");
-            debug.printv(err.c_str());
-        }
-        else
-        {
-            debug.printv("[Serial] processing rule.");
-            engine.process_attributes(doc.as<JsonObject>());
-        }
-        #endif
-        
     }
     #ifdef ENABLE_FEEDER
     else if(message == "[Feeder] abort")
@@ -748,16 +686,10 @@ void parse_command(String& message)
     }
     #endif
 
-    #ifdef ENABLE_WATERINGRULES
-    if(message == "rules")
-    {
-        engine.print();
-    }
-    #endif
     #ifdef ENABLE_PROPERTYRULES
     if(message == "rules")
     {
-        prop_engine.print();
+        rule_engine.print();
     }
     #endif
 }
