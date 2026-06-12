@@ -43,7 +43,7 @@ void PropertyRuleEngine::set_ext_rules(PropertyRule<T>* rule, Args... more_rules
     rules.push_back(rule);
     
     // Pass the rule to the parser variables so the result of the rule's expression is available to other rules.
-    set_variables(rule);
+    set_variables(rule->get_property());
 
     set_ext_rules(more_rules...);
 }

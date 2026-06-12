@@ -9,7 +9,7 @@
 /// @brief The class for `PropertyRuleEngine` rules that store the results of expressions into a `Property` of type `T`.
 /// @tparam T The type of the `Property`.
 template<typename T>
-class PropertyRule: public Property<T>, public Rule
+class PropertyRule: public Rule
 {
     friend class PropertyRuleEngine;
     public:
@@ -29,7 +29,7 @@ class PropertyRule: public Property<T>, public Rule
             uint32_t last_eval = 0
         ):
             Rule(name, expression, eval_interval, enabled, baseparser, last_eval),
-            Property<T>(name)
+            property(name)
         {}
         /// @brief Construct the rule with a blank parser.
         /// @param name The name of this rule.
@@ -44,14 +44,14 @@ class PropertyRule: public Property<T>, public Rule
             bool enabled = true
         ):
             Rule(name, expression, eval_interval, enabled, te_parser(), 0),
-            Property<T>(name)
+            property(name)
         {}
 
         /// @brief Evaluate the expression and update the Property with the result.
         void update()
         {
             te_type result = Rule::evaluate();
-            Property<T>::set(T(result));
+            property.set(T(result));
         }
 
         /// @brief Print information about this rule to:
@@ -59,10 +59,12 @@ class PropertyRule: public Property<T>, public Rule
         void print_to(Print& sink)
         {
             Rule::print_to(sink);
-            sink.print("value:       "); sink.println(Property<T>::get());
+            sink.print("value:       "); sink.println(property.get());
         }
         
+        Property<T>* get_property() { return &property; }
     private:
+        Property<T> property;
         
         
 };
