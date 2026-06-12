@@ -56,6 +56,12 @@ class WateringRule: public Rule
             return;
         }
         
+        void update()
+        {
+            uint32_t quantity = uint32_t(evaluate());
+            if(quantity > 0) act_feeder.start_feed(feeder_address, quantity);
+        }
+        
     private:
         /// @brief The address of the feeder to which the plants will be watered with the quantity calculated by the expression.
         uint32_t feeder_address;
