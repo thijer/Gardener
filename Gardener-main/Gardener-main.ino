@@ -585,6 +585,15 @@ void parse_command(String& message)
             return;
         }
         #endif
+
+        if(subsystem == "Gardener")
+        {
+            if(subsystem_cmd == "reboot")
+            {
+                debug.printv("[Gardener] rebooting.");
+                ESP.restart();
+            }
+        }
     }
     
     int i = message.indexOf('=');
