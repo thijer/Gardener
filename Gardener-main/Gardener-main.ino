@@ -31,6 +31,10 @@ DebugWebsocket socket(DEBUGSOCKET_PORT);
 #ifdef ENABLE_THINGSBOARD
 #include "WiFiClient.h"
 #include "ThingGateway.hpp"
+#include "ThingDebug.hpp"
+
+#define N_VARS_TB 1
+ThingDebug debug_thing("debug", 0, 384, 0, 128);
 
 time_t timesource()
 {
@@ -42,6 +46,8 @@ time_t timesource()
 WiFiClient client;
 ThingGateway<TB_DEVICES> tb_gateway(client, TB_SERVER, TB_ACCESSTOKEN, TB_GARDENER_GATEWAY_NAME);
 ThingDevice tb_device(TB_GARDENER_CONTROL_NAME, "Gardener-control");
+#else
+#define N_VARS_TB 0
 #endif
 
 #ifdef ENABLE_WEBGUI
@@ -308,7 +314,7 @@ PropertyStore<N_PROP> properties({
 #endif
 });
 
-#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_LEVEL + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE)
+#define N_VARS (N_VARS_WINDOW + N_VARS_TEMP + N_VARS_LEVEL + N_VARS_MOISTURE + N_VARS_FEEDER + N_VARS_WATERING_FIXED + N_VARS_WATERING_MOISTURE + N_VARS_TB)
 PropertyStore<N_VARS> variables({
 #ifdef ENABLE_TEMP
     &temp_int, 
@@ -328,6 +334,9 @@ PropertyStore<N_VARS> variables({
 #endif
 #ifdef ENABLE_FEEDER
     act_feeder.get_prop_state(),
+#endif
+#ifdef ENABLE_THINGSBOARD
+    &debug_thing,
 #endif
 });
 
@@ -353,6 +362,8 @@ void setup()
     #endif
 
     #ifdef ENABLE_THINGSBOARD
+    debug.add_streamer(&debug_thing);
+    
     debug.printv("[Gardener] configuring Thingsboard.");
     tb_device.add_shared_attributes(properties);
     tb_device.add_telemetry(variables);
