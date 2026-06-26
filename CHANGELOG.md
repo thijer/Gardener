@@ -1,4 +1,8 @@
 # Changelog
+## [2.19.0]
+### Added
+- Debug messages can now be sent to Thingsboard as string telemetry.
+
 ## [2.18.0] - 12-6-2026
 ### Added
 - A command processing function for `RuleEngine`, from which rules can be modified or a rule evaluation can be forced.
