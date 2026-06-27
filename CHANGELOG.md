@@ -1,5 +1,9 @@
 # Changelog
-## [2.19.0]
+## [3.20.0] - 27-6-2026
+### Added
+- roboot command.
+
+## [2.19.0] - 26-6-2026
 ### Added
 - Debug messages can now be sent to Thingsboard as string telemetry.
 
