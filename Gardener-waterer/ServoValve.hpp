@@ -3,14 +3,9 @@
 
 #include <Servo.h>
 
-#define POS_OPEN 135
-#define POS_CLOSED 45
-#define POS_OVERSHOOT 20
-
 class ServoValve: private Servo
 {
     public:
-        ServoValve(uint8_t pin);
         ServoValve(uint8_t pin, int32_t pos_open, int32_t pos_closed, int32_t pos_overshoot = 0);
         void begin() {};
         void loop();
@@ -36,13 +31,6 @@ class ServoValve: private Servo
             CLOSING
         } state = UNKNOWN;
 };
-
-ServoValve::ServoValve(uint8_t pin):
-    pin(pin),
-    pos_open(POS_OPEN),
-    pos_closed(POS_CLOSED),
-    pos_overshoot(POS_OVERSHOOT)
-{}
 
 ServoValve::ServoValve(uint8_t pin, int32_t pos_open, int32_t pos_closed, int32_t pos_overshoot):
     pin(pin),
