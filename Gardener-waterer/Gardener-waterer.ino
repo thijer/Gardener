@@ -1,3 +1,4 @@
+#include "Arduino.h"
 #include <Servo.h>
 #include "ServoValve.hpp"
 
@@ -28,12 +29,17 @@
 #define POS_ERROR_MARGIN 3
 #define RETRACTION_DURATION 1000            // ms
 
+#define POS_OPEN 135
+#define POS_CLOSED 45
+#define POS_OVERSHOOT 20
+
 // PINS
-#define MOTOR_1 12
-#define MOTOR_2 11
-#define ENDSTOP 3
-#define STEPCOUNTER 2
-#define SERVO 9
+#define PIN_MOTOR_1 12
+#define PIN_MOTOR_2 11
+#define PIN_ENDSTOP 3
+#define PIN_STEPCOUNTER 2
+#define PIN_NOZZLE_SERVO 9
+#define PIN_VALVE 8
 
 class Debounce
 {
@@ -116,13 +122,13 @@ class Debounce
         } state;
 };
 
-ServoValve valve(8);
-Servo nozzle;
-Debounce endstop(ENDSTOP, 30);
+ServoValve valve(PIN_VALVE, POS_OPEN, POS_CLOSED, POS_OVERSHOOT);
+Debounce endstop(PIN_ENDSTOP, 30);
 
 const uint32_t steps_per_revolution = 12;
-uint32_t nozzle_extend_pos = 160;
-uint32_t nozzle_retract_pos = 60;
+int32_t nozzle_extend_pos = 60;
+int32_t nozzle_retract_pos = 160;
+ServoValve nozzle(PIN_NOZZLE_SERVO, nozzle_extend_pos, nozzle_retract_pos);
 
 unsigned long last_state_transition = 0; // Timestamp of last state transition
 int32_t desired_pos = 0;      // 
@@ -186,12 +192,10 @@ void state_transitions()
     {
         if(desired_pos > 0)
         {
-            nozzle.attach(SERVO);
             set_state(STATE::MOVE_RIGHT);
         }
         else if(desired_pos == 0 && feed_duration > 0)
         {
-            nozzle.attach(SERVO);
             set_state(STATE::EXTRUDING_NOZZLE);
         }
     }
@@ -260,61 +264,63 @@ void set_state(STATE newstate)
 {
     if(newstate == STATE::IDLE)                     
     {
-        digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);       
+        digitalWrite(PIN_MOTOR_1, 0);       
+        digitalWrite(PIN_MOTOR_2, 0);       
         current_pos = 0; 
         desired_pos = 0; 
         feed_duration = 0; 
         abort_action = false; 
-        nozzle.detach();
     }
     else if(newstate == STATE::MOVE_RIGHT)         
     {
-        digitalWrite(MOTOR_1, RIGHT_1); 
-        digitalWrite(MOTOR_2, RIGHT_2); 
+        digitalWrite(PIN_MOTOR_1, RIGHT_1); 
+        digitalWrite(PIN_MOTOR_2, RIGHT_2);
+        nozzle.close();                     // Ensure nozzle is not extended
         direction = RIGHT;
     }
     else if(newstate == STATE::MOVE_LEFT)          
     {
-        digitalWrite(MOTOR_1, LEFT_1);  
-        digitalWrite(MOTOR_2, LEFT_2);  
+        digitalWrite(PIN_MOTOR_1, LEFT_1);  
+        digitalWrite(PIN_MOTOR_2, LEFT_2);
+        nozzle.close();                     // Ensure nozzle is not extended
         direction = LEFT;
     }
     else if(newstate == STATE::WAITING)            
     {
-        digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);       
+        digitalWrite(PIN_MOTOR_1, 0);       
+        digitalWrite(PIN_MOTOR_2, 0);       
         feed_duration = 0;
     }
     else if(newstate == STATE::EXTRUDING_NOZZLE)   
     {
-        digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);       
-        nozzle.write(nozzle_extend_pos);
+        digitalWrite(PIN_MOTOR_1, 0);       
+        digitalWrite(PIN_MOTOR_2, 0);       
+        nozzle.open();
         valve.open();
     }
     else if(newstate == STATE::PREPARE_RETRACTION) 
     {
-        digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);
+        digitalWrite(PIN_MOTOR_1, 0);       
+        digitalWrite(PIN_MOTOR_2, 0);
         valve.close();      
     }
     else if(newstate == STATE::RETRACTING_NOZZLE)  
     {
-        digitalWrite(MOTOR_1, 0);       
-        digitalWrite(MOTOR_2, 0);       
-        nozzle.write(nozzle_retract_pos);
+        digitalWrite(PIN_MOTOR_1, 0);       
+        digitalWrite(PIN_MOTOR_2, 0);       
+        nozzle.close();                     // Retract nozzle
     }
     else if(newstate == STATE::RETURNING_TO_ZERO_1)
     {
-        digitalWrite(MOTOR_1, LEFT_1);  
-        digitalWrite(MOTOR_2, LEFT_2);  
+        digitalWrite(PIN_MOTOR_1, LEFT_1);  
+        digitalWrite(PIN_MOTOR_2, LEFT_2);  
+        nozzle.close();                     // Ensure nozzle is not extended
         direction = LEFT;
     }
     else if(newstate == STATE::RETURNING_TO_ZERO_2)
     {
-        digitalWrite(MOTOR_1, RIGHT_1); 
-        digitalWrite(MOTOR_2, RIGHT_2); 
+        digitalWrite(PIN_MOTOR_1, RIGHT_1); 
+        digitalWrite(PIN_MOTOR_2, RIGHT_2); 
         direction = RIGHT;
     }
     
@@ -410,12 +416,14 @@ void serial_input()
             {
                 uint32_t pos = uint32_t(value.toInt());
                 nozzle_extend_pos = pos;
+                nozzle.set_params(nozzle_extend_pos, nozzle_retract_pos);
                 PRINT("[Feeder] nozzle_extrude_pos updated.");
             }
             else if(key == "[Feeder] nozzle_retract_pos" && i != -1)
             {
                 uint32_t pos = uint32_t(value.toInt());
                 nozzle_retract_pos = pos;
+                nozzle.set_params(nozzle_extend_pos, nozzle_retract_pos);
                 PRINT("[Feeder] nozzle_retract_pos updated.");
             }
             else PRINT("[Feeder] ERROR: command not recognized.");
@@ -431,12 +439,12 @@ void serial_input()
 
 void setup()
 {
-	attachInterrupt(digitalPinToInterrupt(STEPCOUNTER), stepcounter, RISING);
+	attachInterrupt(digitalPinToInterrupt(PIN_STEPCOUNTER), stepcounter, RISING);
     
-    pinMode(MOTOR_1, OUTPUT);
-    pinMode(MOTOR_2, OUTPUT);
-    digitalWrite(MOTOR_1, 0);
-    digitalWrite(MOTOR_2, 0);
+    pinMode(PIN_MOTOR_1, OUTPUT);
+    pinMode(PIN_MOTOR_2, OUTPUT);
+    digitalWrite(PIN_MOTOR_1, 0);
+    digitalWrite(PIN_MOTOR_2, 0);
     
     buffer.reserve(51);
     buffer = "";
@@ -446,8 +454,7 @@ void setup()
 
     valve.begin();
 
-    nozzle.attach(SERVO);
-    nozzle.write(nozzle_retract_pos);
+    nozzle.begin();
     endstop.init();
 
     if(!endstop) set_state(STATE::RETURNING_TO_ZERO_1);
@@ -459,6 +466,7 @@ void setup()
 void loop()
 {
 	endstop.loop();
+    nozzle.loop();
     valve.loop();
     serial_input();
     state_transitions();

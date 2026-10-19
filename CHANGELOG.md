@@ -1,5 +1,16 @@
 # Changelog
-## [3.20.0] - 27-6-2026
+## [2.21.0] - 19-10-2026
+### Added
+- `ServoValve` parameters can now be changed after construction through `set_params`.
+
+### Changed
+- All definitions referring to pins in `Gardener-waterer` now have the `PIN_` prefix.
+- The nozzle `Servo` object is replaced with a `ServoValve`.
+
+### Removed
+- The `ServoValve` constructor that takes no open and close angle parameters.
+
+## [2.20.0] - 27-6-2026
 ### Added
 - roboot command.
 

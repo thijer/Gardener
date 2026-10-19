@@ -3,26 +3,22 @@
 
 #include <Servo.h>
 
-#define POS_OPEN 135
-#define POS_CLOSED 45
-#define POS_OVERSHOOT 20
-
 class ServoValve: private Servo
 {
     public:
-        ServoValve(uint8_t pin);
-        ServoValve(uint8_t pin, uint8_t pos_open, uint8_t pos_closed, uint8_t pos_overshoot);
+        ServoValve(uint8_t pin, int32_t pos_open, int32_t pos_closed, int32_t pos_overshoot = 0);
         void begin() {};
         void loop();
         void open()  { desired_state = 1; };
         void close() { desired_state = 0; };
+        void set_params(int32_t open_pos, int32_t closed_pos, int32_t overshoot = 0) { pos_open = open_pos; pos_closed = closed_pos; pos_overshoot = overshoot; }
     protected:
 
     private:
         uint8_t pin;
-        uint8_t pos_open;
-        uint8_t pos_closed;
-        uint8_t pos_overshoot;
+        int32_t pos_open;       // Open position (deg)
+        int32_t pos_closed;     // Closed position (deg)
+        int32_t pos_overshoot;  // Number of degrees to overshoot open or close setpoints to compensate for servo not reaching those angles.
 
         uint32_t last_state = 0;
 
@@ -36,14 +32,7 @@ class ServoValve: private Servo
         } state = UNKNOWN;
 };
 
-ServoValve::ServoValve(uint8_t pin):
-    pin(pin),
-    pos_open(POS_OPEN),
-    pos_closed(POS_CLOSED),
-    pos_overshoot(POS_OVERSHOOT)
-{}
-
-ServoValve::ServoValve(uint8_t pin, uint8_t pos_open, uint8_t pos_closed, uint8_t pos_overshoot):
+ServoValve::ServoValve(uint8_t pin, int32_t pos_open, int32_t pos_closed, int32_t pos_overshoot):
     pin(pin),
     pos_open(pos_open),
     pos_closed(pos_closed),
